@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import type { PlayerController } from './controller'
 import { loadYouTubeApi } from './loadYouTubeApi'
 import { describePlayerError, type PlayerErrorInfo } from './playerErrors'
 import { watchUrl } from './youtubeUrl'
@@ -7,23 +8,19 @@ interface Props {
   youtubeId: string
   /** Width / height of the video frame; sizes the stage. */
   aspectRatio: number
-  /** Called once the player knows the video duration. */
-  onDuration?: (seconds: number) => void
+  controller: PlayerController
 }
 
 /**
- * Minimal embedded player with YouTube's own controls (build step 2).
- * Step 3 replaces the controls with the app's own and adds keyboard capture (ADR-0007).
+ * YouTube embed without YouTube's own controls or keyboard handling; the app's
+ * controls and shortcuts drive it through `controller` (PRD §4.4, ADR-0007).
  */
-export function YouTubePlayer({ youtubeId, aspectRatio, onDuration }: Props) {
+export function YouTubePlayer({ youtubeId, aspectRatio, controller }: Props) {
+  const stageRef = useRef<HTMLDivElement>(null)
   const hostRef = useRef<HTMLDivElement>(null)
-  const onDurationRef = useRef(onDuration)
   const [error, setError] = useState<PlayerErrorInfo | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
-
-  useEffect(() => {
-    onDurationRef.current = onDuration
-  }, [onDuration])
+  const [iframeFocused, setIframeFocused] = useState(false)
 
   useEffect(() => {
     let player: YT.Player | null = null
@@ -40,12 +37,14 @@ export function YouTubePlayer({ youtubeId, aspectRatio, onDuration }: Props) {
           videoId: youtubeId,
           width: '100%',
           height: '100%',
-          playerVars: { rel: 0, playsinline: 1 },
+          playerVars: { controls: 0, disablekb: 1, rel: 0, playsinline: 1, iv_load_policy: 3, fs: 0 },
           events: {
             onReady: (e) => {
-              const d = e.target.getDuration()
-              if (d > 0) onDurationRef.current?.(d)
+              e.target.getIframe().setAttribute('tabindex', '-1')
+              controller.attach(e.target)
             },
+            onStateChange: (e) => controller.onStateChange(e.data),
+            onPlaybackRateChange: (e) => controller.onRateChange(e.data),
             onError: (e) => setError(describePlayerError(e.data)),
           },
         })
@@ -56,14 +55,41 @@ export function YouTubePlayer({ youtubeId, aspectRatio, onDuration }: Props) {
 
     return () => {
       cancelled = true
+      controller.detach()
       player?.destroy()
       host.replaceChildren()
     }
-  }, [youtubeId])
+  }, [youtubeId, controller])
+
+  // A focused iframe swallows key events. When the page loses focus to the player,
+  // take it back; if the browser refuses, show a hint (PRD §4.4, ADR-0007).
+  useEffect(() => {
+    const onBlur = () => {
+      setTimeout(() => {
+        const active = document.activeElement
+        if (!(active instanceof HTMLIFrameElement) || !stageRef.current?.contains(active)) return
+        stageRef.current.focus({ preventScroll: true })
+        setIframeFocused(document.activeElement === active)
+      }, 0)
+    }
+    const onFocus = () => setIframeFocused(false)
+    window.addEventListener('blur', onBlur)
+    window.addEventListener('focus', onFocus)
+    return () => {
+      window.removeEventListener('blur', onBlur)
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [])
 
   return (
     <div className="player">
-      <div className="stage" style={{ aspectRatio: String(aspectRatio), maxWidth: `calc(75vh * ${aspectRatio})` }}>
+      <div
+        className="stage"
+        ref={stageRef}
+        tabIndex={-1}
+        aria-label="Video"
+        style={{ aspectRatio: String(aspectRatio), maxWidth: `calc(70vh * ${aspectRatio})` }}
+      >
         <div className="stage-host" ref={hostRef} />
         {(error || loadError) && (
           <div className="stage-error" role="alert">
@@ -85,6 +111,11 @@ export function YouTubePlayer({ youtubeId, aspectRatio, onDuration }: Props) {
           </div>
         )}
       </div>
+      {iframeFocused && (
+        <p className="focus-hint" role="status">
+          Click outside the video to use shortcuts.
+        </p>
+      )}
     </div>
   )
 }
