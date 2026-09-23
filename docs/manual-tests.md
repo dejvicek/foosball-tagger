@@ -30,3 +30,20 @@ Each section names the build step or requirement it covers.
 8. **Delete (VID-3):** Delete video… → the dialog says what goes (nothing yet besides the video); Cancel and Esc close it; Delete returns to the list with "Deleted …".
 9. **Isolation:** in Supabase → Table Editor, the rows have your `user_id`. (RLS is covered by automated tests in `supabase/tests/`.)
 10. Offline: turn off Wi-Fi and add a video → "Could not reach YouTube…", nothing added; the list shows a load error with Try again.
+
+## Step 3 · Player, keyboard and games (GAM-1..4)
+
+Use a real practice video. Repeat 1–4 in Chrome, Firefox and Safari.
+
+1. **Controls:** Play/Pause, −5/−1/+1/+5 s, ‹ Frame / Frame ›, speed select all work; the time counts smoothly. Clicking a control does not steal the keyboard (Space still plays/pauses right after).
+2. **Keys:** Space, ←/→ (1 s), Shift+←/→ (5 s), `,` / `.` (about one frame; press `.` five times quickly: time moves about 5/fps), `[` / `]` (speed, with a short message). Nothing happens while typing in Opponent or Notes.
+3. **Focus:** click on the video picture, then press Space or →: shortcuts still work. If a browser keeps focus in the video, the hint "Click outside the video to use shortcuts" appears.
+4. **Seek before first play:** reload, click a game's start time before pressing Play: the video jumps there and stays paused.
+5. **Frame rate:** set 60 fps under Details; frame steps get about half as big (both 30 and 60 fps).
+6. **First game:** press B without choosing a side → message asks for the side. Choose Left, press B → Game 1 "open"; press E later → Game 1 has an end time.
+7. **Next game (GAM-1/2):** with Game 1 open, press B → Game 1 ends and Game 2 starts at the same time, with the same side and format.
+8. **Overlap (GAM-4):** seek inside Game 1 and press B → refused with an explanation. Seek before Game 2's start and use "End here" on Game 1 past Game 2's start → refused. Touching games (end of 1 = start of 2) are fine.
+9. **Inline edits (GAM-2):** change side, format, opponent, scores, notes; reload → all kept.
+10. **GAM-3:** click a game's start time → the player seeks there; "Tag →" opens the tagging placeholder.
+11. **Delete a game:** Delete… → confirmation; Esc cancels; confirm removes it.
+12. **Offline (SYN-2):** turn Wi-Fi off, press B and E, edit a name → header shows "Unsynced changes: n"; reload while still offline → the games are still there (games list may show a load error: Try again once online); turn Wi-Fi on → the counter disappears within a minute; reload → everything is on the server.

@@ -56,7 +56,7 @@ Format: context → decision → consequences. Keep each record short.
 
 ## ADR-0008 · Player time between `getCurrentTime()` updates
 
-- **Status:** Accepted · 2026-09-23 (to be measured in build step 3)
+- **Status:** Superseded by ADR-0015
 - **Context:** The IFrame API reports time asynchronously from the iframe, so values polled at animation-frame rate arrive in steps.
 - **Decision:** While playing, interpolate from the last reported time using `performance.now()` × playback rate, resynchronised on every new report and on state changes. Tag times use the interpolated value. `seekTo` before the first play starts playback; the player cues and pauses explicitly where needed.
 
@@ -113,3 +113,40 @@ Format: context → decision → consequences. Keep each record short.
   - **Player errors** (VID-4): YouTube reports error 150 also for private or removed videos, so its message covers all three causes.
   - **Minimal player in step 2:** YouTube's own controls, used to show embed errors and record `duration_s`. Step 3 replaces it per ADR-0007.
   - Screens live in `src/videos/`.
+
+## ADR-0015 · Player time and seeking, as measured
+
+- **Status:** Accepted · 2026-09-24 · Supersedes ADR-0008
+- **Context:** Measured in Chromium with the IFrame API (controls off): while playing, `getCurrentTime()` changes every ~33 ms, i.e. every video frame, not in coarse steps. Right after `seekTo` it still returns the old time for a moment. Seeking a video that has never played is unreliable. Available speeds include 1.25 and 1.75.
+- **Decision:**
+  - Read `getCurrentTime()` directly every animation frame; no interpolation.
+  - After a seek, report the target until the player reports a *new* time near it, or for at most 1 s. The old time never counts as "arrived", so repeated frame steps add up.
+  - Seeking before the first play starts playback and pauses again as soon as it plays.
+  - Speeds are the PRD's 0.25, 0.5, 0.75, 1, 1.5, 2 (those the video supports); `[`/`]` step through them, and a speed set elsewhere moves to the next listed one.
+  - `PlayerController` (`src/player/controller.ts`) holds this logic over a minimal player interface and is unit-tested with a fake player.
+- **Consequences:** Firefox and Safari were not measured; the manual tests cover them.
+
+## ADR-0016 · Pending write queue, used from step 3
+
+- **Status:** Accepted · 2026-09-24
+- **Context:** Games are written from step 3 on and must survive network drops like possessions (SYN-1..4). Building the queue once, now, avoids a second write path.
+- **Decision:**
+  - `WriteQueue` (`src/data/queue.ts`): every write is stored in localStorage (`fbtag:queue:v1:<user id>`) before it is sent; the UI updates optimistically.
+  - One entry per row: repeated edits coalesce into the latest full row (an upsert on `id`, ids generated in the browser); a delete replaces a pending upsert, and a new row deleted before any send attempt is dropped.
+  - Sending order: upserts parents first (games, then possessions), then deletes children first. Deleting a game drops its queued possession writes.
+  - Retry on network or server errors with backoff 1 s, 2 s, 4 s… up to 60 s, and on the `online` event. Postgres data, constraint and permission errors (22xxx, 23xxx, 42xxx) are not retried: they are kept, shown in the header as "n changes refused" with the server's message, and dropped only when the user discards them.
+  - On page load the queue flushes before data is fetched, and pending entries are laid over the fetched rows (SYN-4).
+  - Header shows "Unsynced changes: n" (SYN-2). Inline edits flush after 500 ms (SYN-3).
+- **Consequences:** Two devices editing the same row offline: the last write wins. Video rows stay online-only (ADR-0014).
+
+## ADR-0017 · Marking games on the video screen
+
+- **Status:** Accepted · 2026-09-24
+- **Decision:**
+  - **First game's side:** `my_side` is required and there is no previous game to copy, so before the first game the panel asks "Which side of the frame is your goal on?"; B is refused until it is answered. Later games take the side (and the format) of the game before them (GAM-2).
+  - **Open game range:** a game without `end_s` runs until the next game starts, or to the end of the video (refines ADR-0010). At most one game is open.
+  - **Overlap rules (GAM-4):** half-open ranges, so a game may start exactly where the previous one ended. B inside a closed game, E before the open game's start, or any boundary change that would overlap is refused with a message naming the games and times.
+  - **Boundary edits:** each game has "Start here" / "End here" (current player time), checked by the same rules. No typed time fields.
+  - **Deleting a game** (not named in the PRD, needed to undo a stray B): with a confirmation stating its possession count.
+  - **GAM-3:** clicking a game's start time seeks there; "Tag →" opens the tagging screen, which seeks to the game start (a placeholder until step 4).
+  - Messages appear as a short toast, announced to screen readers.
