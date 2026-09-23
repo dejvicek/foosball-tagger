@@ -1,14 +1,19 @@
 import { useState, type FormEvent } from 'react'
-import { sendMagicLink } from '../data/auth'
+import { sendMagicLink, signInWithGitHub } from '../data/auth'
 
-type Status = { kind: 'idle' } | { kind: 'sending' } | { kind: 'sent'; email: string } | { kind: 'error'; message: string }
+type Status =
+  | { kind: 'idle' }
+  | { kind: 'sending' }
+  | { kind: 'redirecting' }
+  | { kind: 'sent'; email: string }
+  | { kind: 'error'; message: string }
 
 function describeError(err: unknown): string {
   const message = err instanceof Error ? err.message : String(err)
   if (/rate limit|too many/i.test(message)) {
     return 'Too many sign-in emails were requested. Wait a few minutes and try again.'
   }
-  return `Could not send the sign-in link: ${message}`
+  return message
 }
 
 export function SignIn({ linkError }: { linkError: string | null }) {
@@ -24,9 +29,20 @@ export function SignIn({ linkError }: { linkError: string | null }) {
       await sendMagicLink(address)
       setStatus({ kind: 'sent', email: address })
     } catch (err) {
-      setStatus({ kind: 'error', message: describeError(err) })
+      setStatus({ kind: 'error', message: `Could not send the sign-in link: ${describeError(err)}` })
     }
   }
+
+  async function onGitHub() {
+    setStatus({ kind: 'redirecting' })
+    try {
+      await signInWithGitHub()
+    } catch (err) {
+      setStatus({ kind: 'error', message: `Could not start GitHub sign-in: ${describeError(err)}` })
+    }
+  }
+
+  const busy = status.kind === 'sending' || status.kind === 'redirecting'
 
   return (
     <main className="center card">
@@ -48,9 +64,13 @@ export function SignIn({ linkError }: { linkError: string | null }) {
         <form onSubmit={onSubmit}>
           {linkError && (
             <p className="error" role="alert">
-              That sign-in link did not work ({linkError}). Request a new one.
+              Sign-in did not complete ({linkError}). Try again.
             </p>
           )}
+          <button className="btn wide" type="button" onClick={onGitHub} disabled={busy}>
+            {status.kind === 'redirecting' ? 'Opening GitHub…' : 'Sign in with GitHub'}
+          </button>
+          <p className="divider muted">or get a link by email</p>
           <label htmlFor="email">Email</label>
           <div className="row">
             <input
@@ -61,7 +81,7 @@ export function SignIn({ linkError }: { linkError: string | null }) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
-            <button className="btn primary" type="submit" disabled={status.kind === 'sending'}>
+            <button className="btn primary" type="submit" disabled={busy}>
               {status.kind === 'sending' ? 'Sending…' : 'Send sign-in link'}
             </button>
           </div>

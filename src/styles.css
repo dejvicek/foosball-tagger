@@ -42,3 +42,5 @@ input[type="email"] { flex: 1 1 200px; padding: 7px 10px; border: 1px solid var(
 .btn:hover { border-color: var(--muted); }
 .btn:disabled { opacity: 0.6; cursor: default; }
 .btn.primary { background: var(--felt); border-color: var(--felt); color: var(--on-felt); font-weight: 600; }
+.btn.wide { width: 100%; justify-content: center; }
+.divider { text-align: center; font-size: 13px; margin: 14px 0 10px; }

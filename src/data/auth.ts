@@ -14,6 +14,15 @@ export async function sendMagicLink(email: string): Promise<void> {
   if (error) throw error
 }
 
+/** Leaves the page for GitHub; the browser comes back with `?code=` (PKCE, ADR-0004). */
+export async function signInWithGitHub(): Promise<void> {
+  const { error } = await getSupabase().auth.signInWithOAuth({
+    provider: 'github',
+    options: { redirectTo: redirectUrl(window.location) },
+  })
+  if (error) throw error
+}
+
 export async function signOut(): Promise<void> {
   const { error } = await getSupabase().auth.signOut()
   if (error) throw error
