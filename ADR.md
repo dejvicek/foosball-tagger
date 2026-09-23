@@ -88,3 +88,15 @@ Format: context → decision → consequences. Keep each record short.
 - **Context:** Supabase's built-in email service sends 2 emails per hour per project, which makes magic-link sign-in painful during development and on new devices. PRD §4.3 lists GitHub OAuth as optional.
 - **Decision:** The sign-in screen offers "Sign in with GitHub" (primary) and the email magic link. GitHub sign-in uses the same PKCE redirect to the app root (ADR-0004), so it works on the deployed app and on localhost. The OAuth App lives under the `dejvicek` GitHub account.
 - **Consequences:** Needs a GitHub OAuth App with callback `https://<project-ref>.supabase.co/auth/v1/callback`, and the GitHub provider enabled in Supabase. Signing in with GitHub and with email using the same address yields one Supabase user (automatic identity linking by verified email), so `user_id` stays the same.
+
+## ADR-0013 · Schema additions: aspect ratio, video summary view, migration testing
+
+- **Status:** Accepted · 2026-09-24
+- **Context:** VID-1 fetches the aspect ratio, but PRD §5 has no column for it; VID-2 and VID-3 need per-video counts; RLS mistakes are silent, so they must be tested.
+- **Decision:**
+  - `videos.aspect_ratio numeric` (width / height), filled from oEmbed on creation.
+  - `video_summaries` view (`security_invoker = true`, so RLS applies) with game, confirmed/total possession, calibration and job counts and `job_running`.
+  - Extra checks beyond PRD §5: YouTube id format, non-negative times and scores, calibration `points` is a 4-element array.
+  - Explicit grants: `authenticated` gets table access, `anon` gets none.
+  - Migrations are tested in Vitest against PGlite (Postgres in WebAssembly) with a small stub of Supabase's `auth` schema (`supabase/tests/`). The Supabase CLI is a dev dependency, so `npx supabase db push` works without a global install.
+- **Consequences:** `video_summaries` lists video columns as of its creation; a migration that adds a video column must recreate the view. The auth stub mimics `auth.uid()` only; anything else from Supabase's `auth` schema needs adding to the stub.
