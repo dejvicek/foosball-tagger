@@ -1,7 +1,8 @@
 import { HashRouter, Route, Routes } from 'react-router'
 import { AuthGate } from './AuthGate'
 import { Layout } from './Layout'
-import { Home } from './Home'
+import { VideosPage } from '../videos/VideosPage'
+import { VideoPage } from '../videos/VideoPage'
 import { NotFound } from './NotFound'
 
 export function App() {
@@ -11,7 +12,8 @@ export function App() {
         <HashRouter>
           <Routes>
             <Route element={<Layout email={session.user.email ?? ''} />}>
-              <Route index element={<Home />} />
+              <Route index element={<VideosPage />} />
+              <Route path="videos/:id" element={<VideoPage />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
