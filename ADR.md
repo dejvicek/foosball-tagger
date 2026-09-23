@@ -100,3 +100,16 @@ Format: context → decision → consequences. Keep each record short.
   - Explicit grants: `authenticated` gets table access, `anon` gets none.
   - Migrations are tested in Vitest against PGlite (Postgres in WebAssembly) with a small stub of Supabase's `auth` schema (`supabase/tests/`). The Supabase CLI is a dev dependency, so `npx supabase db push` works without a global install.
 - **Consequences:** `video_summaries` lists video columns as of its creation; a migration that adds a video column must recreate the view. The auth stub mimics `auth.uid()` only; anything else from Supabase's `auth` schema needs adding to the stub.
+
+## ADR-0014 · Videos screens (build step 2)
+
+- **Status:** Accepted · 2026-09-24
+- **Decision:**
+  - **Online-only video writes.** Adding, editing and deleting videos needs the network (adding needs oEmbed anyway); failures are shown with a retry. Only tagging writes (possessions, and games in step 3) go through the pending queue (SYN-2).
+  - **Accepted links:** youtube.com / m. / music. / youtube-nocookie.com with `watch?v=`, `live/`, `shorts/`, `embed/`, `v/`, and `youtu.be/`, with any extra parameters. A bare 11-character id is rejected (PRD §4.4: "reject anything else").
+  - **oEmbed refusal blocks adding.** If oEmbed says the video is private, not embeddable (401/403) or missing (400/404), the video is not added and the message says what to change on YouTube. Fix it on YouTube, then add again.
+  - **Aspect ratio:** oEmbed returns rounded player sizes (200×113); ratios within 2% of 16:9, 4:3, 9:16, 1:1, 21:9 or 3:4 snap to it.
+  - **Newest first** (VID-2) = by `recorded_on`, falling back to the date added, then by time added.
+  - **Player errors** (VID-4): YouTube reports error 150 also for private or removed videos, so its message covers all three causes.
+  - **Minimal player in step 2:** YouTube's own controls, used to show embed errors and record `duration_s`. Step 3 replaces it per ADR-0007.
+  - Screens live in `src/videos/`.

@@ -11,6 +11,7 @@ Single-user web app for tagging foosball games from YouTube recordings and compu
 ```
 src/
   app/          routing, auth gate, layout
+  videos/       video list and video screen
   player/       YouTube IFrame wrapper, time polling, focus capture, overlay
   tagging/      tag panel state machine, keyboard map, timeline, log
   stats/        pure statistics functions — no React, no Supabase imports
@@ -28,7 +29,7 @@ docs/           manual-tests.md and notes
 - `npm run build` / `npm run preview`
 - `npm test` — Vitest; run before every commit
 - `npm run lint` (oxlint) and `npm run typecheck` (tsc) — must pass before a task is done
-- `supabase db push` — apply migrations to the linked project (user runs this; tell them when)
+- `npx supabase db push` — apply migrations to the linked project (user runs this; tell them when). Migrations are tested against PGlite in `supabase/tests/` as part of `npm test`.
 
 ## Conventions
 
