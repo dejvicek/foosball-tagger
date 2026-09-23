@@ -1,0 +1,755 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Foosball session tagger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EDF0EE; --panel:#FFFFFF; --ink:#18201C; --muted:#5B6862; --line:#D2D9D4;
+  --felt:#2E6B45; --on-felt:#FFFFFF; --wood:#A8703C; --miss:#B23E2C; --key:#E4E9E6;
+  --stage:#0F1512; --focus:#2B5DA8; --noshot:#9AA5A0;
+  --sans:"Barlow", "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+  --cond:"Barlow Condensed", "Arial Narrow", "Roboto Condensed", "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#131916; --panel:#1B2320; --ink:#E5ECE8; --muted:#98A59F; --line:#2D3833;
+    --felt:#4F9C69; --on-felt:#0D1410; --wood:#CF9660; --miss:#E2735F; --key:#27312C;
+    --stage:#080B09; --focus:#7FA7E8; --noshot:#6A7671; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#131916; --panel:#1B2320; --ink:#E5ECE8; --muted:#98A59F; --line:#2D3833;
+  --felt:#4F9C69; --on-felt:#0D1410; --wood:#CF9660; --miss:#E2735F; --key:#27312C;
+  --stage:#080B09; --focus:#7FA7E8; --noshot:#6A7671; color-scheme: dark;
+}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.45}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+.wrap{max-width:1440px;margin:0 auto;padding:14px 16px 40px}
+header.top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin-bottom:14px}
+header.top h1{font-family:var(--cond);font-weight:700;font-size:26px;letter-spacing:.01em;margin:0 8px 0 0;line-height:1}
+.sess{display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex:1 1 420px}
+.sess input[type=text]{flex:1 1 180px;min-width:140px;padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
+.sess select,.ctl select{padding:7px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--felt);border-color:var(--felt);color:var(--on-felt);font-weight:600}
+.btn.danger{color:var(--miss)}
+.btn.armed{background:var(--miss);border-color:var(--miss);color:#fff}
+input[type=file]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:16px;align-items:start}
+@media (max-width:960px){.grid{grid-template-columns:1fr}}
+
+.stage{position:relative;background:var(--stage);border-radius:8px;overflow:hidden;aspect-ratio:16/9}
+.stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:var(--stage)}
+.empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:#C9D3CE;text-align:center;padding:20px}
+.empty p{margin:0;max-width:46ch}
+.clockface{font-family:var(--cond);font-size:clamp(40px,8vw,84px);font-weight:600;color:#fff;font-variant-numeric:tabular-nums;line-height:1}
+.ctl{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px}
+.ctl .btn{padding:6px 10px}
+.ctl .time{margin-left:auto;font-family:var(--cond);font-size:18px;font-variant-numeric:tabular-nums;color:var(--muted)}
+
+/* Timeline strip: the playfield */
+.strip{position:relative;height:34px;margin-top:10px;border-radius:6px;background:var(--felt);cursor:pointer;overflow:hidden}
+.strip::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 calc(12.5% - 1px),rgba(255,255,255,.14) calc(12.5% - 1px) 12.5%)}
+.seg{position:absolute;top:6px;bottom:6px;min-width:3px;border-radius:2px;background:#fff;opacity:.9}
+.seg.goal{background:#F4F7F5}
+.seg.nogoal{background:var(--miss)}
+.seg.noshot{background:var(--noshot)}
+.seg.untagged{background:repeating-linear-gradient(45deg,#fff 0 3px,rgba(255,255,255,.4) 3px 6px)}
+.seg.draft{background:var(--wood);opacity:1}
+.playhead{position:absolute;top:0;bottom:0;width:2px;background:#FFD24A;pointer-events:none}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:6px;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+
+/* Tag panel */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px}
+.timer{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:end;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.timer .big{font-family:var(--cond);font-weight:700;font-size:64px;line-height:.9;font-variant-numeric:tabular-nums;color:var(--wood)}
+.timer .big small{font-size:26px;font-weight:600;margin-left:2px}
+.timer .big.idle{color:var(--line)}
+.timer .se{font-size:13px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.status{grid-column:1/-1;font-size:14px;margin-top:8px;min-height:2.9em}
+.markrow{display:flex;gap:6px;margin-bottom:12px}
+.markrow .btn{flex:1;justify-content:center}
+.group{margin-bottom:10px}
+.group h3{font-size:13px;font-weight:600;color:var(--muted);margin:0 0 5px}
+.seg-ctl{display:flex;gap:4px}
+.opt{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:8px 6px;border:1px solid var(--line);border-radius:6px;background:transparent;cursor:pointer;font-weight:500}
+.opt:hover{border-color:var(--muted)}
+.opt kbd,.btn kbd{font-family:var(--sans);font-size:11px;font-weight:600;min-width:18px;padding:1px 5px;border-radius:4px;background:var(--key);color:var(--muted);text-align:center}
+.opt[aria-pressed="true"]{background:var(--felt);border-color:var(--felt);color:var(--on-felt)}
+.opt[aria-pressed="true"][data-tone="neg"]{background:var(--miss);border-color:var(--miss);color:#fff}
+.opt[aria-pressed="true"] kbd{background:rgba(255,255,255,.22);color:inherit}
+.actions{display:flex;gap:6px;margin-top:14px}
+.actions .btn{flex:1;justify-content:center}
+details.keys{margin-top:14px;font-size:13px;color:var(--muted)}
+details.keys summary{cursor:pointer;color:var(--ink);font-weight:500}
+details.keys dl{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:8px 0 0}
+details.keys dt{font-weight:600;color:var(--ink)}
+details.keys dd{margin:0}
+
+/* Lower area */
+.lower{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:16px;margin-top:16px;align-items:start}
+@media (max-width:1100px){.lower{grid-template-columns:1fr}}
+h2{font-family:var(--cond);font-weight:600;font-size:22px;margin:0 0 10px;line-height:1.1}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px;margin-bottom:12px}
+.kpi{border-left:3px solid var(--felt);padding:2px 0 2px 10px}
+.kpi b{display:block;font-family:var(--cond);font-size:28px;font-weight:600;line-height:1.05;font-variant-numeric:tabular-nums}
+.kpi span{font-size:13px;color:var(--muted)}
+.note{font-size:13px;color:var(--muted);margin:4px 0 12px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:14px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{font-weight:600;font-size:13px;color:var(--muted)}
+td.num,th.num{text-align:right}
+h4{font-size:14px;margin:16px 0 6px}
+.matrix td:first-child{font-weight:500}
+.log select{padding:3px 4px;border:1px solid transparent;border-radius:4px;background:transparent;max-width:130px}
+.log select:hover,.log select:focus{border-color:var(--line)}
+.log tr.active{background:color-mix(in srgb,var(--wood) 14%,transparent)}
+.seek{border:0;background:none;padding:0;cursor:pointer;color:var(--focus);font-variant-numeric:tabular-nums;text-decoration:underline;text-underline-offset:2px}
+.del{border:0;background:none;cursor:pointer;color:var(--muted);font-size:18px;line-height:1;padding:0 4px}
+.del:hover{color:var(--miss)}
+.blank{color:var(--muted);padding:18px 0}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:6px;font-size:14px;opacity:0;transition:opacity .15s;pointer-events:none;max-width:90vw}
+.toast.show{opacity:1}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:20px;z-index:10}
+.modal.open{display:flex}
+.modal .box{background:var(--panel);border-radius:8px;padding:16px;width:min(720px,100%);max-height:90vh;display:flex;flex-direction:column;gap:10px}
+.modal textarea{width:100%;min-height:260px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);padding:8px;resize:vertical}
+.modal .row{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Session tagger</h1>
+    <div class="sess">
+      <input type="text" id="sessName" aria-label="Session name" value="Untitled session">
+      <select id="sessPick" aria-label="Open a saved session"></select>
+      <button class="btn" id="newSess" type="button">New session</button>
+      <button class="btn danger" id="delSess" type="button">Delete session</button>
+    </div>
+    <label class="btn" for="file">Load video</label>
+    <input type="file" id="file" accept="video/*">
+    <button class="btn primary" id="exportBtn" type="button">Export CSV</button>
+  </header>
+
+  <div class="grid">
+    <section aria-label="Video">
+      <div class="stage" id="stage">
+        <video id="video" playsinline preload="auto" hidden></video>
+        <div class="empty" id="empty">
+          <div class="clockface" id="clockface">0:00.0</div>
+          <p>No video loaded. You can load a recording, or tag live at the table: the session clock starts when you press S, and Space pauses it.</p>
+        </div>
+      </div>
+      <div class="ctl" id="ctl">
+        <button class="btn nf" data-act="play" type="button" id="playBtn">Play <kbd>Space</kbd></button>
+        <button class="btn nf" data-act="back5" type="button" title="Back 5 s (Shift+←)">−5 s</button>
+        <button class="btn nf" data-act="back1" type="button" title="Back 1 s (←)">−1 s</button>
+        <button class="btn nf" data-act="frameBack" type="button" title="Previous frame (,)">‹ Frame</button>
+        <button class="btn nf" data-act="frameFwd" type="button" title="Next frame (.)">Frame ›</button>
+        <button class="btn nf" data-act="fwd1" type="button" title="Forward 1 s (→)">+1 s</button>
+        <button class="btn nf" data-act="fwd5" type="button" title="Forward 5 s (Shift+→)">+5 s</button>
+        <select id="speed" aria-label="Playback speed" title="Speed ([ and ])">
+          <option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="0.75">0.75×</option>
+          <option value="1" selected>1×</option><option value="1.5">1.5×</option><option value="2">2×</option>
+        </select>
+        <select id="fps" aria-label="Video frame rate" title="Frame rate used for frame stepping">
+          <option value="30">30 fps</option><option value="60" selected>60 fps</option>
+          <option value="120">120 fps</option><option value="240">240 fps</option>
+        </select>
+        <span class="time" id="timeDisp">0:00.0</span>
+      </div>
+      <div class="strip" id="strip" role="slider" aria-label="Session timeline" tabindex="-1"><div class="playhead" id="playhead"></div></div>
+      <div class="legend">
+        <span><i style="background:#F4F7F5;outline:1px solid var(--line)"></i>Goal</span>
+        <span><i style="background:var(--miss)"></i>No goal</span>
+        <span><i style="background:var(--noshot)"></i>No shot</span>
+        <span><i style="background:var(--wood)"></i>Current possession</span>
+      </div>
+    </section>
+
+    <aside class="panel" aria-label="Tag the possession">
+      <div class="timer">
+        <div class="big idle" id="bigTimer">0.0<small>s</small></div>
+        <div class="se" id="seTimes">start –<br>shot –</div>
+        <div class="status" id="status" aria-live="polite"></div>
+      </div>
+      <div class="markrow">
+        <button class="btn nf" data-act="start" type="button">Start <kbd>S</kbd></button>
+        <button class="btn nf" data-act="shot" type="button">Shot <kbd>F</kbd></button>
+        <button class="btn nf" data-act="noshot" type="button" title="Possession ended without a shot">No shot <kbd>N</kbd></button>
+      </div>
+      <div id="groups"></div>
+      <div class="actions">
+        <button class="btn primary nf" data-act="save" type="button">Save <kbd>Enter</kbd></button>
+        <button class="btn nf" data-act="clear" type="button">Clear <kbd>Esc</kbd></button>
+        <button class="btn nf" data-act="undo" type="button" title="Delete the last saved possession">Undo <kbd>U</kbd></button>
+      </div>
+      <details class="keys">
+        <summary>How to tag</summary>
+        <dl>
+          <dt>S</dt><dd>Ball is set: possession starts. Pressing S again after a tagged shot saves it and starts the next one.</dd>
+          <dt>F</dt><dd>Shot released: possession ends.</dd>
+          <dt>N</dt><dd>Possession ended without a shot (lost ball, pass, time). Saves immediately.</dd>
+          <dt>Enter</dt><dd>Save the tagged shot. Missing fields stay blank and don't count in percentages.</dd>
+          <dt>Space</dt><dd>Play or pause.</dd>
+          <dt>← →</dt><dd>1 second back or forward; with Shift, 5 seconds.</dd>
+          <dt>, .</dt><dd>One frame back or forward (set your frame rate in the controls).</dd>
+          <dt>[ ]</dt><dd>Slower or faster playback.</dd>
+          <dt>U</dt><dd>Delete the last saved possession.</dd>
+        </dl>
+        <p>Pressing a tag key a second time clears that field. Click any time in the log to jump back to that possession.</p>
+      </details>
+    </aside>
+  </div>
+
+  <div class="lower">
+    <section class="panel" aria-label="Statistics">
+      <h2>Session numbers</h2>
+      <div id="stats"></div>
+    </section>
+    <section class="panel" aria-label="Possession log">
+      <h2>Possession log</h2>
+      <div class="scroll" id="log"></div>
+    </section>
+  </div>
+</div>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="box">
+    <h2 id="modalTitle">Export CSV</h2>
+    <p class="note" style="margin:0">Paste this into our chat, or save it as a file for your records.</p>
+    <textarea id="csvText" readonly></textarea>
+    <div class="row">
+      <button class="btn" id="closeModal" type="button">Close</button>
+      <button class="btn" id="dlCsv" type="button" hidden>Download .csv</button>
+      <button class="btn primary" id="copyCsv" type="button">Copy CSV</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+"use strict";
+const FIELDS = [
+  {key:'type',   label:'Shot type', opts:[['Pin','1'],['Pull','2'],['Other','3']]},
+  {key:'dir',    label:'Direction', opts:[['Pull','Q'],['Push','W'],['Straight','E']]},
+  {key:'side',   label:'Hole',      opts:[['Long','A'],['Middle','M'],['Short','D']]},
+  {key:'result', label:'Result',    opts:[['Goal','G'],['No goal','H',1]]},
+  {key:'exec',   label:'Execution', opts:[['Proper','J'],['Misexecuted','K',1]]}
+];
+const KEYMAP = {};
+FIELDS.forEach(f=>f.opts.forEach(o=>{ KEYMAP[o[1].toLowerCase()] = [f.key,o[0]]; }));
+const TYPE_OPTS = ['Pin','Pull','Other','No shot'];
+const STORE = 'fbtag:v1';
+
+const $ = id => document.getElementById(id);
+const video = $('video');
+let hasVideo = false;
+let downloads = null;
+const clock = {running:false, base:0, startedAt:0};
+const state = { session:'Untitled session', events:[], draft:newDraft(), nextId:1 };
+
+function newDraft(){ return {start:null,end:null,type:null,dir:null,side:null,result:null,exec:null}; }
+
+/* ---------- time source ---------- */
+function now(){
+  if (hasVideo) return video.currentTime || 0;
+  return clock.running ? clock.base + (performance.now()-clock.startedAt)/1000 : clock.base;
+}
+function clockStart(){ if(!clock.running){ clock.startedAt=performance.now(); clock.running=true; } }
+function clockToggle(){ if(clock.running){ clock.base=now(); clock.running=false; } else clockStart(); }
+function fmt(t){
+  if (t==null || isNaN(t)) return '–';
+  const m=Math.floor(t/60), s=t-m*60;
+  return m+':'+(s<10?'0':'')+s.toFixed(1);
+}
+function fmtS(t){ return t==null||isNaN(t) ? '–' : t.toFixed(1)+' s'; }
+function fps(){ return parseFloat($('fps').value)||60; }
+function seek(t){
+  if (!hasVideo) { toast('Load a video to jump in time'); return; }
+  const d = isFinite(video.duration)?video.duration:Infinity;
+  video.currentTime = Math.max(0, Math.min(d, t));
+}
+
+/* ---------- storage ---------- */
+function readStore(){
+  try { const s = JSON.parse(localStorage.getItem(STORE)); if (s && s.sessions) return s; } catch(e){}
+  return {sessions:{}, last:null};
+}
+function writeStore(s){ try { localStorage.setItem(STORE, JSON.stringify(s)); } catch(e){} }
+function persist(){
+  const s = readStore();
+  s.sessions[state.session] = {events:state.events, nextId:state.nextId, fps:fps(), updated:Date.now()};
+  s.last = state.session;
+  writeStore(s);
+  renderSessPick();
+}
+function openSession(name){
+  const s = readStore();
+  const rec = s.sessions[name];
+  state.session = name;
+  state.events = rec ? (rec.events||[]) : [];
+  state.nextId = rec ? (rec.nextId || state.events.reduce((m,e)=>Math.max(m,e.id||0),0)+1) : 1;
+  if (rec && rec.fps) $('fps').value = String(rec.fps);
+  state.draft = newDraft();
+  $('sessName').value = name;
+  s.last = name; writeStore(s);
+  renderAll(); renderSessPick();
+}
+function uniqueName(base){
+  const s = readStore(); let n = base, i = 2;
+  while (s.sessions[n] && n!==state.session) n = base+' ('+(i++)+')';
+  return n;
+}
+function renderSessPick(){
+  const s = readStore(), sel = $('sessPick');
+  sel.textContent = '';
+  const ph = new Option('Saved sessions…',''); ph.disabled = true; sel.add(ph);
+  Object.keys(s.sessions).sort((a,b)=>(s.sessions[b].updated||0)-(s.sessions[a].updated||0)).forEach(n=>{
+    const c = (s.sessions[n].events||[]).length;
+    const o = new Option(n+' ('+c+')', n); sel.add(o);
+  });
+  sel.value = '';
+}
+
+/* ---------- actions ---------- */
+function draftHasContent(d){ return d.end!=null || FIELDS.some(f=>d[f.key]!=null); }
+function markStart(){
+  const d = state.draft;
+  if (d.end!=null) saveDraft(true);
+  if (!hasVideo) clockStart();
+  state.draft = newDraft();
+  state.draft.start = now();
+  renderDraft(); renderTimeline();
+}
+function markShot(){
+  const d = state.draft;
+  if (!hasVideo) clockStart();
+  const t = now();
+  if (d.start!=null && t < d.start){ toast('The shot time is before the start. Move forward, or press S at the new start.'); return; }
+  d.end = t;
+  if (d.type==='No shot') d.type = null;
+  renderDraft(); renderTimeline();
+}
+function markNoShot(){
+  const d = state.draft;
+  if (!hasVideo) clockStart();
+  const t = now();
+  if (d.start!=null && t < d.start){ toast('This time is before the start of the possession.'); return; }
+  d.end = t; d.type = 'No shot'; d.dir = d.side = d.result = d.exec = null;
+  saveDraft();
+}
+function setField(key, val){
+  const d = state.draft;
+  if (d.type==='No shot' && key!=='type') return;
+  d[key] = (d[key]===val) ? null : val;
+  renderDraft();
+}
+function saveDraft(silentAuto){
+  const d = state.draft;
+  if (!draftHasContent(d)){ toast('Nothing to save yet. Press S at the start and F at the shot.'); return; }
+  const ev = Object.assign({id: state.nextId++}, d);
+  state.events.push(ev);
+  sortEvents();
+  state.draft = newDraft();
+  persist(); renderAll();
+  toast((silentAuto?'Saved previous possession':'Saved possession')+' #'+(state.events.indexOf(ev)+1));
+}
+function sortEvents(){
+  const key = e => e.start!=null ? e.start : (e.end!=null ? e.end : 1e12);
+  state.events.sort((a,b)=>key(a)-key(b) || a.id-b.id);
+}
+function clearDraft(){ state.draft = newDraft(); renderDraft(); renderTimeline(); }
+function undo(){
+  if (!state.events.length){ toast('No saved possessions to undo'); return; }
+  let last = state.events.reduce((m,e)=>e.id>m.id?e:m, state.events[0]);
+  state.events = state.events.filter(e=>e!==last);
+  persist(); renderAll(); toast('Deleted the last saved possession');
+}
+function togglePlay(){
+  if (hasVideo){ if (video.paused) video.play().catch(()=>{}); else video.pause(); }
+  else clockToggle();
+  updatePlayBtn();
+}
+function updatePlayBtn(){
+  const playing = hasVideo ? !video.paused : clock.running;
+  $('playBtn').firstChild.nodeValue = playing ? 'Pause ' : 'Play ';
+}
+function stepSpeed(dir){
+  const sel = $('speed'); const i = Math.max(0, Math.min(sel.options.length-1, sel.selectedIndex+dir));
+  sel.selectedIndex = i; applySpeed(); toast('Speed '+sel.value+'×');
+}
+function applySpeed(){ video.playbackRate = parseFloat($('speed').value)||1; }
+function frameStep(dir){
+  if (!hasVideo){ toast('Frame stepping needs a loaded video'); return; }
+  video.pause(); updatePlayBtn(); seek(video.currentTime + dir/fps());
+}
+const ACTS = {
+  play:togglePlay, start:markStart, shot:markShot, noshot:markNoShot, save:()=>saveDraft(), clear:clearDraft, undo:undo,
+  back5:()=>hasVideo?seek(now()-5):toast('Load a video to jump in time'),
+  back1:()=>hasVideo?seek(now()-1):toast('Load a video to jump in time'),
+  fwd1:()=>hasVideo?seek(now()+1):toast('Load a video to jump in time'),
+  fwd5:()=>hasVideo?seek(now()+5):toast('Load a video to jump in time'),
+  frameBack:()=>frameStep(-1), frameFwd:()=>frameStep(1)
+};
+
+/* ---------- rendering ---------- */
+function buildGroups(){
+  const box = $('groups');
+  FIELDS.forEach(f=>{
+    const g = document.createElement('div'); g.className='group';
+    const h = document.createElement('h3'); h.textContent=f.label; g.appendChild(h);
+    const row = document.createElement('div'); row.className='seg-ctl'; row.setAttribute('role','group'); row.setAttribute('aria-label',f.label);
+    f.opts.forEach(o=>{
+      const b = document.createElement('button'); b.type='button'; b.className='opt nf';
+      b.dataset.field=f.key; b.dataset.val=o[0]; if (o[2]) b.dataset.tone='neg';
+      b.setAttribute('aria-pressed','false');
+      const s = document.createElement('span'); s.textContent=o[0];
+      const k = document.createElement('kbd'); k.textContent=o[1];
+      b.append(s,k); row.appendChild(b);
+    });
+    g.appendChild(row); box.appendChild(g);
+  });
+}
+function renderDraft(){
+  const d = state.draft;
+  document.querySelectorAll('.opt').forEach(b=>{
+    b.setAttribute('aria-pressed', d[b.dataset.field]===b.dataset.val ? 'true':'false');
+    b.disabled = d.type==='No shot' && b.dataset.field!=='type';
+  });
+  $('seTimes').innerHTML = 'start '+fmt(d.start)+'<br>shot '+fmt(d.end);
+  let msg;
+  if (d.start==null && d.end==null) msg = 'Press S when the ball is set on the rod.';
+  else if (d.end==null) msg = 'Possession running. Press F at the shot, or N if it ends without one.';
+  else {
+    const missing = FIELDS.filter(f=>d[f.key]==null).map(f=>f.label.toLowerCase());
+    msg = missing.length ? 'Tag the shot, then press Enter. Still blank: '+missing.join(', ')+'.' : 'All tagged. Press Enter to save, or S to save and start the next possession.';
+  }
+  $('status').textContent = msg;
+  tickTimer();
+}
+function tickTimer(){
+  const d = state.draft, el = $('bigTimer');
+  let v = null;
+  if (d.start!=null) v = (d.end!=null ? d.end : now()) - d.start;
+  el.classList.toggle('idle', v==null);
+  el.firstChild.nodeValue = (v==null?0:Math.max(0,v)).toFixed(1);
+}
+function sessionDuration(){
+  if (hasVideo && isFinite(video.duration) && video.duration>0) return video.duration;
+  let m = now();
+  state.events.forEach(e=>{ if(e.end!=null) m=Math.max(m,e.end); });
+  return Math.max(30, m*1.1);
+}
+function segClass(e){
+  if (e.type==='No shot') return 'noshot';
+  if (e.result==='Goal') return 'goal';
+  if (e.result==='No goal') return 'nogoal';
+  return 'untagged';
+}
+function renderTimeline(){
+  const strip = $('strip'), dur = sessionDuration();
+  strip.querySelectorAll('.seg').forEach(n=>n.remove());
+  const add = (a,b,cls,title,t0)=>{
+    const s = document.createElement('div'); s.className='seg '+cls;
+    s.style.left = (a/dur*100)+'%'; s.style.width = (Math.max(0,b-a)/dur*100)+'%';
+    s.title = title; if (t0!=null) s.dataset.t = t0;
+    strip.insertBefore(s, $('playhead'));
+  };
+  state.events.forEach((e,i)=>{
+    const a = e.start!=null?e.start:e.end, b = e.end!=null?e.end:e.start;
+    if (a==null) return;
+    add(a,b,segClass(e),'#'+(i+1)+' '+[e.type,e.dir,e.side,e.result].filter(Boolean).join(' '), a);
+  });
+  const d = state.draft;
+  if (d.start!=null) add(d.start, d.end!=null?d.end:now(), 'draft', 'Current possession', d.start);
+}
+function tickPlayhead(){
+  const dur = sessionDuration();
+  $('playhead').style.left = Math.min(100, now()/dur*100)+'%';
+  const t = fmt(now());
+  $('timeDisp').textContent = hasVideo ? t+' / '+fmt(video.duration) : t;
+  if (!hasVideo) $('clockface').textContent = t;
+}
+
+function pct(a,b){ return b ? Math.round(a/b*100)+'%' : '–'; }
+function len(e){ return (e.start!=null && e.end!=null) ? e.end-e.start : null; }
+function avg(arr){ return arr.length ? arr.reduce((s,x)=>s+x,0)/arr.length : null; }
+function median(arr){ if(!arr.length) return null; const a=[...arr].sort((x,y)=>x-y), m=a.length>>1; return a.length%2?a[m]:(a[m-1]+a[m])/2; }
+function el(tag, cls, text){ const n=document.createElement(tag); if(cls) n.className=cls; if(text!=null) n.textContent=text; return n; }
+function table(headers, rows, numCols){
+  const t = el('table'), thead = el('thead'), tr = el('tr');
+  headers.forEach((h,i)=>{ const th=el('th', numCols.includes(i)?'num':'', h); tr.appendChild(th); });
+  thead.appendChild(tr); t.appendChild(thead);
+  const tb = el('tbody');
+  rows.forEach(r=>{ const row=el('tr'); r.forEach((c,i)=>row.appendChild(el('td', numCols.includes(i)?'num':'', c))); tb.appendChild(row); });
+  t.appendChild(tb);
+  const w = el('div','scroll'); w.appendChild(t); return w;
+}
+function shotStats(list){
+  const res = list.filter(e=>e.result), goals = res.filter(e=>e.result==='Goal').length;
+  const ex = list.filter(e=>e.exec), proper = ex.filter(e=>e.exec==='Proper').length;
+  const lens = list.map(len).filter(v=>v!=null);
+  return {n:list.length, res:res.length, goals, ex:ex.length, proper, avgLen:avg(lens)};
+}
+function renderStats(){
+  const box = $('stats'); box.textContent='';
+  const ev = state.events, shots = ev.filter(e=>e.type!=='No shot'), noshots = ev.length-shots.length;
+  if (!ev.length){ box.appendChild(el('p','blank','Numbers appear here as you tag possessions.')); return; }
+  const s = shotStats(shots);
+  const allLens = ev.map(len).filter(v=>v!=null);
+  const kp = el('div','kpis');
+  [[ev.length,'possessions'],[shots.length,'shots'],[pct(s.goals,s.res),'conversion'],[pct(s.proper,s.ex),'proper execution'],
+   [fmtS(median(allLens)),'median possession'],[pct(noshots,ev.length),'no-shot possessions']].forEach(([v,l])=>{
+    const k=el('div','kpi'); k.append(el('b',null,String(v)), el('span',null,l)); kp.appendChild(k);
+  });
+  box.appendChild(kp);
+  if (shots.length < 30) box.appendChild(el('p','note','Fewer than 30 shots so far. Treat percentages as rough indications, not conclusions; one or two shots can swing them by 10% or more.'));
+
+  // By shot combination
+  box.appendChild(el('h4',null,'By shot'));
+  const groups = {};
+  shots.forEach(e=>{ const k=[e.type||'Untyped', e.dir||'', e.side||''].filter(Boolean).join(' · '); (groups[k]=groups[k]||[]).push(e); });
+  const rows = Object.entries(groups).sort((a,b)=>b[1].length-a[1].length).map(([k,list])=>{
+    const g = shotStats(list);
+    return [k, String(g.n), String(g.goals), pct(g.goals,g.res), pct(g.proper,g.ex), fmtS(g.avgLen)];
+  });
+  box.appendChild(table(['Shot','Att.','Goals','Conv.','Proper','Avg poss.'], rows, [1,2,3,4,5]));
+
+  // Execution × result
+  box.appendChild(el('h4',null,'Execution vs. result'));
+  const both = shots.filter(e=>e.exec && e.result);
+  const c = (x,r)=>both.filter(e=>e.exec===x && e.result===r).length;
+  const mrows = ['Proper','Misexecuted'].map(x=>{ const g=c(x,'Goal'), n=c(x,'No goal'); return [x, String(g), String(n), pct(g,g+n)]; });
+  const mt = table(['Execution','Goal','No goal','Conv.'], mrows, [1,2,3]); mt.querySelector('table').classList.add('matrix');
+  box.appendChild(mt);
+  box.appendChild(el('p','note','Proper shots that don\'t score point to the goalie reading you (selection or disguise problem). Misexecuted shots that score are luck you can\'t rely on.'));
+
+  // Possession length buckets
+  box.appendChild(el('h4',null,'Conversion by possession length'));
+  const buckets = [[0,5,'Under 5 s'],[5,10,'5–10 s'],[10,15,'10–15 s'],[15,Infinity,'15 s or more']];
+  const brows = buckets.map(([a,b,l])=>{
+    const list = shots.filter(e=>{ const v=len(e); return v!=null && v>=a && v<b; });
+    const g = shotStats(list); return [l, String(g.n), pct(g.goals,g.res), pct(g.proper,g.ex)];
+  }).filter(r=>r[1]!=='0');
+  if (brows.length) box.appendChild(table(['Length','Shots','Conv.','Proper'], brows, [1,2,3]));
+  else box.appendChild(el('p','note','Mark possession starts (S) to see this breakdown.'));
+}
+
+function renderLog(){
+  const box = $('log'); box.textContent='';
+  if (!state.events.length){ box.appendChild(el('p','blank','No possessions yet. Press S when the ball is set and F when you shoot.')); return; }
+  const t = el('table','log'), thead = el('thead'), hr = el('tr');
+  ['#','Start','Length','Shot type','Direction','Hole','Result','Execution',''].forEach((h,i)=>hr.appendChild(el('th', (i===2)?'num':'', h)));
+  thead.appendChild(hr); t.appendChild(thead);
+  const tb = el('tbody'), cur = now();
+  state.events.forEach((e,i)=>{
+    const tr = el('tr');
+    if (e.start!=null && e.end!=null && cur>=e.start && cur<=e.end) tr.className='active';
+    tr.appendChild(el('td',null,String(i+1)));
+    const td = el('td'); const sb = el('button','seek', fmt(e.start!=null?e.start:e.end)); sb.type='button';
+    sb.title='Jump to one second before this possession'; sb.addEventListener('click',()=>seek((e.start!=null?e.start:e.end)-1));
+    td.appendChild(sb); tr.appendChild(td);
+    tr.appendChild(el('td','num', fmtS(len(e))));
+    const mk = (key, opts)=>{
+      const cell = el('td'), sel = el('select'); sel.setAttribute('aria-label', key+' for possession '+(i+1));
+      sel.add(new Option('–',''));
+      opts.forEach(o=>sel.add(new Option(o,o)));
+      sel.value = e[key]||'';
+      if (key!=='type' && e.type==='No shot') sel.disabled = true;
+      sel.addEventListener('change',()=>{
+        e[key] = sel.value || null;
+        if (key==='type' && e.type==='No shot'){ e.dir=e.side=e.result=e.exec=null; }
+        persist(); renderAll();
+      });
+      cell.appendChild(sel); return cell;
+    };
+    tr.appendChild(mk('type', TYPE_OPTS));
+    tr.appendChild(mk('dir', ['Pull','Push','Straight']));
+    tr.appendChild(mk('side', ['Long','Middle','Short']));
+    tr.appendChild(mk('result', ['Goal','No goal']));
+    tr.appendChild(mk('exec', ['Proper','Misexecuted']));
+    const dc = el('td'), db = el('button','del','×'); db.type='button'; db.title='Delete possession '+(i+1); db.setAttribute('aria-label','Delete possession '+(i+1));
+    db.addEventListener('click',()=>{ state.events = state.events.filter(x=>x!==e); persist(); renderAll(); });
+    dc.appendChild(db); tr.appendChild(dc);
+    tb.appendChild(tr);
+  });
+  t.appendChild(tb); box.appendChild(t);
+}
+function renderAll(){ renderDraft(); renderTimeline(); renderStats(); renderLog(); }
+
+/* ---------- export ---------- */
+function csv(){
+  const q = v => { const s = v==null?'':String(v); return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; };
+  const lines = [['session','n','start_s','shot_s','length_s','shot_type','direction','hole','result','execution'].join(',')];
+  state.events.forEach((e,i)=>{
+    const l = len(e);
+    lines.push([state.session, i+1, e.start!=null?e.start.toFixed(2):'', e.end!=null?e.end.toFixed(2):'', l!=null?l.toFixed(2):'',
+      e.type, e.dir, e.side, e.result, e.exec].map(q).join(','));
+  });
+  return lines.join('\n');
+}
+function openModal(){
+  $('csvText').value = csv(); $('modal').classList.add('open'); $('copyCsv').focus();
+}
+function closeModal(){ $('modal').classList.remove('open'); }
+async function copyCsv(){
+  const ta = $('csvText');
+  try { await navigator.clipboard.writeText(ta.value); toast('CSV copied'); return; } catch(e){}
+  ta.focus(); ta.select();
+  try { if (document.execCommand('copy')) { toast('CSV copied'); return; } } catch(e){}
+  toast('Copying is blocked here. The text is selected: press Ctrl+C (⌘C on Mac).');
+}
+async function downloadCsv(){
+  if (!downloads) return;
+  const name = (state.session.replace(/[\\/:*?"<>|]+/g,' ').trim()||'foosball-session')+'.csv';
+  try { await downloads.save({filename:name, data:csv()}); toast('Saved '+name); }
+  catch(e){
+    const code = e && e.code;
+    if (code==='declined') return;
+    if (code==='rate_limited') { toast('A save prompt is already open'); return; }
+    $('dlCsv').hidden = true; toast('Downloads aren\'t available here. Use Copy CSV instead.');
+  }
+}
+
+/* ---------- toast ---------- */
+let toastT;
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2200); }
+
+/* ---------- video loading ---------- */
+let objUrl = null;
+$('file').addEventListener('change', ()=>{
+  const f = $('file').files[0]; if (!f) return;
+  if (objUrl) URL.revokeObjectURL(objUrl);
+  objUrl = URL.createObjectURL(f);
+  video.src = objUrl; video.hidden = false; $('empty').hidden = true;
+  hasVideo = true; applySpeed();
+  const base = f.name.replace(/\.[^.]+$/,'');
+  const s = readStore();
+  if (s.sessions[base]) { openSession(base); toast('Reopened saved session "'+base+'"'); }
+  else if (!state.events.length) { state.session = uniqueName(base); $('sessName').value = state.session; state.draft=newDraft(); persist(); renderAll(); }
+  else { persist(); state.session = uniqueName(base); state.events=[]; state.nextId=1; state.draft=newDraft(); $('sessName').value=state.session; persist(); renderAll(); toast('Started a new session for this video. The previous one is saved.'); }
+  $('file').value = '';
+});
+video.addEventListener('error', ()=>{
+  hasVideo = false; video.hidden = true; $('empty').hidden = false;
+  toast('This video can\'t play here. MP4 (H.264) plays most reliably; you can convert or re-export and try again.');
+});
+video.addEventListener('loadedmetadata', ()=>{ renderTimeline(); tickPlayhead(); });
+video.addEventListener('play', updatePlayBtn);
+video.addEventListener('pause', updatePlayBtn);
+video.addEventListener('seeked', ()=>{ renderLog(); });
+video.addEventListener('click', togglePlay);
+
+/* ---------- wiring ---------- */
+document.addEventListener('pointerdown', e=>{ if (e.target.closest('.nf')) e.preventDefault(); });
+document.addEventListener('click', e=>{
+  const a = e.target.closest('[data-act]'); if (a && ACTS[a.dataset.act]) { ACTS[a.dataset.act](); return; }
+  const o = e.target.closest('.opt'); if (o && !o.disabled) setField(o.dataset.field, o.dataset.val);
+});
+$('strip').addEventListener('click', e=>{
+  const seg = e.target.closest('.seg');
+  if (seg && seg.dataset.t!=null) { seek(parseFloat(seg.dataset.t)-1); return; }
+  const r = $('strip').getBoundingClientRect();
+  seek((e.clientX-r.left)/r.width*sessionDuration());
+});
+$('speed').addEventListener('change', applySpeed);
+$('fps').addEventListener('change', persist);
+$('sessName').addEventListener('change', ()=>{
+  const n = $('sessName').value.trim(); if (!n || n===state.session) { $('sessName').value = state.session; return; }
+  const s = readStore();
+  if (s.sessions[n]) { toast('A session with that name already exists'); $('sessName').value = state.session; return; }
+  delete s.sessions[state.session]; writeStore(s);
+  state.session = n; persist();
+});
+$('sessPick').addEventListener('change', ()=>{ const n=$('sessPick').value; if (n) { persist(); openSession(n); } });
+$('newSess').addEventListener('click', ()=>{
+  persist(); state.session = uniqueName('Session '+new Date().toISOString().slice(0,10));
+  state.events=[]; state.nextId=1; state.draft=newDraft(); $('sessName').value=state.session;
+  clock.base=0; clock.running=false; persist(); renderAll(); updatePlayBtn();
+});
+let delArmed = null;
+$('delSess').addEventListener('click', ()=>{
+  const b = $('delSess');
+  if (!delArmed){ b.classList.add('armed'); b.textContent='Click again to delete'; delArmed=setTimeout(()=>{ b.classList.remove('armed'); b.textContent='Delete session'; delArmed=null; },3000); return; }
+  clearTimeout(delArmed); delArmed=null; b.classList.remove('armed'); b.textContent='Delete session';
+  const s = readStore(); delete s.sessions[state.session]; s.last=null; writeStore(s);
+  toast('Deleted "'+state.session+'"');
+  state.session = uniqueName('Untitled session'); state.events=[]; state.nextId=1; state.draft=newDraft(); $('sessName').value=state.session;
+  renderAll(); renderSessPick();
+});
+$('exportBtn').addEventListener('click', openModal);
+$('closeModal').addEventListener('click', closeModal);
+$('copyCsv').addEventListener('click', copyCsv);
+$('dlCsv').addEventListener('click', downloadCsv);
+$('modal').addEventListener('click', e=>{ if (e.target===$('modal')) closeModal(); });
+
+document.addEventListener('keydown', ev=>{
+  if ($('modal').classList.contains('open')) { if (ev.key==='Escape') closeModal(); return; }
+  const t = ev.target;
+  if (t.closest && t.closest('input,select,textarea')) { if (ev.key==='Escape') t.blur(); return; }
+  if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
+  if (t.closest && t.closest('button') && (ev.key===' ' || ev.key==='Enter')) return;
+  const k = ev.key.length===1 ? ev.key.toLowerCase() : ev.key;
+  let handled = true;
+  if (KEYMAP[k]) setField(KEYMAP[k][0], KEYMAP[k][1]);
+  else switch(k){
+    case 's': markStart(); break;
+    case 'f': markShot(); break;
+    case 'n': markNoShot(); break;
+    case 'u': undo(); break;
+    case 'Enter': saveDraft(); break;
+    case 'Escape': clearDraft(); break;
+    case ' ': togglePlay(); break;
+    case 'ArrowLeft': ACTS[ev.shiftKey?'back5':'back1'](); break;
+    case 'ArrowRight': ACTS[ev.shiftKey?'fwd5':'fwd1'](); break;
+    case ',': case '<': frameStep(-1); break;
+    case '.': case '>': frameStep(1); break;
+    case '[': stepSpeed(-1); break;
+    case ']': stepSpeed(1); break;
+    default: handled = false;
+  }
+  if (handled) ev.preventDefault();
+});
+
+let lastLogRefresh = 0;
+function loop(ts){
+  tickPlayhead();
+  if (state.draft.start!=null && state.draft.end==null) { tickTimer(); renderTimeline(); }
+  if (hasVideo && !video.paused && ts-lastLogRefresh>1000 && !$('log').contains(document.activeElement)) { lastLogRefresh=ts; renderLog(); }
+  requestAnimationFrame(loop);
+}
+
+/* ---------- init ---------- */
+buildGroups();
+const st = readStore();
+if (st.last && st.sessions[st.last]) openSession(st.last);
+else { renderAll(); renderSessPick(); }
+updatePlayBtn();
+requestAnimationFrame(loop);
+if (window.claude && typeof window.claude.use === 'function') {
+  window.claude.use('downloads').then(d=>{ downloads = d; if (d) $('dlCsv').hidden = false; }).catch(()=>{});
+}
+})();
+</script>
+</body>
+</html>
