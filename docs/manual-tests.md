@@ -48,3 +48,20 @@ Use a real practice video. Repeat 1–4 in Chrome, Firefox and Safari.
 11. **Delete a game:** Delete… → confirmation; Esc cancels; confirm removes it.
 12. **Offline (SYN-2):** turn Wi-Fi off, press B and E, edit a name → header shows "Unsynced changes: n"; reload while still offline → the games are still there (games list may show a load error: Try again once online); turn Wi-Fi on → the counter disappears within a minute; reload → everything is on the server.
 13. **Seek bar (ADR-0018):** on a long video, drag the bar → the video follows while dragging and lands where released; hovering shows the time; games appear as green marks. Right after using the bar, Space and B still work. Tab to the bar: Page Up/Down jump a minute, Home/End go to the ends.
+
+## Step 4 · Tagging (TAG-1..8, SYN-1..4)
+
+Open a game with "Tag →" on the video screen.
+
+1. **Opens at the game (GAM-3):** the player jumps to the game start; the header shows game number, range, side, opponent.
+2. **Keyboard-only possession:** S → timer runs and status says "Press F…"; Z, 1, Q; F → timer freezes, status lists what is blank; A, G, J → "All tagged"; Enter → row appears in the log with the right length; Setup is back on Middle (TAG-2, TAG-3).
+3. **S after F** saves and starts the next; **N** saves a No shot at once; **Esc** clears; **U** deletes the last saved (press twice: the one before); pressing a tag key twice clears it.
+4. **Refusals:** F before S's time (seek back) → message, nothing swapped (TAG-4). Seek outside the game, press S → message suggesting to adjust the game (TAG-5).
+5. **Focus:** clicking any tag button, then Space/Enter still play/save. Clicking the video picture, then S still works. Nothing happens while a log select is open; Esc leaves it.
+6. **Timeline (TAG-6):** goal, no goal, no shot, untagged look different even in greyscale; hover shows tags; click a segment → 1 s before it; click empty strip → seek there.
+7. **Log (TAG-7):** change a result → reload → kept; ⌖ sets start/shot to the current time (refused outside the game or with shot before start); the row under the playhead is highlighted; × → "Delete?" → click again deletes.
+8. **Help (TAG-8):** "How to tag" opens the key table and definitions; it says frame stepping is approximate.
+9. **Reload mid-draft:** press S, tag a field, reload → the running draft is still there.
+10. **Offline (SYN):** Wi-Fi off, tag 5 possessions → "Unsynced changes: 5"; reload offline → the draft survives, the tagged rows are safe in the queue (the page may show a load error until online); Wi-Fi on → counter clears; reload → all 5 on the server, none twice.
+11. **Speed:** tag a 10-minute game; it should take about 15 minutes (PRD §1.4). Note anything slowing you down.
+12. **Unexpected refusals:** if S or F is ever refused when the time looks right, open the browser console (⌥⌘J) and copy the "Tag refused" line.

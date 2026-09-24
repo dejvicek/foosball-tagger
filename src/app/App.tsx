@@ -5,7 +5,7 @@ import { NotFound } from './NotFound'
 import { QueueProvider } from './QueueProvider'
 import { VideosPage } from '../videos/VideosPage'
 import { VideoPage } from '../videos/VideoPage'
-import { TaggingPlaceholder } from '../tagging/TaggingPlaceholder'
+import { TaggingPage } from '../tagging/TaggingPage'
 
 export function App() {
   return (
@@ -17,7 +17,7 @@ export function App() {
               <Route element={<Layout email={session.user.email ?? ''} />}>
                 <Route index element={<VideosPage />} />
                 <Route path="videos/:id" element={<VideoPage userId={session.user.id} />} />
-                <Route path="videos/:id/games/:gameId" element={<TaggingPlaceholder />} />
+                <Route path="videos/:id/games/:gameId" element={<TaggingPage userId={session.user.id} />} />
                 <Route path="*" element={<NotFound />} />
               </Route>
             </Routes>

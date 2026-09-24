@@ -160,3 +160,19 @@ Format: context → decision → consequences. Keep each record short.
   - Games are drawn on the bar as marks, so they can be found in a long video.
   - It is a custom `role="slider"`, not `<input type="range">`: clicking never takes focus (a focused range input would swallow the arrow keys and Space). With Tab focus, the arrows behave as everywhere else, Page Up/Down jump ±1 min, Home/End go to the ends.
 - **Consequences:** On a 3-hour video one pixel of a 1000 px bar is about 11 s; fine positioning stays with the arrow keys and frame steps. The tagging screen's timeline (TAG-6) still covers only its game.
+
+## ADR-0019 · Tagging screen (build step 4)
+
+- **Status:** Accepted · 2026-09-24
+- **Decision:**
+  - **S before F** moves the start to the current time and keeps tags already set (the prototype discarded them; keeping them loses nothing).
+  - **Enter** saves any draft with a time or a tag; a draft holding only the default Setup counts as empty.
+  - **N** saves at once with direction, hole, result and execution blank (the database also enforces it).
+  - **U** deletes the last possession saved on this page, and the one before it on the next press; after a reload there is nothing to undo.
+  - **TAG-5:** S, F, N and "set to current time" in the log are refused outside the game's range (0.05 s tolerance at the edges); the message points to the video screen to adjust the game.
+  - **Unsaved draft** is kept in localStorage per game (`fbtag:draft:v1:<game id>`) so a reload or closed tab doesn't lose it; it never reaches the server until saved.
+  - **Log editing (TAG-7):** tag fields are selects; times are changed with "set to the current time" (⌖) next to each, checked like the keys. Delete asks once ("Delete?" on the same button, 3 s). Setting shot type to No shot clears the shot fields.
+  - **Review:** unreviewed candidates show Confirm / Reject; rejected rows stay in the log, dimmed and unnumbered, with Confirm to restore them; they are left off the timeline.
+  - **Timeline (TAG-6):** each outcome has its own pattern as well as colour: goal solid, no goal hatched, no shot dotted and thinner, untagged striped, candidate dashed outline, draft outlined. Clicking an empty spot seeks there; a segment seeks to 1 s before it. Covers only the game (an open game without a known video length shows 10 minutes).
+  - **Statistics** below the timeline come in build step 5; the card shows the count and the help (TAG-8) meanwhile.
+  - Refused S/F/N presses are also logged to the console with the player time, to diagnose unexpected refusals.
