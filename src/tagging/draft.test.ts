@@ -128,10 +128,10 @@ describe('draft state machine', () => {
 
 describe('statusText (TAG-3)', () => {
   it('guides through the steps', () => {
-    expect(statusText(emptyDraft())).toBe('Press S when the ball is set.')
-    expect(statusText({ ...emptyDraft(), start_s: 1 })).toMatch(/Press F at the shot/)
+    expect(statusText(emptyDraft())).toBe('Press R when the ball is set.')
+    expect(statusText({ ...emptyDraft(), start_s: 1 })).toMatch(/Press F at the shot, or V/)
     expect(statusText({ ...emptyDraft(), start_s: 1, shot_s: 2, shot_type: 'Pin' })).toBe(
-      'Tag the shot, then press Enter. Still blank: direction, hole, result, execution.',
+      'Tag the shot, then press 4 to save. Still blank: direction, hole, result, execution.',
     )
     expect(
       statusText({ start_s: 1, shot_s: 2, setup: 'Middle', shot_type: 'Pin', direction: 'Pull', hole: 'Middle lane', result: 'Goal', execution: 'Proper' }),

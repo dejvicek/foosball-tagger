@@ -54,17 +54,17 @@ Use a real practice video. Repeat 1–4 in Chrome, Firefox and Safari.
 Open a game with "Tag →" on the video screen.
 
 1. **Opens at the game (GAM-3):** the player jumps to the game start; the header shows game number, range, side, opponent.
-2. **Keyboard-only possession:** S → timer runs and status says "Press F…"; Z, 1, Q; F → timer freezes, status lists what is blank; A, G, J → "All tagged"; Enter → row appears in the log with the right length; Setup is back on Middle (TAG-2, TAG-3).
-3. **S after F** saves and starts the next; **N** saves a No shot at once; **Esc** clears; **U** deletes the last saved (press twice: the one before); pressing a tag key twice clears it.
-4. **Refusals:** F before S's time (seek back) → message, nothing swapped (TAG-4). Seek outside the game, press S → message suggesting to adjust the game (TAG-5).
-5. **Focus:** clicking any tag button, then Space/Enter still play/save. Clicking the video picture, then S still works. Nothing happens while a log select is open; Esc leaves it.
+2. **Keyboard-only possession (ADR-0021 keys):** R → timer runs and status says "Press F…"; 1, X, E; F → timer freezes, status lists what is blank; A, G, 5 → "All tagged"; 4 → row appears in the log with the right length; Setup is back on Middle (TAG-2, TAG-3).
+3. **R after F** saves and starts the next; **V** saves a No shot at once; **Esc** clears; **⌘Z / Ctrl+Z** (or Backspace) deletes the last saved (press twice: the one before); pressing a tag key twice clears it.
+4. **Refusals:** F before the ball-set time (seek back) → message, nothing swapped (TAG-4). Seek outside the game, press R → message suggesting to adjust the game (TAG-5).
+5. **Focus:** clicking any tag button, then Space/Enter still play/save. Clicking the video picture, then R still works. Nothing happens while a log select is open; Esc leaves it.
 6. **Timeline (TAG-6):** goal, no goal, no shot, untagged look different even in greyscale; hover shows tags; click a segment → 1 s before it; click empty strip → seek there.
 7. **Log (TAG-7):** change a result → reload → kept; ⌖ sets start/shot to the current time (refused outside the game or with shot before start); the row under the playhead is highlighted; × → "Delete?" → click again deletes.
 8. **Help (TAG-8):** "How to tag" opens the key table and definitions; it says frame stepping is approximate.
-9. **Reload mid-draft:** press S, tag a field, reload → the running draft is still there.
+9. **Reload mid-draft:** press R, tag a field, reload → the running draft is still there.
 10. **Offline (SYN):** Wi-Fi off, tag 5 possessions → "Unsynced changes: 5"; reload offline → the draft survives, the tagged rows are safe in the queue (the page may show a load error until online); Wi-Fi on → counter clears; reload → all 5 on the server, none twice.
 11. **Speed:** tag a 10-minute game; it should take about 15 minutes (PRD §1.4). Note anything slowing you down.
-12. **Unexpected refusals:** if S or F is ever refused when the time looks right, open the browser console (⌥⌘J) and copy the "Tag refused" line.
+12. **Unexpected refusals:** if R or F is ever refused when the time looks right, open the browser console (⌥⌘J) and copy the "Tag refused" line.
 
 ## Step 5 · Statistics (STA-1..10)
 
@@ -76,3 +76,12 @@ Open a game with "Tag →" on the video screen.
 6. **Filters:** tick Pin → only Pin shots count, "n of m … match the filters"; Format and Opponent narrow further; reload keeps scope and filters (they are in the URL).
 7. **Candidates:** unreviewed or rejected possessions never count; confirming one in the log makes it count.
 8. Phone width: the statistics page has no sideways scroll; wide tables scroll inside their card.
+
+## Keyboard layout (ADR-0021)
+
+1. **Mouse + left hand:** tag a whole possession without lifting the left hand from 1–5 / Q–T / A–G / Z–B, seeking with the mouse on the timeline. Nothing needs the right side of the keyboard.
+2. **Keyboard only, two hands:** K plays/pauses, J / L step 1 s (Shift 5 s), U / O step frames, Enter saves, Backspace undoes, while the left hand tags.
+3. **Columns:** 1/Q/A = pull side, 2/W/S = middle/straight, 3/E/D = push side; the tag panel buttons are in the same order.
+4. **Undo:** ⌘Z (Mac) / Ctrl+Z (Windows) deletes the last save; inside a text field ⌘Z undoes typing instead.
+5. **Help:** "How to tag" shows the keyboard map; the buttons show the same keys.
+6. On the video screen, J / K / L / U / O work too; B / E still mark games.

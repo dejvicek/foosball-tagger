@@ -125,7 +125,11 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
       const out = reduce(draftRef.current, event, { t, range, gameLabel: label })
       if (out.error) {
         // Kept for diagnosing refusals caused by an unexpected player time.
-        console.warn('Tag refused', { event: event.kind, t, range, draft: draftRef.current })
+        const d = draftRef.current
+        console.warn(
+          `Tag refused: ${event.kind} at t=${t} (game ${range.start}–${range.end}, draft start=${d.start_s} shot=${d.shot_s})`,
+          JSON.stringify(controller.debugState()),
+        )
         show(out.error, 'error')
         return
       }
@@ -141,7 +145,7 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
     [controller, range, label, show, userId, game.id, queue, setDraft],
   )
 
-  // U: delete the most recently saved possession on this page (TAG-1, ADR-0010).
+  // Undo (⌘Z / Ctrl+Z / Backspace): delete the most recently saved possession on this page (ADR-0021).
   const undo = useCallback(() => {
     const ids = new Set(possessions.map((p) => p.id))
     let last = undoStack.current.pop()
@@ -205,6 +209,13 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
         target.blur()
         return
       }
+      // ⌘Z / Ctrl+Z undo outside fields (inside a field it stays the field's own undo).
+      const undoChord = (e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === 'z' && !e.shiftKey
+      if (undoChord && !target?.closest('input, select, textarea') && !document.querySelector('.modal')) {
+        e.preventDefault()
+        undo()
+        return
+      }
       if (!isShortcut(e) || document.querySelector('.modal')) return
       const player = playerAction(e)
       if (player) {
@@ -216,7 +227,7 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
         else show(`Speed ${controller.stepRate(player.direction)}×`)
         return
       }
-      const action = tagAction(e.key)
+      const action = tagAction(e)
       if (!action) return
       e.preventDefault()
       if (action.kind === 'undo') undo()

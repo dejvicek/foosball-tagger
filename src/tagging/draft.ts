@@ -2,6 +2,7 @@
 // current player time and persists what it returns.
 import type { Direction, Execution, Hole, Result, Setup, ShotType } from '../data/types'
 import { formatTime } from '../player/time'
+import { KEY } from './keyLabels'
 
 export interface Draft {
   start_s: number | null
@@ -71,11 +72,11 @@ export function reduce(draft: Draft, event: DraftEvent, ctx: DraftContext): Outc
     case 'ballSet': {
       const out = outsideRange(ctx)
       if (out) return { draft, error: out }
-      // S after F: save the tagged possession, then start the next one (TAG-1).
+      // Ball set after a shot: save the tagged possession, then start the next one (TAG-1).
       if (draft.shot_s != null) {
         return { draft: { ...emptyDraft(), start_s: t }, save: draft, message: 'Saved the possession and started the next one.' }
       }
-      // S again before F moves the start; tags already set are kept (ADR-0019).
+      // Ball set again before the shot moves the start; tags already set are kept (ADR-0019).
       return { draft: { ...draft, start_s: t } }
     }
     case 'shot': {
@@ -84,7 +85,7 @@ export function reduce(draft: Draft, event: DraftEvent, ctx: DraftContext): Outc
       if (draft.start_s != null && t < draft.start_s) {
         return {
           draft,
-          error: `The shot (${formatTime(t)}) can’t be before the start (${formatTime(draft.start_s)}). Move forward, or press S at the new start.`,
+          error: `The shot (${formatTime(t)}) can’t be before the start (${formatTime(draft.start_s)}). Move forward, or press ${KEY.ballSet} at the new start.`,
         }
       }
       return { draft: { ...draft, shot_s: t, shot_type: draft.shot_type === 'No shot' ? null : draft.shot_type } }
@@ -99,7 +100,7 @@ export function reduce(draft: Draft, event: DraftEvent, ctx: DraftContext): Outc
       return { draft: emptyDraft(), save: saved, message: 'Saved a possession without a shot.' }
     }
     case 'save': {
-      if (!hasContent(draft)) return { draft, error: 'Nothing to save yet. Press S when the ball is set and F at the shot.' }
+      if (!hasContent(draft)) return { draft, error: `Nothing to save yet. Press ${KEY.ballSet} when the ball is set and ${KEY.shot} at the shot.` }
       return { draft: emptyDraft(), save: draft, message: 'Saved the possession.' }
     }
     case 'clear':
@@ -124,10 +125,10 @@ const FIELDS: TagField[] = ['setup', 'shot_type', 'direction', 'hole', 'result',
 
 /** The next step, as shown under the timer (TAG-3). */
 export function statusText(d: Draft): string {
-  if (d.start_s == null && d.shot_s == null) return 'Press S when the ball is set.'
-  if (d.shot_s == null) return 'Possession running. Press F at the shot, or N if it ends without one.'
+  if (d.start_s == null && d.shot_s == null) return `Press ${KEY.ballSet} when the ball is set.`
+  if (d.shot_s == null) return `Possession running. Press ${KEY.shot} at the shot, or ${KEY.noShot} if it ends without one.`
   const blank = FIELDS.filter((f) => d[f] == null).map((f) => FIELD_LABEL[f])
   return blank.length > 0
-    ? `Tag the shot, then press Enter. Still blank: ${blank.join(', ')}.`
-    : 'All tagged. Press Enter to save, or S to save and start the next possession.'
+    ? `Tag the shot, then press ${KEY.save} to save. Still blank: ${blank.join(', ')}.`
+    : `All tagged. Press ${KEY.save} to save, or ${KEY.ballSet} to save and start the next possession.`
 }

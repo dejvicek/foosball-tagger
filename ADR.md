@@ -68,7 +68,7 @@ Format: context → decision → consequences. Keep each record short.
 
 ## ADR-0010 · Tagging and sync semantics
 
-- **Status:** Accepted · 2026-09-23 (implemented in build steps 3–4)
+- **Status:** Accepted · 2026-09-23 (implemented in build steps 3–4) · key names superseded by ADR-0021
 - **Decision:**
   - B and E (game start/end) work only on the video screen; on the tagging screen E means Straight. Game boundaries are adjusted on the video screen.
   - A game with `end_s` null uses the video duration as its range.
@@ -163,7 +163,7 @@ Format: context → decision → consequences. Keep each record short.
 
 ## ADR-0019 · Tagging screen (build step 4)
 
-- **Status:** Accepted · 2026-09-24
+- **Status:** Accepted · 2026-09-24 · key names superseded by ADR-0021
 - **Decision:**
   - **S before F** moves the start to the current time and keeps tags already set (the prototype discarded them; keeping them loses nothing).
   - **Enter** saves any draft with a time or a tag; a draft holding only the default Setup counts as empty.
@@ -191,3 +191,22 @@ Format: context → decision → consequences. Keep each record short.
   - **Scopes (STA-4):** game, video, or date range. A video's date is its recorded date, else the day it was added. Filters: shot types (any of), format, opponent ("no opponent" selectable). Scope and filters live in the URL (`#/stats?…`). The tagging screen shows live statistics for its game.
   - **Fixture:** tests use `fixtures/synthetic-01.json`, a made-up game whose expected numbers were worked out by hand. The PRD's real hand-tagged `fixtures/game-01.json` is added once export exists (step 6), with its own expected numbers checked by hand against the CSV.
   - Pure functions live in `src/stats/`; their UI in `src/statsView/`.
+
+## ADR-0021 · Keyboard layout: left-hand grid, optional right-hand player keys
+
+- **Status:** Accepted · 2026-09-24 (chosen by the user) · Replaces the key table of PRD TAG-1 and the key names in ADR-0010 / ADR-0019
+- **Context:** The PRD keys were mnemonic but spread over both hands (M, H, J, K, N, U, Enter on the right), so tagging with the mouse in the right hand was impossible, and the pull/push options sat in different orders per field.
+- **Decision:** All tagging on the left hand; each row one field; the first three columns always run pull → middle → push (fixed, not mirrored per game).
+
+  | | col 1 | col 2 | col 3 | index | stretch |
+  |---|---|---|---|---|---|
+  | number row | 1 Setup pull side | 2 Setup middle | 3 Setup push side | 4 Save | 5 Proper |
+  | top row | Q Direction pull | W Direction straight | E Direction push | R Ball set | T Misexecuted |
+  | home row | A Hole pull-side | S Hole middle | D Hole push-side | F Shot | G Goal |
+  | bottom row | Z Pin | X Pull | C Other | V No shot | B No goal |
+
+  - Esc clears the draft; ⌘Z / Ctrl+Z undoes the last save (inside a field it stays the field's own undo); Space plays/pauses.
+  - Right hand (optional): J / K / L back 1 s, play/pause, forward 1 s (Shift = 5 s); U / O frame back/forward; Enter saves; Backspace undoes. Arrows, `,` `.` `[` `]` keep working. The J/K/L/U/O keys also work on the video screen.
+  - Unchanged rules: a second press clears a field; ball set after a shot saves and starts the next; B / E stay the game keys on the video screen only.
+  - The tag panel lists fields in keyboard-row order; the help shows the grid as a keyboard map. Key names in messages and buttons come from one table (`src/tagging/keyLabels.ts`).
+- **Consequences:** Muscle memory from the PRD keys (S, N, U, J/K for execution, H for no goal) no longer applies.

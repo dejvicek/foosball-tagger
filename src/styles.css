@@ -237,3 +237,19 @@ table.log td, table.log th { padding: 5px 6px; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; font-size: 14px; cursor: pointer; }
 .scope-summary { margin: 0 0 10px; }
+
+/* Keyboard map (ADR-0021) */
+.keymap-lead { margin: 6px 0 10px; }
+.keymap-grid { display: grid; gap: 4px; overflow-x: auto; padding-bottom: 4px; }
+.keymap-row { display: flex; gap: 4px; align-items: stretch; }
+.keymap-name { width: 70px; flex: none; font-size: 12px; color: var(--muted); align-self: center; }
+.keycap { flex: none; width: 74px; display: flex; flex-direction: column; gap: 2px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; font-size: 11px; line-height: 1.2; background: var(--panel); }
+.keycap kbd { align-self: flex-start; font-size: 12px; }
+.keycap.field { border-bottom: 3px solid var(--felt); }
+.keycap.moment { border-bottom: 3px solid var(--wood); font-weight: 600; }
+.keycap.verdict { border-bottom: 3px solid var(--focus); }
+.keymap-foot { margin: 8px 0; }
+.help .keymap-right { display: grid; grid-template-columns: 1fr; gap: 3px; margin: 4px 0 8px; }
+.keymap-right div { display: grid; grid-template-columns: 70px 1fr; gap: 8px; }
+.keymap-right dd { margin: 0; color: var(--muted); }
+.help h4 { font-size: 13px; margin: 10px 0 2px; }

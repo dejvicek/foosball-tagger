@@ -4,6 +4,7 @@ import type { PlayerController } from '../player/controller'
 import { formatTime } from '../player/time'
 import type { TagField } from './draft'
 import { anchor, possessionAt, possessionLength } from './possessions'
+import { KEY } from './keyLabels'
 
 export type PossessionPatch = Partial<Pick<Possession, TagField | 'start_s' | 'shot_s' | 'review_status'>>
 
@@ -79,7 +80,7 @@ export function PossessionLog({ rows, controller, onSeek, onChange, onSetTime, o
   }
 
   if (rows.length === 0) {
-    return <p className="muted">No possessions yet. Press S when the ball is set and F at the shot.</p>
+    return <p className="muted">No possessions yet. Press {KEY.ballSet} when the ball is set and {KEY.shot} at the shot.</p>
   }
 
   return (

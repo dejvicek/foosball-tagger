@@ -3,6 +3,7 @@ import type { PlayerController } from '../player/controller'
 import { formatTime } from '../player/time'
 import { statusText, type Draft, type DraftEvent } from './draft'
 import { TAG_GROUPS } from './keymap'
+import { KEY } from './keyLabels'
 
 interface Props {
   draft: Draft
@@ -59,13 +60,13 @@ export function TagPanel({ draft, controller, onEvent, onUndo }: Props) {
       </div>
       <div className="markrow">
         <button className="btn nf" type="button" onClick={() => onEvent({ kind: 'ballSet' })}>
-          Ball set <kbd>S</kbd>
+          Ball set <kbd>{KEY.ballSet}</kbd>
         </button>
         <button className="btn nf" type="button" onClick={() => onEvent({ kind: 'shot' })}>
-          Shot <kbd>F</kbd>
+          Shot <kbd>{KEY.shot}</kbd>
         </button>
         <button className="btn nf" type="button" onClick={() => onEvent({ kind: 'noShot' })} title="Possession ended without a shot">
-          No shot <kbd>N</kbd>
+          No shot <kbd>{KEY.noShot}</kbd>
         </button>
       </div>
       {TAG_GROUPS.map((g) => (
@@ -92,13 +93,13 @@ export function TagPanel({ draft, controller, onEvent, onUndo }: Props) {
       ))}
       <div className="actions">
         <button className="btn primary nf" type="button" onClick={() => onEvent({ kind: 'save' })}>
-          Save <kbd>Enter</kbd>
+          Save <kbd>{KEY.save}</kbd>
         </button>
         <button className="btn nf" type="button" onClick={() => onEvent({ kind: 'clear' })}>
-          Clear <kbd>Esc</kbd>
+          Clear <kbd>{KEY.clear}</kbd>
         </button>
         <button className="btn nf" type="button" onClick={onUndo} title="Delete the last possession saved on this page">
-          Undo <kbd>U</kbd>
+          Undo <kbd>{KEY.undo}</kbd>
         </button>
       </div>
     </aside>
