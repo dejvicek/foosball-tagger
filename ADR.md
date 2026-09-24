@@ -176,3 +176,18 @@ Format: context → decision → consequences. Keep each record short.
   - **Timeline (TAG-6):** each outcome has its own pattern as well as colour: goal solid, no goal hatched, no shot dotted and thinner, untagged striped, candidate dashed outline, draft outlined. Clicking an empty spot seeks there; a segment seeks to 1 s before it. Covers only the game (an open game without a known video length shows 10 minutes).
   - **Statistics** below the timeline come in build step 5; the card shows the count and the help (TAG-8) meanwhile.
   - Refused S/F/N presses are also logged to the console with the player time, to diagnose unexpected refusals.
+
+## ADR-0020 · Statistics definitions (build step 5)
+
+- **Status:** Accepted · 2026-09-24
+- **Context:** STA-1..10 name the numbers but not every edge case; the choices below decide what the percentages mean.
+- **Decision:**
+  - **Input:** confirmed possessions only (PRD §5), including writes still in the pending queue.
+  - **Shot or not:** "No shot" → not a shot; any shot type → shot; no type but a shot time (F was pressed) → a shot of unknown type; no type and no shot time → outcome unknown, left out of the no-shot share and of all shot statistics.
+  - **Denominators (STA-1):** conversion = goals / shots with a result; proper rate = Proper / shots with an execution; no-shot share = no-shot / possessions with a known outcome. Median length over all possessions with both times; average length per shot row over its shots with both times.
+  - **By shot (STA-6):** groups by the exact (type, direction, hole), blanks shown as "–"; most attempts first, ties in schema order (Pin, Pull, Other; Pull, Push, Straight; pull-side, middle, push-side lane), blanks last.
+  - **Execution vs. result (STA-7):** shots with both tagged. **Length buckets (STA-8):** shots with both times; each bucket includes its lower bound (5.0 s is in 5–10 s). **Setup (STA-9):** Middle, Off-middle, and Off-middle split into Pull side / Push side; shots with a setup. **Hole (STA-10):** shots with a hole.
+  - **Display (STA-2, STA-3):** every percentage is "58% (7/12)", rounded to whole percent; a † marks fewer than 30 attempts, with a footnote. An empty denominator shows "– (0/0)".
+  - **Scopes (STA-4):** game, video, or date range. A video's date is its recorded date, else the day it was added. Filters: shot types (any of), format, opponent ("no opponent" selectable). Scope and filters live in the URL (`#/stats?…`). The tagging screen shows live statistics for its game.
+  - **Fixture:** tests use `fixtures/synthetic-01.json`, a made-up game whose expected numbers were worked out by hand. The PRD's real hand-tagged `fixtures/game-01.json` is added once export exists (step 6), with its own expected numbers checked by hand against the CSV.
+  - Pure functions live in `src/stats/`; their UI in `src/statsView/`.
