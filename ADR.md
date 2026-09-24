@@ -153,7 +153,7 @@ Format: context → decision → consequences. Keep each record short.
 
 ## ADR-0018 · Seek bar over the whole video
 
-- **Status:** Accepted · 2026-09-24 (requested by the user; not in the PRD)
+- **Status:** Accepted · 2026-09-24 (requested by the user; not in the PRD) · drag behaviour superseded by ADR-0022
 - **Context:** Practice videos can be three hours long; ±5 s steps are too slow to get to a game.
 - **Decision:**
   - A seek bar under the player on the video screen covers the whole video. Click or drag to seek; the time under the pointer is shown. While dragging, seeks use `allowSeekAhead = false` (at most one per 120 ms); releasing does a full seek.
@@ -210,3 +210,13 @@ Format: context → decision → consequences. Keep each record short.
   - Unchanged rules: a second press clears a field; ball set after a shot saves and starts the next; B / E stay the game keys on the video screen only.
   - The tag panel lists fields in keyboard-row order; the help shows the grid as a keyboard map. Key names in messages and buttons come from one table (`src/tagging/keyLabels.ts`).
 - **Consequences:** Muscle memory from the PRD keys (S, N, U, J/K for execution, H for no goal) no longer applies.
+
+## ADR-0022 · Drag to seek; keys by physical position
+
+- **Status:** Accepted · 2026-09-24 (requested by the user) · Supersedes the drag details of ADR-0018
+- **Context:** Dragging the seek bar did not show it could be dragged and the picture only moved on release; the tagging timeline only took clicks. On Czech and Slovak (QWERTZ) keyboards Y and Z are swapped, and the Czech number row types `+ ě š č ř`, so 1–5 did nothing.
+- **Decision:**
+  - **Dragging:** one `useScrubber` hook for the seek bar and the tagging timeline. The handle follows the pointer every frame; the video seeks (full seek, frames load) at most every 250 ms while dragging and once on release. The pointer is captured, so dragging over the video or past the ends works; the time is clamped to the bar (the timeline to its game). The seek bar seeks on press; the timeline starts a drag only after 4 px of movement, so a click on a possession still jumps 1 s before it, and the click that ends a drag is swallowed. Both show a round handle and the time under the pointer. The "scrub without seek-ahead" mode of ADR-0018 is removed.
+  - **Keys by position:** every single-key shortcut matches `KeyboardEvent.code` (the physical key), not the character: the grid of ADR-0021 stays in the same place on QWERTZ, AZERTY or Dvorak, and the number row works whatever it types. Space, Enter, Esc, Backspace and the arrows match by name. Chords follow the character like the operating system does: ⌘Z / Ctrl+Z is the key labelled Z.
+  - **Labels follow the keyboard:** buttons, messages and the keyboard map show the character printed on the user's key. Source, most trusted first: the character the user actually typed on that key (learned from every key press, ignoring Alt/Ctrl/⌘ combinations), the Keyboard Map API (`navigator.keyboard.getLayoutMap`, Chromium only), a guess from the browser language (QWERTZ for cs, sk, de, hu, sl, hr…, AZERTY for fr), then US. The number row always shows digits (printed on every layout). Labels update live.
+- **Consequences:** In Firefox or Safari with an unusual layout and a language that doesn't hint at it, labels are US until the user presses the key once; the keys themselves work from the start.

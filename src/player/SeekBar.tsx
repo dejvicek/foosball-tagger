@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent, type PointerEvent } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent } from 'react'
 import type { PlayerController } from './controller'
-import { percentAt, timeAtX } from './scrub'
+import { percentAt } from './scrub'
 import { formatTime } from './time'
+import { useScrubber } from './useScrubber'
 
 export interface SeekMark {
   id: string
@@ -16,71 +17,42 @@ interface Props {
   marks?: SeekMark[]
 }
 
-/** While dragging, send at most one seek per this many ms. */
-const SCRUB_INTERVAL_MS = 120
-
 /**
- * Seek bar over the whole video (ADR-0018). Clicking it never takes focus, so
- * shortcuts keep working; when focused with Tab, Page Up/Down jump a minute
- * and Home/End go to the ends (arrows work as everywhere else).
+ * Seek bar over the whole video (ADR-0018, ADR-0022). Click to jump, or drag the
+ * handle: the handle follows the pointer and the video follows a few times a
+ * second. It never takes focus, so shortcuts keep working; with Tab focus, Page
+ * Up/Down jump a minute and Home/End go to the ends.
  */
 export function SeekBar({ controller, marks = [] }: Props) {
   const { ready, duration } = useSyncExternalStore(controller.subscribe, controller.getSnapshot)
-  const barRef = useRef<HTMLDivElement>(null)
   const headRef = useRef<HTMLDivElement>(null)
-  const dragging = useRef(false)
-  const lastScrub = useRef(0)
-  const [hover, setHover] = useState<{ t: number; pct: number } | null>(null)
-  const [valueText, setValueText] = useState(formatTime(0, 0))
+  const [second, setSecond] = useState(0)
   const d = duration ?? 0
+  const { ref, dragTime, dragging, hover, handlers } = useScrubber({
+    start: 0,
+    length: d,
+    enabled: ready,
+    onSeek: (t) => controller.seek(t),
+    pressSeeks: true,
+  })
 
-  // Playhead follows the player every frame without re-rendering React.
+  // Handle follows the pointer while dragging, else the player, every frame without re-rendering React.
   useEffect(() => {
     let frame = 0
     let lastSecond = -1
     const tick = () => {
-      const t = controller.time()
+      const t = dragTime.current ?? controller.time()
       if (headRef.current) headRef.current.style.left = `${percentAt(t, d)}%`
-      const second = Math.floor(t)
-      if (second !== lastSecond) {
-        lastSecond = second
-        setValueText(formatTime(t, 0))
+      const s = Math.floor(t)
+      if (s !== lastSecond) {
+        lastSecond = s
+        setSecond(s)
       }
       frame = requestAnimationFrame(tick)
     }
     frame = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(frame)
-  }, [controller, d])
-
-  const at = (e: PointerEvent<HTMLDivElement>) => {
-    const rect = barRef.current?.getBoundingClientRect()
-    return rect ? timeAtX(e.clientX, rect, d) : 0
-  }
-
-  const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
-    if (!ready || d <= 0 || e.button !== 0) return
-    e.preventDefault() // keep focus where it is (TAG-1)
-    e.currentTarget.setPointerCapture?.(e.pointerId)
-    dragging.current = true
-    lastScrub.current = performance.now()
-    controller.scrub(at(e))
-  }
-
-  const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
-    if (d <= 0) return
-    const t = at(e)
-    setHover({ t, pct: percentAt(t, d) })
-    if (dragging.current && performance.now() - lastScrub.current >= SCRUB_INTERVAL_MS) {
-      lastScrub.current = performance.now()
-      controller.scrub(t)
-    }
-  }
-
-  const finish = (e: PointerEvent<HTMLDivElement>) => {
-    if (!dragging.current) return
-    dragging.current = false
-    controller.seek(at(e))
-  }
+  }, [controller, d, dragTime])
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (!ready) return
@@ -100,22 +72,18 @@ export function SeekBar({ controller, marks = [] }: Props) {
   return (
     <div className="seekbar-wrap">
       <div
-        ref={barRef}
-        className={`seekbar${ready && d > 0 ? '' : ' disabled'}`}
+        ref={ref}
+        className={`seekbar${ready && d > 0 ? '' : ' disabled'}${dragging ? ' dragging' : ''}`}
         role="slider"
         tabIndex={ready ? 0 : -1}
         aria-label="Seek in video"
         aria-valuemin={0}
         aria-valuemax={Math.round(d)}
-        aria-valuenow={Math.round(controller.time())}
-        aria-valuetext={`${valueText} of ${formatTime(d, 0)}`}
+        aria-valuenow={second}
+        aria-valuetext={`${formatTime(second, 0)} of ${formatTime(d, 0)}`}
         aria-disabled={!ready || d <= 0}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={finish}
-        onPointerCancel={finish}
-        onPointerLeave={() => setHover(null)}
         onKeyDown={onKeyDown}
+        {...handlers}
       >
         <div className="seekbar-track" />
         {d > 0 &&

@@ -10,7 +10,7 @@ function setup(duration = 10800) {
     getPlayerState: () => PLAYER_STATE.PAUSED,
     playVideo: () => {},
     pauseVideo: () => {},
-    seekTo: (s, ahead) => void calls.push(`${ahead ? 'seek' : 'scrub'} ${Math.round(s)}`),
+    seekTo: (s) => void calls.push(`seek ${Math.round(s)}`),
     setPlaybackRate: () => {},
     getPlaybackRate: () => 1,
     getAvailablePlaybackRates: () => [1],
@@ -29,7 +29,7 @@ describe('SeekBar (ADR-0018)', () => {
     const down = fireEvent.pointerDown(bar, { clientX: 500, button: 0, pointerId: 1 })
     fireEvent.pointerUp(bar, { clientX: 500, pointerId: 1 })
     expect(down).toBe(false) // default prevented: focus stays put
-    expect(calls).toEqual(['scrub 5400', 'seek 5400'])
+    expect(calls).toEqual(['seek 5400', 'seek 5400'])
     expect(bar).not.toHaveFocus()
   })
 
@@ -38,8 +38,22 @@ describe('SeekBar (ADR-0018)', () => {
     fireEvent.pointerDown(bar, { clientX: 100, button: 0, pointerId: 1 })
     fireEvent.pointerMove(bar, { clientX: 900, pointerId: 1 })
     fireEvent.pointerUp(bar, { clientX: 900, pointerId: 1 })
-    expect(calls[0]).toBe('scrub 1080')
+    expect(calls[0]).toBe('seek 1080')
     expect(calls.at(-1)).toBe('seek 9720')
+  })
+
+  it('moves the handle with the pointer while dragging, and seeks a few times a second', () => {
+    vi.useFakeTimers({ toFake: ['performance'] })
+    const { bar, calls } = setup()
+    fireEvent.pointerDown(bar, { clientX: 100, button: 0, pointerId: 1 })
+    fireEvent.pointerMove(bar, { clientX: 200, pointerId: 1 })
+    expect(calls).toEqual(['seek 1080']) // too soon for another seek
+    vi.advanceTimersByTime(300)
+    fireEvent.pointerMove(bar, { clientX: 300, pointerId: 1 })
+    expect(calls).toEqual(['seek 1080', 'seek 3240'])
+    fireEvent.pointerUp(bar, { clientX: 320, pointerId: 1 })
+    expect(calls.at(-1)).toBe('seek 3456')
+    vi.useRealTimers()
   })
 
   it('shows the time under the pointer', () => {

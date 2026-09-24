@@ -136,13 +136,15 @@ kbd { font-family: var(--sans); font-size: 11px; font-weight: 600; min-width: 18
 
 /* Seek bar (ADR-0018) */
 .seekbar-wrap { margin-top: 10px; }
-.seekbar { position: relative; height: 22px; cursor: pointer; touch-action: none; border-radius: 4px; }
+.seekbar { position: relative; height: 24px; cursor: pointer; touch-action: none; border-radius: 4px; }
+.seekbar.dragging, .strip.dragging { cursor: grabbing; }
 .seekbar.disabled { cursor: default; opacity: 0.5; }
-.seekbar-track { position: absolute; left: 0; right: 0; top: 8px; height: 6px; border-radius: 3px; background: var(--line); }
-.seekbar-mark { position: absolute; top: 8px; height: 6px; background: var(--felt); border-radius: 2px; min-width: 3px; }
-.seekbar-head { position: absolute; top: 2px; width: 4px; height: 18px; margin-left: -2px; border-radius: 2px; background: var(--wood); pointer-events: none; }
+.seekbar-track { position: absolute; left: 0; right: 0; top: 9px; height: 6px; border-radius: 3px; background: var(--line); }
+.seekbar-mark { position: absolute; top: 9px; height: 6px; background: var(--felt); border-radius: 2px; min-width: 3px; }
+.seekbar-head { position: absolute; top: 4px; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: var(--wood); box-shadow: 0 0 0 2px var(--panel), 0 1px 3px rgba(0, 0, 0, 0.35); pointer-events: none; transition: transform 0.1s; }
+.seekbar:hover .seekbar-head, .seekbar.dragging .seekbar-head { transform: scale(1.2); cursor: grab; }
 .seekbar:hover .seekbar-track { background: color-mix(in srgb, var(--muted) 45%, var(--line)); }
-.seekbar-tip { position: absolute; bottom: calc(100% + 4px); transform: translateX(-50%); background: var(--ink); color: var(--bg); font-size: 12px; font-variant-numeric: tabular-nums; padding: 2px 6px; border-radius: 4px; white-space: nowrap; pointer-events: none; }
+.seekbar-tip { position: absolute; z-index: 5; bottom: calc(100% + 4px); transform: translateX(-50%); background: var(--ink); color: var(--bg); font-size: 12px; font-variant-numeric: tabular-nums; padding: 2px 6px; border-radius: 4px; white-space: nowrap; pointer-events: none; }
 
 /* Tagging screen (TAG-1..8), layout from the prototype */
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -169,7 +171,9 @@ kbd { font-family: var(--sans); font-size: 11px; font-weight: 600; min-width: 18
 .actions .btn { flex: 1; justify-content: center; }
 
 /* Timeline strip (TAG-6): color plus a distinct pattern per outcome */
-.timeline { margin-top: 10px; }
+.timeline { position: relative; margin-top: 10px; }
+.strip { touch-action: none; }
+.strip-tip { position: absolute; z-index: 5; top: -22px; transform: translateX(-50%); background: var(--ink); color: var(--bg); font-size: 12px; font-variant-numeric: tabular-nums; padding: 2px 6px; border-radius: 4px; white-space: nowrap; pointer-events: none; }
 .strip { position: relative; height: 34px; border-radius: 6px; background: var(--felt); cursor: pointer; overflow: hidden; }
 .strip-bg { position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 calc(12.5% - 1px), rgba(255, 255, 255, 0.14) calc(12.5% - 1px) 12.5%); }
 .seg { position: absolute; top: 6px; bottom: 6px; min-width: 4px; margin: 0; padding: 0; border: 0; border-radius: 2px; cursor: pointer; }
@@ -180,7 +184,8 @@ kbd { font-family: var(--sans); font-size: 11px; font-weight: 600; min-width: 18
 .seg.untagged, .swatch.untagged { background: repeating-linear-gradient(45deg, #fff 0 3px, rgba(255, 255, 255, 0.35) 3px 6px); }
 .seg.candidate, .swatch.candidate { background: transparent; outline: 2px dashed #ffd24a; outline-offset: -2px; }
 .seg.draft, .swatch.draft { background: var(--wood); box-shadow: inset 0 0 0 2px #fff; pointer-events: none; }
-.playhead { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #ffd24a; pointer-events: none; }
+.playhead { position: absolute; top: 0; bottom: 0; width: 3px; margin-left: -1.5px; background: #ffd24a; pointer-events: none; }
+.playhead::before { content: ""; position: absolute; top: -1px; left: 50%; width: 11px; height: 11px; margin-left: -5.5px; border-radius: 50%; background: #ffd24a; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4); }
 .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; font-size: 13px; color: var(--muted); }
 .swatch { display: inline-block; width: 14px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; outline: 1px solid var(--line); }
 .swatch.candidate { outline: 2px dashed var(--wood); }

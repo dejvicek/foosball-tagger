@@ -85,3 +85,10 @@ Open a game with "Tag →" on the video screen.
 4. **Undo:** ⌘Z (Mac) / Ctrl+Z (Windows) deletes the last save; inside a text field ⌘Z undoes typing instead.
 5. **Help:** "How to tag" shows the keyboard map; the buttons show the same keys.
 6. On the video screen, J / K / L / U / O work too; B / E still mark games.
+
+## Dragging and keyboard layouts (ADR-0022)
+
+1. **Seek bar drag:** on the video screen, grab the round handle and drag: the handle follows the pointer, the video follows a few times a second, the time shows above the pointer; release lands exactly there. Dragging over the video or past either end still works.
+2. **Timeline drag:** on the tagging screen, drag along the green strip: same behaviour, limited to the game. A plain click on a possession still jumps 1 s before it; a drag that starts on a possession does not.
+3. **Czech/Slovak keyboard:** switch the OS keyboard to Czech (QWERTZ). The bottom-left letter key (labelled Y) selects Pin and the Shot type buttons show "Y"; the number row keys (+ ě š č ř) select setup, save and Proper; ⌘Z / Ctrl+Z still undoes with the key labelled Z.
+4. In Chrome the labels are right from the start; in Firefox/Safari they correct themselves after the first press of a key if the browser language is not Czech/Slovak.
