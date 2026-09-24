@@ -47,3 +47,4 @@ Use a real practice video. Repeat 1–4 in Chrome, Firefox and Safari.
 10. **GAM-3:** click a game's start time → the player seeks there; "Tag →" opens the tagging placeholder.
 11. **Delete a game:** Delete… → confirmation; Esc cancels; confirm removes it.
 12. **Offline (SYN-2):** turn Wi-Fi off, press B and E, edit a name → header shows "Unsynced changes: n"; reload while still offline → the games are still there (games list may show a load error: Try again once online); turn Wi-Fi on → the counter disappears within a minute; reload → everything is on the server.
+13. **Seek bar (ADR-0018):** on a long video, drag the bar → the video follows while dragging and lands where released; hovering shows the time; games appear as green marks. Right after using the bar, Space and B still work. Tab to the bar: Page Up/Down jump a minute, Home/End go to the ends.

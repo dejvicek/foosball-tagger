@@ -150,3 +150,13 @@ Format: context → decision → consequences. Keep each record short.
   - **Deleting a game** (not named in the PRD, needed to undo a stray B): with a confirmation stating its possession count.
   - **GAM-3:** clicking a game's start time seeks there; "Tag →" opens the tagging screen, which seeks to the game start (a placeholder until step 4).
   - Messages appear as a short toast, announced to screen readers.
+
+## ADR-0018 · Seek bar over the whole video
+
+- **Status:** Accepted · 2026-09-24 (requested by the user; not in the PRD)
+- **Context:** Practice videos can be three hours long; ±5 s steps are too slow to get to a game.
+- **Decision:**
+  - A seek bar under the player on the video screen covers the whole video. Click or drag to seek; the time under the pointer is shown. While dragging, seeks use `allowSeekAhead = false` (at most one per 120 ms); releasing does a full seek.
+  - Games are drawn on the bar as marks, so they can be found in a long video.
+  - It is a custom `role="slider"`, not `<input type="range">`: clicking never takes focus (a focused range input would swallow the arrow keys and Space). With Tab focus, the arrows behave as everywhere else, Page Up/Down jump ±1 min, Home/End go to the ends.
+- **Consequences:** On a 3-hour video one pixel of a 1000 px bar is about 11 s; fine positioning stays with the arrow keys and frame steps. The tagging screen's timeline (TAG-6) still covers only its game.

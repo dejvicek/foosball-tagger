@@ -133,3 +133,13 @@ kbd { font-family: var(--sans); font-size: 11px; font-weight: 600; min-width: 18
 .toast.error-tone { background: var(--miss); color: #fff; }
 @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
 .stage:focus { outline: none; }
+
+/* Seek bar (ADR-0018) */
+.seekbar-wrap { margin-top: 10px; }
+.seekbar { position: relative; height: 22px; cursor: pointer; touch-action: none; border-radius: 4px; }
+.seekbar.disabled { cursor: default; opacity: 0.5; }
+.seekbar-track { position: absolute; left: 0; right: 0; top: 8px; height: 6px; border-radius: 3px; background: var(--line); }
+.seekbar-mark { position: absolute; top: 8px; height: 6px; background: var(--felt); border-radius: 2px; min-width: 3px; }
+.seekbar-head { position: absolute; top: 2px; width: 4px; height: 18px; margin-left: -2px; border-radius: 2px; background: var(--wood); pointer-events: none; }
+.seekbar:hover .seekbar-track { background: color-mix(in srgb, var(--muted) 45%, var(--line)); }
+.seekbar-tip { position: absolute; bottom: calc(100% + 4px); transform: translateX(-50%); background: var(--ink); color: var(--bg); font-size: 12px; font-variant-numeric: tabular-nums; padding: 2px 6px; border-radius: 4px; white-space: nowrap; pointer-events: none; }

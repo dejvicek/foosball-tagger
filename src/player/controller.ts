@@ -100,13 +100,25 @@ export class PlayerController {
 
   /** Seeks, clamped to the video. Before the first play a bare seekTo is unreliable, so start and pause again. */
   seek(t: number): void {
+    this.seekInternal(t, true)
+  }
+
+  /**
+   * Seek while dragging the seek bar: `allowSeekAhead = false` avoids loading
+   * every intermediate position; the final `seek` on release loads the frame.
+   */
+  scrub(t: number): void {
+    this.seekInternal(t, false)
+  }
+
+  private seekInternal(t: number, allowSeekAhead: boolean): void {
     const p = this.player
     if (!p) return
     const d = this.snapshot.duration
     const target = Math.max(0, d != null ? Math.min(t, Math.max(0, d - 0.05)) : t)
     const state = p.getPlayerState()
     this.seekTarget = { t: target, at: this.clock(), from: p.getCurrentTime() || 0 }
-    p.seekTo(target, true)
+    p.seekTo(target, allowSeekAhead)
     if (state === PLAYER_STATE.UNSTARTED || state === PLAYER_STATE.CUED) {
       this.pauseWhenPlaying = true
       p.playVideo()

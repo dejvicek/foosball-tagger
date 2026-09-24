@@ -5,6 +5,7 @@ import { deleteGame, loadGames, possessionCounts, saveGame } from '../data/games
 import { FPS_VALUES, type Fps, type Game, type Side, type VideoSummary } from '../data/types'
 import { PlayerController } from '../player/controller'
 import { PlayerControls } from '../player/PlayerControls'
+import { SeekBar, type SeekMark } from '../player/SeekBar'
 import { YouTubePlayer } from '../player/YouTubePlayer'
 import { isShortcut, playerAction } from '../player/keys'
 import { watchUrl } from '../player/youtubeUrl'
@@ -13,7 +14,7 @@ import { useQueue } from '../app/QueueProvider'
 import { useResource } from '../app/useResource'
 import { useToast } from '../app/useToast'
 import { deleteSummary, formatDuration, plural, videoTitle } from './format'
-import { defaultSide, endGame, gameNumber, setBoundary, startGame, type Plan } from './games'
+import { defaultSide, endGame, gameNumber, gameRange, setBoundary, sortGames, startGame, type Plan } from './games'
 import { GamesPanel, type GameField } from './GamesPanel'
 import type { VideosLocationState } from './VideosPage'
 
@@ -81,6 +82,10 @@ function VideoScreen({
   const games = gamesResource.state.kind === 'ready' ? gamesResource.state.value : null
   const setGames = gamesResource.update
   const [firstSide, setFirstSide] = useState<Side | null>(null)
+  const marks: SeekMark[] = sortGames(games ?? []).map((g, i) => {
+    const r = gameRange(g, games ?? [], duration)
+    return { id: g.id, start: r.start, end: Number.isFinite(r.end) ? r.end : r.start, label: `Game ${i + 1}` }
+  })
   const [toDelete, setToDelete] = useState<{ game: Game; possessions: number | null } | null>(null)
 
   // Store the duration the player reports, so the list can show it and games can be checked against it.
@@ -202,6 +207,7 @@ function VideoScreen({
       <div className="video-grid">
         <section aria-label="Player">
           <YouTubePlayer youtubeId={video.youtube_id} aspectRatio={video.aspect_ratio ?? 16 / 9} controller={controller} />
+          <SeekBar controller={controller} marks={marks} />
           <PlayerControls controller={controller} fps={video.fps} />
           <p className="hint muted">
             Frame steps move about 1/{video.fps} s; YouTube cannot step exact frames. Set the frame rate under Details.
