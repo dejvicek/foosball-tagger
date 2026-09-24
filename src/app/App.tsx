@@ -6,6 +6,7 @@ import { QueueProvider } from './QueueProvider'
 import { VideosPage } from '../videos/VideosPage'
 import { VideoPage } from '../videos/VideoPage'
 import { TaggingPage } from '../tagging/TaggingPage'
+import { StatsPage } from '../statsView/StatsPage'
 
 export function App() {
   return (
@@ -18,6 +19,7 @@ export function App() {
                 <Route index element={<VideosPage />} />
                 <Route path="videos/:id" element={<VideoPage userId={session.user.id} />} />
                 <Route path="videos/:id/games/:gameId" element={<TaggingPage userId={session.user.id} />} />
+                <Route path="stats" element={<StatsPage />} />
                 <Route path="*" element={<NotFound />} />
               </Route>
             </Routes>

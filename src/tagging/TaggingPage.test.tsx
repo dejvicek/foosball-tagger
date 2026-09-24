@@ -148,7 +148,7 @@ describe('tagging screen keyboard (TAG-1..5, PRD §8)', () => {
       }),
     ])
     expect(screen.getByRole('button', { name: /^Middle\s*X$/ })).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByRole('table')).toHaveTextContent('4.2 s')
+    expect(screen.getByRole('table', { name: 'Possessions' })).toHaveTextContent('4.2 s')
   })
 
   it('S after F saves and starts the next; N saves a No shot at once', async () => {
@@ -253,7 +253,7 @@ describe('possession log (TAG-7)', () => {
   it('clicking the start time seeks one second before it', async () => {
     vi.mocked(loadPossessions).mockResolvedValue([possession(70, 75)])
     await renderPage()
-    fireEvent.click(within(screen.getByRole('table')).getByRole('button', { name: '1:10.0' }))
+    fireEvent.click(within(screen.getByRole('table', { name: 'Possessions' })).getByRole('button', { name: '1:10.0' }))
     expect(fake.t).toBe(69)
   })
 
@@ -261,9 +261,9 @@ describe('possession log (TAG-7)', () => {
     vi.mocked(loadPossessions).mockResolvedValue([possession(70, 75)])
     await renderPage()
     fireEvent.click(screen.getByRole('button', { name: 'Delete possession 1' }))
-    expect(screen.getByRole('table')).toBeInTheDocument()
+    expect(screen.getByRole('table', { name: 'Possessions' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Confirm: delete possession 1' }))
-    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Possessions' })).not.toBeInTheDocument()
   })
 
   it('shows Confirm and Reject for unreviewed candidates', async () => {

@@ -203,6 +203,8 @@ function VideoScreen({
         <a href={watchUrl(video.youtube_id)} target="_blank" rel="noreferrer">
           Open on YouTube
         </a>
+        {' · '}
+        <Link to={`/stats?scope=video&video=${video.id}`}>Statistics for this video</Link>
       </p>
       <div className="video-grid">
         <section aria-label="Player">

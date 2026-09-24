@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, Outlet } from 'react-router'
+import { Link, NavLink, Outlet } from 'react-router'
 import { signOut } from '../data/auth'
 import { SyncStatus } from './SyncStatus'
 
@@ -30,6 +30,12 @@ export function Layout({ email }: { email: string }) {
         <h1>
           <Link to="/">Session tagger</Link>
         </h1>
+        <nav className="nav" aria-label="Main">
+          <NavLink to="/" end>
+            Videos
+          </NavLink>
+          <NavLink to="/stats">Statistics</NavLink>
+        </nav>
         <span className="spacer" />
         <SyncStatus />
         <span className="muted">{email}</span>

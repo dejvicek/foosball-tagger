@@ -22,6 +22,9 @@ import { PossessionLog, type PossessionPatch } from './PossessionLog'
 import { TagPanel } from './TagPanel'
 import { Timeline } from './Timeline'
 import { Help } from './Help'
+import { StatsView } from '../statsView/StatsView'
+import { toStatItem } from '../data/stats'
+import { confirmedOnly } from '../stats'
 
 interface Loaded {
   video: VideoSummary
@@ -103,6 +106,8 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
     let n = 0
     return sorted.map((p) => ({ p, n: p.review_status === 'rejected' ? null : ++n }))
   }, [sorted])
+  // Live game statistics from what is tagged here, synced or not (STA-4 game scope).
+  const statItems = useMemo(() => confirmedOnly(possessions.map((p) => toStatItem(p, game, video))), [possessions, game, video])
   const numbered = useMemo(() => rows.filter((r): r is { p: Possession; n: number } => r.n != null), [rows])
 
   // GAM-3: the tagging screen opens at the game's start.
@@ -246,8 +251,9 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
       <div className="lower">
         <section className="card" aria-labelledby="stats-heading">
           <h2 id="stats-heading">Game numbers</h2>
-          <p className="muted">
-            {numbered.length} possession{numbered.length === 1 ? '' : 's'} tagged. Statistics arrive in build step 5.
+          <StatsView items={statItems} />
+          <p className="note">
+            <Link to={`/stats?scope=game&video=${video.id}&game=${game.id}`}>Filter these, or compare with other games →</Link>
           </p>
           <Help />
         </section>

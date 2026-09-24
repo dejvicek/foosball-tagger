@@ -84,7 +84,7 @@ export function PossessionLog({ rows, controller, onSeek, onChange, onSetTime, o
 
   return (
     <div className="scroll">
-      <table className="log">
+      <table className="log" aria-label="Possessions">
         <thead>
           <tr>
             <th className="num">#</th>

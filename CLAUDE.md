@@ -15,6 +15,7 @@ src/
   player/       YouTube IFrame wrapper, time polling, focus capture, overlay
   tagging/      tag panel state machine, keyboard map, timeline, log
   stats/        pure statistics functions — no React, no Supabase imports
+  statsView/    statistics page and tables (UI over stats/)
   data/         Supabase client, typed queries, pending write queue
   export/       CSV generation
 supabase/migrations/   SQL migrations (never edit an applied one)

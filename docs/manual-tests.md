@@ -65,3 +65,14 @@ Open a game with "Tag →" on the video screen.
 10. **Offline (SYN):** Wi-Fi off, tag 5 possessions → "Unsynced changes: 5"; reload offline → the draft survives, the tagged rows are safe in the queue (the page may show a load error until online); Wi-Fi on → counter clears; reload → all 5 on the server, none twice.
 11. **Speed:** tag a 10-minute game; it should take about 15 minutes (PRD §1.4). Note anything slowing you down.
 12. **Unexpected refusals:** if S or F is ever refused when the time looks right, open the browser console (⌥⌘J) and copy the "Tag refused" line.
+
+## Step 5 · Statistics (STA-1..10)
+
+1. **Live game numbers:** on the tagging screen, tag a goal → conversion and the "By shot" row update at once, without reload.
+2. **Blank is not a miss (STA-1):** tag a shot with no result → conversion's denominator does not grow; add the result → it does.
+3. **Samples (STA-2, STA-3):** every percentage shows (n/d); all carry † until 30 attempts; the footnote explains it.
+4. **Hand check:** for one game, count goals and shots-with-result in the log yourself → same as the conversion shown. Same for one "By shot" row.
+5. **Scopes (STA-4):** Statistics → Date range "All time" includes every video; "Last 30 days" drops older ones; a video without a recorded date counts on the day it was added. Video scope matches the sum of its games. Game scope matches the tagging screen.
+6. **Filters:** tick Pin → only Pin shots count, "n of m … match the filters"; Format and Opponent narrow further; reload keeps scope and filters (they are in the URL).
+7. **Candidates:** unreviewed or rejected possessions never count; confirming one in the log makes it count.
+8. Phone width: the statistics page has no sideways scroll; wide tables scroll inside their card.
