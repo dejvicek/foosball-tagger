@@ -26,20 +26,29 @@ export type PlayerAction =
   | { kind: 'frame'; direction: 1 | -1 }
   | { kind: 'speed'; direction: 1 | -1 }
 
-/** Player keys shared by the video and tagging screens (TAG-1). */
+/**
+ * Player keys shared by the video and tagging screens (TAG-1, ADR-0021). Besides
+ * Space and the arrows, the right hand has video-editor keys: J / K / L for back,
+ * play/pause, forward and U / O for frame steps.
+ */
 export function playerAction(e: Pick<KeyLike, 'key' | 'shiftKey'>): PlayerAction | null {
-  switch (e.key) {
+  switch (e.key.length === 1 ? e.key.toLowerCase() : e.key) {
     case ' ':
+    case 'k':
       return { kind: 'toggle' }
     case 'ArrowLeft':
+    case 'j':
       return { kind: 'nudge', seconds: e.shiftKey ? -5 : -1 }
     case 'ArrowRight':
+    case 'l':
       return { kind: 'nudge', seconds: e.shiftKey ? 5 : 1 }
     case ',':
     case '<':
+    case 'u':
       return { kind: 'frame', direction: -1 }
     case '.':
     case '>':
+    case 'o':
       return { kind: 'frame', direction: 1 }
     case '[':
       return { kind: 'speed', direction: -1 }

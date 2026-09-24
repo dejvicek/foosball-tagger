@@ -42,10 +42,10 @@ export function PlayerControls({ controller, fps }: { controller: PlayerControll
       <button className="btn nf play" type="button" disabled={!ready} onClick={() => controller.toggle()}>
         {playing ? 'Pause' : 'Play'} <kbd>Space</kbd>
       </button>
-      <button className="btn nf" type="button" disabled={!ready} onClick={() => controller.nudge(-5)} title="Back 5 s (Shift+←)">
+      <button className="btn nf" type="button" disabled={!ready} onClick={() => controller.nudge(-5)} title="Back 5 s (Shift+← or Shift+J)">
         −5 s
       </button>
-      <button className="btn nf" type="button" disabled={!ready} onClick={() => controller.nudge(-1)} title="Back 1 s (←)">
+      <button className="btn nf" type="button" disabled={!ready} onClick={() => controller.nudge(-1)} title="Back 1 s (← or J)">
         −1 s
       </button>
       <button
@@ -53,7 +53,7 @@ export function PlayerControls({ controller, fps }: { controller: PlayerControll
         type="button"
         disabled={!ready}
         onClick={() => controller.frameStep(-1, fps)}
-        title="About one frame back (,)"
+        title="About one frame back (U or ,)"
         aria-label="About one frame back"
       >
         ‹ Frame
@@ -63,15 +63,15 @@ export function PlayerControls({ controller, fps }: { controller: PlayerControll
         type="button"
         disabled={!ready}
         onClick={() => controller.frameStep(1, fps)}
-        title="About one frame forward (.)"
+        title="About one frame forward (O or .)"
         aria-label="About one frame forward"
       >
         Frame ›
       </button>
-      <button className="btn nf" type="button" disabled={!ready} onClick={() => controller.nudge(1)} title="Forward 1 s (→)">
+      <button className="btn nf" type="button" disabled={!ready} onClick={() => controller.nudge(1)} title="Forward 1 s (→ or L)">
         +1 s
       </button>
-      <button className="btn nf" type="button" disabled={!ready} onClick={() => controller.nudge(5)} title="Forward 5 s (Shift+→)">
+      <button className="btn nf" type="button" disabled={!ready} onClick={() => controller.nudge(5)} title="Forward 5 s (Shift+→ or Shift+L)">
         +5 s
       </button>
       <select

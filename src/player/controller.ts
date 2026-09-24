@@ -83,6 +83,16 @@ export class PlayerController {
     return reported
   }
 
+  /** For diagnosing unexpected times: what the player reports and any seek still settling. */
+  debugState(): { reported: number | null; seekTarget: number | null; pauseWhenPlaying: boolean; playing: boolean } {
+    return {
+      reported: this.player ? this.player.getCurrentTime() : null,
+      seekTarget: this.seekTarget?.t ?? null,
+      pauseWhenPlaying: this.pauseWhenPlaying,
+      playing: this.snapshot.playing,
+    }
+  }
+
   play(): void {
     this.pauseWhenPlaying = false
     this.player?.playVideo()

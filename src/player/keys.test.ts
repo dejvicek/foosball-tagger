@@ -40,6 +40,13 @@ describe('playerAction', () => {
     ['<', true, { kind: 'frame', direction: -1 }],
     ['[', false, { kind: 'speed', direction: -1 }],
     [']', false, { kind: 'speed', direction: 1 }],
+    ['k', false, { kind: 'toggle' }],
+    ['j', false, { kind: 'nudge', seconds: -1 }],
+    ['J', true, { kind: 'nudge', seconds: -5 }],
+    ['l', false, { kind: 'nudge', seconds: 1 }],
+    ['L', true, { kind: 'nudge', seconds: 5 }],
+    ['u', false, { kind: 'frame', direction: -1 }],
+    ['o', false, { kind: 'frame', direction: 1 }],
     ['x', false, null],
   ])('%j (shift %s)', (k, shiftKey, expected) => {
     expect(playerAction({ key: k, shiftKey })).toEqual(expected)
