@@ -8,6 +8,7 @@ import { PlayerControls } from '../player/PlayerControls'
 import { SeekBar, type SeekMark } from '../player/SeekBar'
 import { YouTubePlayer } from '../player/YouTubePlayer'
 import { isShortcut, playerAction } from '../player/keys'
+import { codeOf } from '../player/keyboardLayout'
 import { watchUrl } from '../player/youtubeUrl'
 import { ConfirmDialog } from '../app/ConfirmDialog'
 import { useQueue } from '../app/QueueProvider'
@@ -174,11 +175,11 @@ function VideoScreen({
         else show(`Speed ${controller.stepRate(action.direction)}×`)
         return
       }
-      const k = e.key.toLowerCase()
-      if (k === 'b') {
+      const k = codeOf(e) // by position, like every shortcut (ADR-0022)
+      if (k === 'KeyB') {
         e.preventDefault()
         start()
-      } else if (k === 'e') {
+      } else if (k === 'KeyE') {
         e.preventDefault()
         end()
       }

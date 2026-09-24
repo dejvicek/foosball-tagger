@@ -28,6 +28,14 @@ describe('isShortcut', () => {
   })
 })
 
+describe('playerAction by position (ADR-0022)', () => {
+  it('uses the physical key, so layouts that move punctuation still work', () => {
+    expect(playerAction({ key: 'ú', code: 'BracketLeft', shiftKey: false })).toEqual({ kind: 'speed', direction: -1 })
+    expect(playerAction({ key: ',', code: 'KeyM', shiftKey: false })).toBeNull() // AZERTY: comma sits on M's key
+    expect(playerAction({ key: ';', code: 'Comma', shiftKey: false })).toEqual({ kind: 'frame', direction: -1 })
+  })
+})
+
 describe('playerAction', () => {
   it.each([
     [' ', false, { kind: 'toggle' }],

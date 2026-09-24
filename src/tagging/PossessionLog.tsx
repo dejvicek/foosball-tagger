@@ -5,6 +5,7 @@ import { formatTime } from '../player/time'
 import type { TagField } from './draft'
 import { anchor, possessionAt, possessionLength } from './possessions'
 import { KEY } from './keyLabels'
+import { useKeyboardLayout } from '../player/useKeyboardLayout'
 
 export type PossessionPatch = Partial<Pick<Possession, TagField | 'start_s' | 'shot_s' | 'review_status'>>
 
@@ -57,6 +58,7 @@ function useActiveId(rows: Props['rows'], controller: PlayerController): string 
 
 /** Possession log: every field editable inline (TAG-7). */
 export function PossessionLog({ rows, controller, onSeek, onChange, onSetTime, onDelete }: Props) {
+  useKeyboardLayout()
   const active = useActiveId(rows, controller)
   const [armed, setArmed] = useState<string | null>(null)
   const armTimer = useRef<ReturnType<typeof setTimeout> | null>(null)

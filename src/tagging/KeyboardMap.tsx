@@ -1,7 +1,10 @@
 import { KEY } from './keyLabels'
+import { keyLabel } from '../player/keyboardLayout'
+import { useKeyboardLayout } from '../player/useKeyboardLayout'
 
 type Kind = 'field' | 'moment' | 'verdict'
 interface Cap {
+  /** Physical key (KeyboardEvent.code). */
   k: string
   label: string
   kind: Kind
@@ -13,25 +16,27 @@ const v = (k: string, label: string): Cap => ({ k, label, kind: 'verdict' })
 
 /** The left-hand grid, as on the keyboard (ADR-0021). */
 const ROWS: { name: string; caps: Cap[] }[] = [
-  { name: 'Setup', caps: [f('1', 'Pull side'), f('2', 'Middle'), f('3', 'Push side'), m('4', 'Save'), v('5', 'Proper')] },
-  { name: 'Direction', caps: [f('Q', 'Pull'), f('W', 'Straight'), f('E', 'Push'), m('R', 'Ball set'), v('T', 'Misexecuted')] },
-  { name: 'Hole', caps: [f('A', 'Pull-side'), f('S', 'Middle'), f('D', 'Push-side'), m('F', 'Shot'), v('G', 'Goal')] },
-  { name: 'Shot type', caps: [f('Z', 'Pin'), f('X', 'Pull'), f('C', 'Other'), m('V', 'No shot'), v('B', 'No goal')] },
+  { name: 'Setup', caps: [f('Digit1', 'Pull side'), f('Digit2', 'Middle'), f('Digit3', 'Push side'), m('Digit4', 'Save'), v('Digit5', 'Proper')] },
+  { name: 'Direction', caps: [f('KeyQ', 'Pull'), f('KeyW', 'Straight'), f('KeyE', 'Push'), m('KeyR', 'Ball set'), v('KeyT', 'Misexecuted')] },
+  { name: 'Hole', caps: [f('KeyA', 'Pull-side'), f('KeyS', 'Middle'), f('KeyD', 'Push-side'), m('KeyF', 'Shot'), v('KeyG', 'Goal')] },
+  { name: 'Shot type', caps: [f('KeyZ', 'Pin'), f('KeyX', 'Pull'), f('KeyC', 'Other'), m('KeyV', 'No shot'), v('KeyB', 'No goal')] },
 ]
 
-const RIGHT: [string, string][] = [
-  ['J  K  L', 'back 1 s · play/pause · forward 1 s (Shift: 5 s)'],
-  ['U  O', 'about one frame back · forward'],
-  ['[  ]', 'slower · faster'],
+const right = (): [string, string][] => [
+  [['KeyJ', 'KeyK', 'KeyL'].map(keyLabel).join('  '), 'back 1 s · play/pause · forward 1 s (Shift: 5 s)'],
+  [['KeyU', 'KeyO'].map(keyLabel).join('  '), 'about one frame back · forward'],
+  [['BracketLeft', 'BracketRight'].map(keyLabel).join('  '), 'slower · faster'],
   ['Enter', 'save'],
   ['⌫', 'undo'],
 ]
 
 /** Keyboard map for the help (TAG-8). */
 export function KeyboardMap() {
+  useKeyboardLayout()
   return (
     <div className="keymap">
       <p className="keymap-lead">
+        Keys go by position, so they sit in the same place on any keyboard layout; the labels show your keyboard.
         Left hand tags; each row is one field. The first three columns always run <b>pull → middle → push</b>. The index
         finger marks the moments, the stretch column the verdicts.
       </p>
@@ -43,7 +48,7 @@ export function KeyboardMap() {
             </span>
             {row.caps.map((c) => (
               <span key={c.k} className={`keycap ${c.kind}`} role="cell">
-                <kbd>{c.k}</kbd>
+                <kbd>{keyLabel(c.k)}</kbd>
                 <span>{c.label}</span>
               </span>
             ))}
@@ -56,7 +61,7 @@ export function KeyboardMap() {
       </p>
       <h4>Right hand (optional)</h4>
       <dl className="keymap-right">
-        {RIGHT.map(([k, d]) => (
+        {right().map(([k, d]) => (
           <div key={k}>
             <dt>
               <kbd>{k}</kbd>

@@ -3,6 +3,8 @@ import { Link } from 'react-router'
 import { FORMATS, SIDES, type Format, type Game, type Side } from '../data/types'
 import { formatTime } from '../player/time'
 import { gameRange, sortGames } from './games'
+import { keyLabel } from '../player/keyboardLayout'
+import { useKeyboardLayout } from '../player/useKeyboardLayout'
 
 export type GameField = Partial<Pick<Game, 'my_side' | 'format' | 'opponent' | 'my_score' | 'opp_score' | 'notes'>>
 
@@ -31,6 +33,7 @@ function scoreValue(v: string): number | null {
 }
 
 export function GamesPanel(props: Props) {
+  useKeyboardLayout()
   const { games, firstSide, onFirstSide, onStart, onEnd, ready } = props
   const sorted = sortGames(games)
   const hasOpen = sorted.some((g) => g.end_s == null)
@@ -53,10 +56,10 @@ export function GamesPanel(props: Props) {
       )}
       <div className="markrow">
         <button className="btn nf primary" type="button" onClick={onStart} disabled={!ready}>
-          {hasOpen ? 'End & start next' : 'Start game'} <kbd>B</kbd>
+          {hasOpen ? 'End & start next' : 'Start game'} <kbd>{keyLabel('KeyB')}</kbd>
         </button>
         <button className="btn nf" type="button" onClick={onEnd} disabled={!ready || !hasOpen}>
-          End game <kbd>E</kbd>
+          End game <kbd>{keyLabel('KeyE')}</kbd>
         </button>
       </div>
       {sorted.length === 0 ? (

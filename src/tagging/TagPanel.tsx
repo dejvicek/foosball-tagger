@@ -4,6 +4,8 @@ import { formatTime } from '../player/time'
 import { statusText, type Draft, type DraftEvent } from './draft'
 import { TAG_GROUPS } from './keymap'
 import { KEY } from './keyLabels'
+import { keyLabel } from '../player/keyboardLayout'
+import { useKeyboardLayout } from '../player/useKeyboardLayout'
 
 interface Props {
   draft: Draft
@@ -44,6 +46,7 @@ function Timer({ draft, controller }: { draft: Draft; controller: PlayerControll
 
 /** The tag panel (TAG-1..3). Every button is also a key; none takes focus. */
 export function TagPanel({ draft, controller, onEvent, onUndo }: Props) {
+  useKeyboardLayout()
   const noShot = draft.shot_type === 'No shot'
   return (
     <aside className="panel card" aria-label="Tag the possession">
@@ -75,7 +78,7 @@ export function TagPanel({ draft, controller, onEvent, onUndo }: Props) {
           <div className="seg-ctl" role="group" aria-labelledby={`grp-${g.field}`}>
             {g.options.map((o) => (
               <button
-                key={o.key}
+                key={o.code}
                 type="button"
                 className="opt nf"
                 data-tone={o.negative ? 'neg' : undefined}
@@ -85,7 +88,7 @@ export function TagPanel({ draft, controller, onEvent, onUndo }: Props) {
                 title={o.value}
               >
                 <span>{o.label}</span>
-                <kbd>{o.key}</kbd>
+                <kbd>{keyLabel(o.code)}</kbd>
               </button>
             ))}
           </div>

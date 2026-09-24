@@ -1,5 +1,9 @@
+import { codeOf } from './keyboardLayout'
+
 export interface KeyLike {
   key: string
+  /** Physical key (KeyboardEvent.code); shortcuts match by position (ADR-0022). */
+  code?: string
   shiftKey: boolean
   metaKey: boolean
   ctrlKey: boolean
@@ -29,30 +33,33 @@ export type PlayerAction =
 /**
  * Player keys shared by the video and tagging screens (TAG-1, ADR-0021). Besides
  * Space and the arrows, the right hand has video-editor keys: J / K / L for back,
- * play/pause, forward and U / O for frame steps.
+ * play/pause, forward and U / O for frame steps. Matched by key position (ADR-0022).
  */
-export function playerAction(e: Pick<KeyLike, 'key' | 'shiftKey'>): PlayerAction | null {
-  switch (e.key.length === 1 ? e.key.toLowerCase() : e.key) {
+export function playerAction(e: Pick<KeyLike, 'key' | 'shiftKey' | 'code'>): PlayerAction | null {
+  switch (e.key) {
     case ' ':
-    case 'k':
       return { kind: 'toggle' }
     case 'ArrowLeft':
-    case 'j':
       return { kind: 'nudge', seconds: e.shiftKey ? -5 : -1 }
     case 'ArrowRight':
-    case 'l':
       return { kind: 'nudge', seconds: e.shiftKey ? 5 : 1 }
-    case ',':
-    case '<':
-    case 'u':
+  }
+  switch (codeOf(e)) {
+    case 'KeyK':
+      return { kind: 'toggle' }
+    case 'KeyJ':
+      return { kind: 'nudge', seconds: e.shiftKey ? -5 : -1 }
+    case 'KeyL':
+      return { kind: 'nudge', seconds: e.shiftKey ? 5 : 1 }
+    case 'Comma':
+    case 'KeyU':
       return { kind: 'frame', direction: -1 }
-    case '.':
-    case '>':
-    case 'o':
+    case 'Period':
+    case 'KeyO':
       return { kind: 'frame', direction: 1 }
-    case '[':
+    case 'BracketLeft':
       return { kind: 'speed', direction: -1 }
-    case ']':
+    case 'BracketRight':
       return { kind: 'speed', direction: 1 }
     default:
       return null

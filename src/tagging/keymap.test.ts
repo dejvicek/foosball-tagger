@@ -33,6 +33,16 @@ describe('tagAction (ADR-0021)', () => {
     expect(tagAction(key)).toEqual(action)
   })
 
+  it('matches by key position on a Czech QWERTZ keyboard (ADR-0022)', () => {
+    expect(tagAction({ key: 'y', code: 'KeyZ' })).toEqual({ kind: 'tag', field: 'shot_type', value: 'Pin' })
+    expect(tagAction({ key: 'z', code: 'KeyY' })).toBeNull()
+    expect(tagAction({ key: '+', code: 'Digit1' })).toEqual({ kind: 'tag', field: 'setup', value: 'Pull side' })
+    expect(tagAction({ key: 'č', code: 'Digit4' })).toEqual({ kind: 'save' })
+    expect(tagAction({ key: 'ř', code: 'Digit5' })).toEqual({ kind: 'tag', field: 'execution', value: 'Proper' })
+    // Undo follows the letter, like the operating system: Czech ⌘Z is the key labelled Z.
+    expect(tagAction({ key: 'z', code: 'KeyY', metaKey: true })).toEqual({ kind: 'undo' })
+  })
+
   it('undoes with ⌘Z or Ctrl+Z, and ignores other chords', () => {
     expect(tagAction({ key: 'z', metaKey: true })).toEqual({ kind: 'undo' })
     expect(tagAction({ key: 'z', ctrlKey: true })).toEqual({ kind: 'undo' })
@@ -42,7 +52,7 @@ describe('tagAction (ADR-0021)', () => {
 
   it('puts every tagging key under the left hand', () => {
     const left = new Set('12345qwertasdfgzxcvb'.split(''))
-    for (const g of TAG_GROUPS) for (const o of g.options) expect(left.has(o.key.toLowerCase())).toBe(true)
+    for (const g of TAG_GROUPS) for (const o of g.options) expect(left.has(o.code.replace(/^(Key|Digit)/, '').toLowerCase())).toBe(true)
     for (const k of ['r', 'f', 'v', '4']) expect(left.has(k)).toBe(true)
   })
 
@@ -54,7 +64,7 @@ describe('tagAction (ADR-0021)', () => {
   })
 
   it('never collides with a player key', () => {
-    const keys = ['r', 'f', 'v', '4', 'Enter', 'Escape', 'Backspace', ...TAG_GROUPS.flatMap((g) => g.options.map((o) => o.key))]
+    const keys = ['r', 'f', 'v', '4', 'Enter', 'Escape', 'Backspace', ...TAG_GROUPS.flatMap((g) => g.options.map((o) => o.code.replace(/^(Key|Digit)/, '').toLowerCase()))]
     for (const k of keys) expect(playerAction({ key: k, shiftKey: false })).toBeNull()
   })
 
