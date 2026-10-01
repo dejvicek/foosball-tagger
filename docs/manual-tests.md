@@ -55,7 +55,7 @@ Open a game with "Tag →" on the video screen.
 
 1. **Opens at the game (GAM-3):** the player jumps to the game start; the header shows game number, range, side, opponent.
    Also on a video uploaded the same day (still processing on YouTube): reload the tagging page a few times → it opens paused at the game start every time, never at 0:00 (ADR-0024).
-2. **Keyboard-only possession (ADR-0026 keys):** R → timer runs and status says "Press F…"; A, W; F → timer freezes, status lists what is blank (hole, execution, result); 2, G, Z → "All tagged"; Enter → row appears in the log with the right length and hole Pull short; Setup is back on Middle (TAG-2, TAG-3).
+2. **Keyboard-only possession (ADR-0026 keys):** Shot type shows Pin before anything is pressed (ADR-0027). R → timer runs and status says "Press F…"; A, W; F → timer freezes, status lists what is blank (hole, execution, result); 2, G, Z → "All tagged"; Enter → row appears in the log with the right length and hole Pull short; Setup is back on Middle and Shot type on Pin (TAG-2, TAG-3). R, F, Enter without touching Shot type → the row says Pin.
 3. **R after F** saves and starts the next; **V** saves a No shot at once; **Backspace** or **Esc** clears; **⌘Z / Ctrl+Z** deletes the last saved (press twice: the one before); pressing a tag key twice clears it.
 4. **Refusals:** F before the ball-set time (seek back) → message, nothing swapped (TAG-4). Seek outside the game, press R → message suggesting to adjust the game (TAG-5).
 5. **Focus:** clicking any tag button, then Space/Enter still play/save. Clicking the video picture, then R still works. Nothing happens while a log select is open; Esc leaves it.

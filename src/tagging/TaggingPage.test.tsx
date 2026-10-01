@@ -164,7 +164,7 @@ describe('tagging screen keyboard (TAG-1..5, PRD §8)', () => {
     await flush()
     const rows = saved().sort((a, b) => (a.start_s ?? 0) - (b.start_s ?? 0))
     expect(rows.map((p) => [p.start_s, p.shot_s, p.shot_type])).toEqual([
-      [70, 75, null],
+      [70, 75, 'Pin'],
       [80, 90, 'No shot'],
     ])
   })
@@ -309,7 +309,7 @@ describe('timeline (TAG-6)', () => {
   it('draws one segment per possession, with its tags on hover, and jumps before it on click', async () => {
     vi.mocked(loadPossessions).mockResolvedValue([possession(70, 75, { result: 'Goal' }), possession(100, 104, { shot_type: 'No shot' })])
     await renderPage()
-    const seg = screen.getByRole('button', { name: /^#1 Middle · Goal\. Goal\./ })
+    const seg = screen.getByRole('button', { name: /^#1 Middle · Pin · Goal\. Goal\./ })
     expect(seg).toHaveClass('goal')
     expect(screen.getByRole('button', { name: /^#2 Middle · No shot\./ })).toHaveClass('noshot')
     fireEvent.click(seg)

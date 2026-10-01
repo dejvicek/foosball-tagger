@@ -42,6 +42,7 @@ describe('draft state machine', () => {
     ])
     expect(draft).toEqual(emptyDraft())
     expect(draft.setup).toBe('Middle')
+    expect(draft.shot_type).toBe('Pin')
   })
 
   it('S after F saves the tagged possession and starts the next one', () => {
@@ -119,6 +120,13 @@ describe('draft state machine', () => {
   it('Enter saves with missing fields left blank, but refuses an empty draft', () => {
     expect(run([[ENTER, 70]]).errors[0]).toMatch(/Nothing to save/)
     expect(run([[S, 70], [ENTER, 71]]).saved).toEqual([expect.objectContaining({ start_s: 70, shot_s: null, result: null })])
+  })
+
+  it('starts with Shot type Pin; S, F, Enter saves a Pin (ADR-0027)', () => {
+    expect(emptyDraft().shot_type).toBe('Pin')
+    expect(run([[S, 70], [F, 72], [ENTER, 73]]).saved).toEqual([expect.objectContaining({ shot_type: 'Pin' })])
+    // Pressing Q again clears it, like any field.
+    expect(run([[{ kind: 'tag', field: 'shot_type', value: 'Pin' }, 70]]).draft.shot_type).toBeNull()
   })
 
   it('Esc clears the draft', () => {

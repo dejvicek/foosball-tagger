@@ -274,3 +274,10 @@ Format: context → decision → consequences. Keep each record short.
     Enter saves (4 no longer does), Backspace and Esc clear the draft, ⌘Z / Ctrl+Z undoes the last save (Backspace no longer does). T and C are free.
   - A draft kept in localStorage from before this change loses its direction and any old hole value when loaded.
 - **Consequences:** Muscle memory from ADR-0021 no longer applies. Saving needs Enter (right hand) or R for the next possession. The migration must be applied before the frontend that uses it is deployed, and writes still pending from the old frontend that carry `direction` would be refused, so sync before deploying.
+
+## ADR-0027 · Shot type starts at Pin
+
+- **Status:** Accepted · 2026-10-02 (requested by the user) · Amends TAG-2
+- **Context:** Most possessions end in a pin shot, so pressing Q every time was wasted effort.
+- **Decision:** A new draft has Shot type Pin, like Setup starts at Middle; it resets to Pin after every save and clear. Q on a draft showing Pin clears the field, W / E switch it, V saves No shot as before. Pin and Middle together do not count as content: Enter on an untouched draft still says there is nothing to save.
+- **Consequences:** A possession saved without F (R, then Enter) is saved as a Pin and counts as a shot in the statistics, where before it was left out as unknown (ADR-0020). Clear the shot type with Q, or press V, for possessions that ended without a shot.

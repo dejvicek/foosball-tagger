@@ -17,9 +17,9 @@ export interface Draft {
 export type TagField = 'setup' | 'shot_type' | 'hole' | 'result' | 'execution'
 type TagValue<F extends TagField> = NonNullable<Draft[F]>
 
-/** A new draft; Setup starts at Middle (TAG-2). */
+/** A new draft; Setup starts at Middle (TAG-2) and Shot type at Pin (ADR-0027). */
 export function emptyDraft(): Draft {
-  return { start_s: null, shot_s: null, setup: 'Middle', shot_type: null, hole: null, result: null, execution: null }
+  return { start_s: null, shot_s: null, setup: 'Middle', shot_type: 'Pin', hole: null, result: null, execution: null }
 }
 
 export type DraftEvent =
@@ -51,11 +51,10 @@ export interface Outcome {
 /** Tolerance for "inside the game" so a press right at a boundary counts. */
 const EDGE = 0.05
 
-/** Whether the draft holds anything worth saving (a default Setup alone is not). */
+/** Whether the draft holds anything worth saving (the defaults alone are not). */
 export function hasContent(d: Draft): boolean {
-  return (
-    d.start_s != null || d.shot_s != null || d.shot_type != null || d.hole != null || d.result != null || d.execution != null
-  )
+  const e = emptyDraft()
+  return d.start_s != null || d.shot_s != null || d.shot_type !== e.shot_type || d.hole != null || d.result != null || d.execution != null
 }
 
 function outsideRange(ctx: DraftContext): string | null {
