@@ -30,12 +30,17 @@ export interface PlayerSnapshot {
 /** After a seek, report the target until the player catches up (at most this long). */
 const SEEK_SETTLE_MS = 1000
 
+/** Re-seeks after a seek made before the first play was dropped (ADR-0024). */
+const START_SEEK_RETRIES = 3
+
 export class PlayerController {
   private player: YTPlayerLike | null = null
   private listeners = new Set<() => void>()
   private snapshot: PlayerSnapshot = { ready: false, playing: false, rate: 1, speeds: SPEEDS, duration: null }
   private seekTarget: { t: number; at: number; from: number } | null = null
   private pauseWhenPlaying = false
+  /** A seek made before the first play, kept until the player is seen there (ADR-0024). */
+  private startSeek: { t: number; retries: number } | null = null
 
   constructor(private readonly clock: () => number = () => performance.now()) {}
 
@@ -54,6 +59,21 @@ export class PlayerController {
 
   /** Feed YT onStateChange events here. */
   onStateChange(state: number): void {
+    // Some videos (e.g. still processing on YouTube) reload when playback starts,
+    // change length and start at 0, dropping the seek: seek again while playing.
+    if (state === PLAYER_STATE.PLAYING && this.startSeek && this.player) {
+      const { t, retries } = this.startSeek
+      const reported = this.player.getCurrentTime() || 0
+      if (Math.abs(reported - t) > 0.5 && retries > 0) {
+        this.startSeek = { t, retries: retries - 1 }
+        this.player.seekTo(t, true)
+        const d = this.player.getDuration()
+        if (d > 0) this.set({ duration: d })
+        return
+      }
+      this.startSeek = null
+      this.seekTarget = { t, at: this.clock(), from: reported }
+    }
     if (state === PLAYER_STATE.PLAYING && this.pauseWhenPlaying) {
       this.pauseWhenPlaying = false
       this.player?.pauseVideo()
@@ -71,6 +91,7 @@ export class PlayerController {
   /** Current video time in seconds. getCurrentTime() updates every frame while playing (measured, ADR-0015). */
   time(): number {
     if (!this.player) return this.seekTarget?.t ?? 0
+    if (this.startSeek) return this.startSeek.t
     const reported = this.player.getCurrentTime() || 0
     if (this.seekTarget) {
       // Settled once the player reports a new time near the target (frame steps are
@@ -87,7 +108,7 @@ export class PlayerController {
   debugState(): { reported: number | null; seekTarget: number | null; pauseWhenPlaying: boolean; playing: boolean } {
     return {
       reported: this.player ? this.player.getCurrentTime() : null,
-      seekTarget: this.seekTarget?.t ?? null,
+      seekTarget: this.startSeek?.t ?? this.seekTarget?.t ?? null,
       pauseWhenPlaying: this.pauseWhenPlaying,
       playing: this.snapshot.playing,
     }
@@ -118,8 +139,11 @@ export class PlayerController {
     this.seekTarget = { t: target, at: this.clock(), from: p.getCurrentTime() || 0 }
     p.seekTo(target, true)
     if (state === PLAYER_STATE.UNSTARTED || state === PLAYER_STATE.CUED) {
+      this.startSeek = { t: target, retries: START_SEEK_RETRIES }
       this.pauseWhenPlaying = true
       p.playVideo()
+    } else {
+      this.startSeek = null
     }
   }
 

@@ -232,3 +232,10 @@ Format: context → decision → consequences. Keep each record short.
   - **Statistics:** the Opponent filter matches either opponent of a doubles game and lists every name once; "(no opponent)" selects games with neither. Game labels read "vs A" or "with T · vs A & B".
   - **Later steps:** EXP-1 adds `teammate` and `opponent2` after `opponent`. CAL-1's corner order and the worker's use of `my_side` are restated in terms of the side the user stands on when step 6 is built.
 - **Consequences:** The deployed frontend writes the new columns, so the migration must be applied before the frontend that uses it is deployed.
+
+## ADR-0024 · Repeat a seek the player drops before the first play
+
+- **Status:** Accepted · 2026-10-01 (bug reported by the user) · Amends ADR-0015
+- **Context:** The tagging screen of a game on a video uploaded the same day opened at 0:00 instead of the game start (GAM-3). Measured in the browser: before the first play the player reported the old length (10106 s) and took the seek (223.6 s); once playback started it reloaded with a different length (9910 s), began at 0 and the start-then-pause of ADR-0015 paused it there. Seeks after the first play work. A video whose length does not change keeps the seek.
+- **Decision:** A seek made before the first play is remembered until the player is seen near it (0.5 s). When the player reports playing elsewhere, the controller seeks again while still playing and pauses only once it is there; it gives up after 3 extra seeks and pauses where the player is. Until then the current time reported to the app is the seek target, without the 1 s settle timeout. A seek made after the first play replaces the remembered one. The video length is read again on each state change, so the readout shows the length after the reload.
+- **Consequences:** Such a video can play a fraction of a second from 0:00 before landing at the game start. Opening at a game start lands about 0.2 s after it (the pause follows the playing event).

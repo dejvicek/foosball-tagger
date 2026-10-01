@@ -54,6 +54,7 @@ Use a real practice video. Repeat 1–4 in Chrome, Firefox and Safari.
 Open a game with "Tag →" on the video screen.
 
 1. **Opens at the game (GAM-3):** the player jumps to the game start; the header shows game number, range, side, opponent.
+   Also on a video uploaded the same day (still processing on YouTube): reload the tagging page a few times → it opens paused at the game start every time, never at 0:00 (ADR-0024).
 2. **Keyboard-only possession (ADR-0021 keys):** R → timer runs and status says "Press F…"; 1, X, E; F → timer freezes, status lists what is blank; A, G, 5 → "All tagged"; 4 → row appears in the log with the right length; Setup is back on Middle (TAG-2, TAG-3).
 3. **R after F** saves and starts the next; **V** saves a No shot at once; **Esc** clears; **⌘Z / Ctrl+Z** (or Backspace) deletes the last saved (press twice: the one before); pressing a tag key twice clears it.
 4. **Refusals:** F before the ball-set time (seek back) → message, nothing swapped (TAG-4). Seek outside the game, press R → message suggesting to adjust the game (TAG-5).

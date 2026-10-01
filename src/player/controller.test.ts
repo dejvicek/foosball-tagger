@@ -86,9 +86,51 @@ describe('PlayerController', () => {
     const { c, player } = setup()
     c.seek(30)
     expect(player.calls).toEqual(['seek 30.000', 'play'])
+    player.t = 30
     c.onStateChange(PLAYER_STATE.PLAYING)
     expect(player.calls.at(-1)).toBe('pause')
     expect(c.getSnapshot().playing).toBe(false)
+  })
+
+  it('seeks again when the player drops a seek made before the first play (ADR-0024)', () => {
+    const { c, player, advance } = setup()
+    c.seek(223.6)
+    // A video whose length changes when playback starts reloads and starts at 0.
+    player.t = 0.1
+    player.duration = 550
+    c.onStateChange(PLAYER_STATE.PLAYING)
+    expect(player.calls).toEqual(['seek 223.600', 'play', 'seek 223.600'])
+    expect(c.getSnapshot().duration).toBe(550)
+    advance(3000)
+    expect(c.time()).toBe(223.6)
+    player.t = 223.6
+    c.onStateChange(PLAYER_STATE.BUFFERING)
+    c.onStateChange(PLAYER_STATE.PLAYING)
+    expect(player.calls.at(-1)).toBe('pause')
+    expect(c.time()).toBe(223.6)
+  })
+
+  it('gives up re-seeking after a few tries and pauses where the player is', () => {
+    const { c, player, advance } = setup()
+    c.seek(100)
+    player.t = 0.1
+    for (let i = 0; i < 5; i++) c.onStateChange(PLAYER_STATE.PLAYING)
+    expect(player.calls.filter((x) => x === 'seek 100.000')).toHaveLength(4)
+    expect(player.calls.at(-1)).toBe('pause')
+    advance(1100)
+    expect(c.time()).toBe(0.1)
+  })
+
+  it('a new seek after the first play replaces the pending start seek', () => {
+    const { c, player } = setup()
+    c.seek(100)
+    player.t = 100
+    c.onStateChange(PLAYER_STATE.PLAYING)
+    player.state = PLAYER_STATE.PAUSED
+    c.seek(50)
+    player.t = 50
+    c.onStateChange(PLAYER_STATE.PLAYING)
+    expect(player.calls).toEqual(['seek 100.000', 'play', 'pause', 'seek 50.000'])
   })
 
   it('frame-steps by 1/fps and pauses first', () => {
