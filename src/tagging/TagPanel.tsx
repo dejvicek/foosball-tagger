@@ -4,6 +4,7 @@ import { formatTime } from '../player/time'
 import { movementOf } from '../stats/movement'
 import { statusText, type Draft, type DraftEvent } from './draft'
 import { TAG_GROUPS } from './keymap'
+import { isFoul } from './possessions'
 import { KEY } from './keyLabels'
 import { keyLabel } from '../player/keyboardLayout'
 import { useKeyboardLayout } from '../player/useKeyboardLayout'
@@ -27,6 +28,7 @@ function Timer({ draft, controller }: { draft: Draft; controller: PlayerControll
       const v = start_s == null ? null : (shot_s ?? controller.time()) - start_s
       ref.current.textContent = (v == null ? 0 : Math.max(0, v)).toFixed(1)
       ref.current.parentElement?.classList.toggle('idle', v == null)
+      ref.current.parentElement?.classList.toggle('foul', isFoul(v))
     }
     const tick = () => {
       render()

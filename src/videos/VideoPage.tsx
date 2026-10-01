@@ -210,8 +210,8 @@ function VideoScreen({
         {' · '}
         <Link to={`/stats?scope=video&video=${video.id}`}>Statistics for this video</Link>
       </p>
-      <div className={cinema ? 'video-grid cinema' : 'video-grid'}>
-        <section aria-label="Player" className="player-col" style={{ '--ar': ar } as CSSProperties}>
+      <div className={cinema ? 'video-grid cinema' : 'video-grid'} style={{ '--ar': ar } as CSSProperties}>
+        <section aria-label="Player" className="player-col">
           <YouTubePlayer youtubeId={video.youtube_id} aspectRatio={ar} controller={controller} />
           <SeekBar controller={controller} marks={marks} />
           <PlayerControls controller={controller} fps={video.fps} />

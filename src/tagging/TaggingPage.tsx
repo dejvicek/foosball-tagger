@@ -253,8 +253,8 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
           {playersLabel(game) ? ` · ${playersLabel(game)}` : ''}
         </span>
       </h2>
-      <div className={cinema ? 'grid cinema' : 'grid'}>
-        <section aria-label="Player" className="player-col" style={{ '--ar': ar } as CSSProperties}>
+      <div className={cinema ? 'grid cinema' : 'grid'} style={{ '--ar': ar } as CSSProperties}>
+        <section aria-label="Player" className="player-col">
           <YouTubePlayer youtubeId={video.youtube_id} aspectRatio={ar} controller={controller} />
           <PlayerControls controller={controller} fps={video.fps} />
           <Timeline range={shownRange} possessions={numbered} draft={draft} controller={controller} onSeek={(t) => controller.seek(t)} />

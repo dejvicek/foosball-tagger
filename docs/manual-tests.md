@@ -103,7 +103,7 @@ Open a game with "Tag →" on the video screen.
 ## Dragging and keyboard layouts (ADR-0022)
 
 1. **Seek bar drag:** on the video screen, grab the round handle and drag: the handle follows the pointer, the video follows a few times a second, the time shows above the pointer; release lands exactly there. Dragging over the video or past either end still works.
-2. **Timeline drag:** on the tagging screen, drag along the green strip: same behaviour, limited to the game. A plain click on a possession still jumps 1 s before it; a drag that starts on a possession does not.
+2. **Timeline drag:** on the tagging screen, drag along the timeline strip: same behaviour, limited to the game. A plain click on a possession still jumps 1 s before it; a drag that starts on a possession does not.
 3. **Czech/Slovak keyboard:** switch the OS keyboard to Czech (QWERTZ). The bottom-left letter key (labelled Y) selects Pin and the Shot type buttons show "Y"; the number row keys (+ ě š č ř) select setup, save and Proper; ⌘Z / Ctrl+Z still undoes with the key labelled Z.
 4. In Chrome the labels are right from the start; in Firefox/Safari they correct themselves after the first press of a key if the browser language is not Czech/Slovak.
 
@@ -113,3 +113,9 @@ Open a game with "Tag →" on the video screen.
 2. **Window sizes:** in cinema mode, narrow the window and make it short → no sideways scroll, the video shrinks to fit.
 3. **Side:** a new video asks "Which side of the frame do you stand on?"; the game rows say "My side". Check existing games show the side you stand on.
 4. **Doubles:** switch a game to Doubles, enter teammate and both opponents → the tagging header shows "with … · vs … & …"; the statistics Opponent filter lists both opponents and either one selects the game.
+
+## Timeline colors, fouls, player width (ADR-0029)
+
+1. **Colors:** on the tagging screen the strip is dark grey; goals are solid green, no goals red stripes, no shots grey dots, untagged white stripes. Same in dark mode.
+2. **Foul:** tag a possession longer than 15 s (R, wait, F, G, Enter). While it runs, the timer turns red and reads FOUL after 15.0 s, and the running segment grows orange-black stripes past 15 s. Saved, the segment keeps its outcome color with the striped tail, the hover text says "foul, 17.3 s", and the log's Length cell reads "17.3 s · foul" in red. A possession of exactly 15.0 s is not a foul. The tags are saved as entered.
+3. **Width:** on a wide monitor (e.g. 23", 1920×1080), in default and cinema view, the left and right edges of the video, the seek bar / timeline and the player controls line up on both the video and the tagging screen; the tag panel sits right next to the video. Narrow the window below 960 px: the panel stacks under the player and the edges still line up.

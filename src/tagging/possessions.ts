@@ -17,6 +17,14 @@ export function possessionLength(p: Pick<Possession, 'start_s' | 'shot_s'>): num
   return p.start_s != null && p.shot_s != null ? p.shot_s - p.start_s : null
 }
 
+/** The rule limit for one possession on the 3-bar; longer is a foul (ADR-0029). */
+export const FOUL_LIMIT_S = 15
+
+/** A foul: held longer than the limit. Shown, never stored; the tags stay as entered (ADR-0029). */
+export function isFoul(length: number | null): boolean {
+  return length != null && length > FOUL_LIMIT_S
+}
+
 export type Outcome = 'goal' | 'nogoal' | 'noshot' | 'untagged' | 'candidate'
 
 /** Timeline class (TAG-6). Unreviewed candidates get their own style whatever their tags. */
@@ -37,10 +45,14 @@ export const OUTCOME_LABEL: Record<Outcome | 'draft', string> = {
   draft: 'Current possession',
 }
 
+export const FOUL_LABEL = `Foul (over ${FOUL_LIMIT_S} s)`
+
 /** Hover text: number and tags (TAG-6). */
 export function describe(p: Possession, n: number): string {
   const tags = [p.setup, p.shot_type, p.hole, p.shot_direction, p.result, p.execution].filter(Boolean).join(' · ')
-  return `#${n}${tags ? ` ${tags}` : ' (no tags)'}${p.review_status === 'unreviewed' ? ' — unreviewed' : ''}`
+  const len = possessionLength(p)
+  const foul = isFoul(len) ? ` — foul, ${(len as number).toFixed(1)} s` : ''
+  return `#${n}${tags ? ` ${tags}` : ' (no tags)'}${foul}${p.review_status === 'unreviewed' ? ' — unreviewed' : ''}`
 }
 
 /** The possession whose range contains `t` (for the log highlight, TAG-7). */

@@ -292,3 +292,14 @@ Format: context → decision → consequences. Keep each record short.
   - **Movement:** the derived Pull / Straight / Push of ADR-0026 is called Movement (`movementOf`, `src/stats/movement.ts`). The tag panel shows it read-only under Hole; By shot groups by shot type · movement · hole. EXP-1 will name its column `movement` and add `shot_direction`.
   - **Statistics:** a "By shot direction" table after "By hole": attempts, conversion and proper rate for Straight and Z/7, over shots with a shot direction.
 - **Consequences:** Old shots read Straight even where they were Z/7; re-tag those in the log. Apply migration 0004 together with 0003 before deploying the frontend.
+
+## ADR-0029 · Timeline colors; fouls over 15 s; player column as wide as the video
+
+- **Status:** Accepted · 2026-10-02 (requested by the user; colors and foul display chosen by Claude) · Amends TAG-3, TAG-6, TAG-7
+- **Context:** On the timeline, goals were white and no goals red on a green (felt) strip, so green could not mean Goal. The rules allow at most 15 s per possession on the 3-bar; longer is a foul, which the user wants to see (and be discouraged by) without changing how it is tagged. On a wide monitor the video was capped at 70 % of the window height and centered, while the timeline and controls under it spanned the whole column, so they were wider than the video.
+- **Decision:**
+  - **Colors:** the strip is a neutral dark grey (`--strip`); Goal is solid green (`--goal`), No goal stays red stripes, No shot grey dots, Untagged white stripes, the current possession wood, candidates a yellow dashed outline, the playhead yellow. Colors are CSS tokens with dark-mode values.
+  - **Foul:** a possession whose length (shot − start) is over 15 s (`FOUL_LIMIT_S`, `isFoul` in `src/tagging/possessions.ts`; exactly 15 s is legal) is a foul, whatever its tags, including No shot. It is derived, never stored, and the tags are saved as entered. It shows as orange-and-black warning stripes on the part of the timeline segment past 15 s (live for the running draft), a red timer reading FOUL in the tag panel, "foul, N s" in the segment's hover text and "N s · foul" in red in the log's Length cell. The legend lists it. Statistics are unchanged (STA-8 already has a "15 s or more" bucket).
+  - **Width:** the player column of the video and tagging screens is exactly as wide as the video (70 % of the window height × aspect ratio in the default view, the cinema heights of ADR-0025 in cinema mode, never more than the space available), and the grid is centered, so the seek bar or timeline and the controls line up with the video's edges and the side panel sits next to it.
+- **Consequences:** On a short, wide window there is empty space on both sides of the player + panel rather than between them. Fouls are not counted anywhere in the statistics; that would be a separate decision.
+

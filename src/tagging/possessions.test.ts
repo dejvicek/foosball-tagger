@@ -1,6 +1,6 @@
 import type { Possession } from '../data/types'
 import { emptyDraft } from './draft'
-import { describe as describeP, fromDraft, outcomeOf, possessionAt, possessionLength, sortPossessions } from './possessions'
+import { describe as describeP, fromDraft, isFoul, outcomeOf, possessionAt, possessionLength, sortPossessions } from './possessions'
 
 let seq = 0
 function p(start_s: number | null, shot_s: number | null, extra: Partial<Possession> = {}): Possession {
@@ -23,6 +23,13 @@ describe('possession helpers', () => {
   it('derives length only with both times', () => {
     expect(possessionLength(p(10, 14.5))).toBe(4.5)
     expect(possessionLength(p(10, null))).toBeNull()
+  })
+
+  it('flags possessions over 15 s as fouls, keeping 15 s itself legal (ADR-0029)', () => {
+    expect(isFoul(possessionLength(p(10, 25)))).toBe(false)
+    expect(isFoul(possessionLength(p(10, 25.1)))).toBe(true)
+    expect(isFoul(possessionLength(p(10, null)))).toBe(false)
+    expect(describeP(p(10, 30, { result: 'Goal' }), 1)).toContain('foul, 20.0 s')
   })
 
   it('classifies outcomes for the timeline (TAG-6)', () => {

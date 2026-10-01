@@ -3,7 +3,7 @@ import { EXECUTIONS, HOLES, RESULTS, SETUPS, SHOT_DIRECTIONS, SHOT_TYPES, type P
 import type { PlayerController } from '../player/controller'
 import { formatTime } from '../player/time'
 import type { TagField } from './draft'
-import { anchor, possessionAt, possessionLength } from './possessions'
+import { FOUL_LIMIT_S, anchor, isFoul, possessionAt, possessionLength } from './possessions'
 import { KEY } from './keyLabels'
 import { useKeyboardLayout } from '../player/useKeyboardLayout'
 
@@ -140,7 +140,13 @@ export function PossessionLog({ rows, controller, onSeek, onChange, onSetTime, o
                     </button>
                   </span>
                 </td>
-                <td className="num">{len != null ? `${len.toFixed(1)} s` : '–'}</td>
+                {isFoul(len) ? (
+                  <td className="num foul" title={`Foul: over ${FOUL_LIMIT_S} s`}>
+                    {(len as number).toFixed(1)} s · foul
+                  </td>
+                ) : (
+                  <td className="num">{len != null ? `${len.toFixed(1)} s` : '–'}</td>
+                )}
                 {COLUMNS.map((c) => (
                   <td key={c.field}>
                     <select

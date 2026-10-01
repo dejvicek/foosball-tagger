@@ -3,6 +3,8 @@
   --bg: #edf0ee; --panel: #ffffff; --ink: #18201c; --muted: #5b6862; --line: #d2d9d4;
   --felt: #2e6b45; --on-felt: #ffffff; --wood: #a8703c; --miss: #b23e2c; --key: #e4e9e6;
   --stage: #0f1512; --focus: #2b5da8; --noshot: #9aa5a0;
+  /* Timeline strip (ADR-0029): neutral track so green can mean Goal. */
+  --strip: #2c3431; --goal: #34c26a; --nogoal: #d9452f; --nogoal-dark: #8a2416; --foul: #ff9f1a;
   --sans: "Barlow", "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
   --cond: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", "Segoe UI", system-ui, sans-serif;
   color-scheme: light;
@@ -12,6 +14,7 @@
     --bg: #131916; --panel: #1b2320; --ink: #e5ece8; --muted: #98a59f; --line: #2d3833;
     --felt: #4f9c69; --on-felt: #0d1410; --wood: #cf9660; --miss: #e2735f; --key: #27312c;
     --stage: #080b09; --focus: #7fa7e8; --noshot: #6a7671;
+    --strip: #29312e; --goal: #4fd17f; --nogoal: #e5553e; --nogoal-dark: #8a2416; --foul: #ffa733;
     color-scheme: dark;
   }
 }
@@ -65,8 +68,14 @@ td.title-cell { white-space: normal; min-width: 200px; }
 .crumbs { margin: 0 0 6px; }
 .video-page > h2 { margin: 0; }
 .meta { margin: 2px 0 12px; }
-.video-grid { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; align-items: start; }
+.video-grid { display: grid; grid-template-columns: minmax(0, var(--player-w)) 380px; justify-content: center; gap: 16px; align-items: start; }
 @media (max-width: 960px) { .video-grid { grid-template-columns: minmax(0, 1fr); } }
+/* The player column is exactly as wide as the video, so the seek bar, timeline and
+   controls under it line up with its edges (ADR-0029). --ar is set on the grid. */
+.video-grid, .grid { --player-w: calc(70vh * var(--ar, 1.7778)); }
+.video-grid.cinema { --player-w: calc((100vh - var(--below, 120px)) * var(--ar, 1.7778)); }
+.grid.cinema { --player-w: calc((100vh - var(--below, 150px)) * var(--ar, 1.7778)); }
+.player-col { width: 100%; max-width: var(--player-w); margin-inline: auto; }
 /* Cinema mode (ADR-0025): only the player and its panel are left, spanning the
    viewport; the video grows to the window height less the controls under it.
    The sync status stays reachable in the corner. */
@@ -76,12 +85,10 @@ td.title-cell { white-space: normal; min-width: 200px; }
 [data-cinema] .crumbs, [data-cinema] .notice,
 [data-cinema] .video-page > h2, [data-cinema] .video-page > .meta, [data-cinema] .video-lower, [data-cinema] .player-col > .hint,
 [data-cinema] .tagging-page > h2, [data-cinema] .tagging-page > .lower { display: none; }
-.video-grid.cinema .stage { max-width: calc((100vh - var(--below, 120px)) * var(--ar, 1.7778)); }
-.grid.cinema .stage { max-width: calc((100vh - var(--below, 150px)) * var(--ar, 1.7778)); }
 .ctl .cinema-btn[aria-pressed="true"] { border-color: var(--focus); }
 .video-side .card + .card { margin-top: 12px; }
 
-.stage { position: relative; width: 100%; max-width: calc(70vh * var(--ar, 1.7778)); margin: 0 auto; background: var(--stage); border-radius: 8px; overflow: hidden; }
+.stage { position: relative; width: 100%; background: var(--stage); border-radius: 8px; overflow: hidden; }
 .stage-host, .stage-host > iframe, .stage-host > div { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .stage-error { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; gap: 4px; padding: 20px; background: #080b09; color: #e5ece8; text-align: center; }
 .stage-error p { margin: 0 auto; max-width: 52ch; }
@@ -162,7 +169,7 @@ kbd { font-family: var(--sans); font-size: 11px; font-weight: 600; min-width: 18
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .tagging-page > h2 { margin: 0 0 12px; }
 .game-meta { font-family: var(--sans); font-size: 15px; font-weight: 400; }
-.grid { display: grid; grid-template-columns: minmax(0, 1fr) 350px; gap: 16px; align-items: start; }
+.grid { display: grid; grid-template-columns: minmax(0, var(--player-w)) 350px; justify-content: center; gap: 16px; align-items: start; }
 @media (max-width: 960px) { .grid { grid-template-columns: minmax(0, 1fr); } }
 .lower { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: 16px; margin-top: 16px; align-items: start; }
 @media (max-width: 1100px) { .lower { grid-template-columns: minmax(0, 1fr); } }
@@ -173,6 +180,8 @@ kbd { font-family: var(--sans); font-size: 11px; font-weight: 600; min-width: 18
 .timer .big { font-family: var(--cond); font-weight: 700; font-size: 64px; line-height: 0.9; font-variant-numeric: tabular-nums; color: var(--wood); }
 .timer .big small { font-size: 26px; font-weight: 600; margin-left: 2px; }
 .timer .big.idle { color: var(--line); }
+.timer .big.foul { color: var(--miss); }
+.timer .big.foul::after { content: "Foul"; margin-left: 8px; font-size: 22px; letter-spacing: 0.04em; text-transform: uppercase; }
 .timer .se { font-size: 13px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
 .timer .status { grid-column: 1 / -1; font-size: 14px; margin: 8px 0 0; min-height: 2.9em; }
 .group { margin-bottom: 10px; }
@@ -190,16 +199,21 @@ kbd { font-family: var(--sans); font-size: 11px; font-weight: 600; min-width: 18
 .timeline { position: relative; margin-top: 10px; }
 .strip { touch-action: none; }
 .strip-tip { position: absolute; z-index: 5; top: -22px; transform: translateX(-50%); background: var(--ink); color: var(--bg); font-size: 12px; font-variant-numeric: tabular-nums; padding: 2px 6px; border-radius: 4px; white-space: nowrap; pointer-events: none; }
-.strip { position: relative; height: 34px; border-radius: 6px; background: var(--felt); cursor: pointer; overflow: hidden; }
+.strip { position: relative; height: 34px; border-radius: 6px; background: var(--strip); cursor: pointer; overflow: hidden; }
 .strip-bg { position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 calc(12.5% - 1px), rgba(255, 255, 255, 0.14) calc(12.5% - 1px) 12.5%); }
 .seg { position: absolute; top: 6px; bottom: 6px; min-width: 4px; margin: 0; padding: 0; border: 0; border-radius: 2px; cursor: pointer; }
 .seg:hover, .seg:focus-visible { outline: 2px solid #ffd24a; outline-offset: 1px; }
-.seg.goal, .swatch.goal { background: #f4f7f5; }
-.seg.nogoal, .swatch.nogoal { background: repeating-linear-gradient(135deg, var(--miss) 0 4px, #7a2417 4px 6px); }
+.seg.goal, .swatch.goal { background: var(--goal); }
+.seg.nogoal, .swatch.nogoal { background: repeating-linear-gradient(135deg, var(--nogoal) 0 4px, var(--nogoal-dark) 4px 6px); }
 .seg.noshot, .swatch.noshot { background: radial-gradient(circle, #fff 1px, transparent 1.5px) 0 0 / 5px 5px, var(--noshot); top: 11px; bottom: 11px; }
 .seg.untagged, .swatch.untagged { background: repeating-linear-gradient(45deg, #fff 0 3px, rgba(255, 255, 255, 0.35) 3px 6px); }
 .seg.candidate, .swatch.candidate { background: transparent; outline: 2px dashed #ffd24a; outline-offset: -2px; }
 .seg.draft, .swatch.draft { background: var(--wood); box-shadow: inset 0 0 0 2px #fff; pointer-events: none; }
+/* Foul (ADR-0029): the part of a possession past 15 s, in warning-tape stripes. */
+.seg-foul, .swatch.foul { background: repeating-linear-gradient(135deg, var(--foul) 0 4px, #1b1b1b 4px 7px); }
+.seg-foul { position: absolute; top: -3px; bottom: -3px; right: 0; border-radius: 0 2px 2px 0; pointer-events: none; }
+.seg.draft .seg-foul { display: none; }
+.seg.draft.foul .seg-foul { display: block; }
 .playhead { position: absolute; top: 0; bottom: 0; width: 3px; margin-left: -1.5px; background: #ffd24a; pointer-events: none; }
 .playhead::before { content: ""; position: absolute; top: -1px; left: 50%; width: 11px; height: 11px; margin-left: -5.5px; border-radius: 50%; background: #ffd24a; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4); }
 .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; font-size: 13px; color: var(--muted); }
@@ -217,6 +231,7 @@ table.log td, table.log th { padding: 5px 6px; }
 .time-cell { display: inline-flex; align-items: center; gap: 4px; }
 .now { border: 0; background: none; cursor: pointer; color: var(--muted); padding: 0 2px; font-size: 14px; }
 .now:hover { color: var(--ink); }
+.log td.foul { color: var(--miss); font-weight: 600; }
 .del { border: 0; background: none; cursor: pointer; color: var(--muted); font-size: 18px; line-height: 1; padding: 0 4px; }
 .del:hover { color: var(--miss); }
 .del.armed { font-size: 12px; font-weight: 600; color: #fff; background: var(--miss); border-radius: 4px; padding: 3px 6px; }
