@@ -344,3 +344,11 @@ Format: context → decision → consequences. Keep each record short.
 - **Context:** With the Undo button gone (ADR-0033), the user found the ⌘Z / Ctrl+Z shortcut alone useless.
 - **Decision:** The shortcut goes too. The tagging screen leaves ⌘ / Ctrl chords to the browser; inside a text field ⌘Z still undoes typing. A possession is deleted from the log, with its confirmation.
 - **Consequences:** There is no single-step undo (the PRD's U key); a stray save is removed from the log.
+
+## ADR-0033 · Setup keys also follow the side
+
+- **Status:** Accepted · 2026-10-02 (requested by the user) · Amends ADR-0031
+- **Context:** ADR-0031 mirrored only the hole keys. Where the ball sits on the 3-bar is upside down in the video too when I stand on the right.
+- **Decision:** On the right, Setup is mirrored the same way: A Push side, S Middle, D Pull side, and the panel buttons and keyboard map follow that order. On the left it is unchanged (A Pull side, S Middle, D Push side). Stored values are unchanged. The other fields keep their keys.
+- **Consequences:** For right-side games A and D swap meaning compared with left-side games.
+

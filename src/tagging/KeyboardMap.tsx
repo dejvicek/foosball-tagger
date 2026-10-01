@@ -16,11 +16,13 @@ const f = (k: string, label: string): Cap => ({ k, label, kind: 'field' })
 const m = (k: string, label: string): Cap => ({ k, label, kind: 'moment' })
 const v = (k: string, label: string): Cap => ({ k, label, kind: 'verdict' })
 
-/** The left-hand grid, as on the keyboard (ADR-0026); the hole row follows my side (ADR-0031). */
+const options = (side: Side, field: 'hole' | 'setup') => tagGroups(side).find((g) => g.field === field)?.options ?? []
+
+/** The left-hand grid, as on the keyboard (ADR-0026); the hole and setup rows follow my side (ADR-0031, ADR-0033). */
 const rows = (side: Side): { name: string; caps: Cap[] }[] => [
-  { name: 'Hole', caps: (tagGroups(side).find((g) => g.field === 'hole')?.options ?? []).map((o) => f(o.code, o.value)) },
+  { name: 'Hole', caps: options(side, 'hole').map((o) => f(o.code, o.value)) },
   { name: 'Shot type', caps: [f('KeyQ', 'Pin'), f('KeyW', 'Pull'), f('KeyE', 'Other'), m('KeyR', 'Ball set')] },
-  { name: 'Setup', caps: [f('KeyA', 'Pull side'), f('KeyS', 'Middle'), f('KeyD', 'Push side'), m('KeyF', 'Shot'), v('KeyG', 'Goal')] },
+  { name: 'Setup', caps: [...options(side, 'setup').map((o) => f(o.code, o.value)), m('KeyF', 'Shot'), v('KeyG', 'Goal')] },
   { name: 'Execution · shot dir.', caps: [f('KeyZ', 'Proper'), f('KeyX', 'Misexecuted'), f('KeyC', 'Straight ⇄ Z'), m('KeyV', 'No shot'), v('KeyB', 'No goal')] },
 ]
 
@@ -38,7 +40,7 @@ export function KeyboardMap({ side }: { side: Side }) {
       <p className="keymap-lead">
         Keys go by position, so they sit in the same place on any keyboard layout; the labels show your keyboard.
         Left hand tags; each row is one field, and pull → push options run <b>left to right</b>
-        {side === 'right' ? <>, except the holes: standing on the right, the goal is upside down in the video, so they run <b>push → pull</b></> : null}. The index
+        {side === 'right' ? <>, except hole and setup: standing on the right, the table is upside down in the video, so they run <b>push → pull</b></> : null}. The index
         finger marks the moments, G and B the result.
       </p>
       <div className="keymap-grid" role="table" aria-label="Left-hand tagging keys">

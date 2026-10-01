@@ -15,7 +15,7 @@ export function Help({ side }: { side: Side }) {
           <dt>Shot type</dt>
           <dd>Shot family: Pin, Pull, Other, or No shot.</dd>
           <dt>Setup</dt>
-          <dd>Where the ball sits when the possession starts: Pull side, Middle, Push side. Resets to Middle after each save.</dd>
+          <dd>Where the ball sits when the possession starts: Pull side, Middle, Push side. Resets to Middle after each save. Like the holes, A S D run the other way when you stand on the right.</dd>
           <dt>Hole</dt>
           <dd>Where the ball crossed or was aimed at, seen from the shooter: Pull long, Pull short, Middle, Push short, Push long. Keys 1–5 follow the goal as it looks in the video, so they run the other way when you stand on the right.</dd>
           <dt>Movement</dt>

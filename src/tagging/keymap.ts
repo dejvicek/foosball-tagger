@@ -2,8 +2,8 @@
 // hand, so the right hand can stay on the mouse or on the player keys:
 //
 //   1 2 3 4 5  Hole       pull long · pull short · middle · push short · push long
-//                         (reversed when I stand on the right, so the keys match the
-//                         goal as it appears in the video, ADR-0031)
+//                         (holes and setup reversed when I stand on the right, so the
+//                         keys match the table as it appears in the video, ADR-0031, ADR-0033)
 //   Q W E      Shot type  Pin · Pull · Other          │ R Ball set │
 //   A S D      Setup      pull side · middle · push   │ F Shot     │ G Goal
 //   Z X        Execution  Proper · Misexecuted        │ V No shot  │ B No goal
@@ -93,17 +93,21 @@ const LEFT_GROUPS: TagGroup[] = [
   },
 ]
 
-const HOLE_CODES = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5']
+/** Fields laid out as on the table, which reads the other way round when I stand on the right. */
+const MIRRORED: TagField[] = ['hole', 'setup']
 
 /**
- * The groups for the side I stand on. On the right the goal is upside down in the
- * video, so the holes run push long → pull long on 1–5 and in the panel (ADR-0031).
+ * The groups for the side I stand on. On the right the table is upside down in the
+ * video, so holes (1–5) and setup (A S D) run push → pull, on the keys and in the
+ * panel (ADR-0031, ADR-0033).
  */
 export function tagGroups(side: Side): TagGroup[] {
   if (side === 'left') return LEFT_GROUPS
-  return LEFT_GROUPS.map((g) =>
-    g.field === 'hole' ? { ...g, options: [...g.options].reverse().map((o, i) => ({ ...o, code: HOLE_CODES[i] as string })) } : g,
-  )
+  return LEFT_GROUPS.map((g) => {
+    if (!MIRRORED.includes(g.field)) return g
+    const codes = g.options.map((o) => o.code)
+    return { ...g, options: [...g.options].reverse().map((o, i) => ({ ...o, code: codes[i] as string })) }
+  })
 }
 
 /** Physical keys of the non-field actions. */
