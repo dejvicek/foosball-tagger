@@ -96,7 +96,7 @@ Open a game with "Tag →" on the video screen.
 
 ## Cinema mode and players (ADR-0023)
 
-1. **Cinema:** on the video screen click Cinema → the video spans the window width (video and controls still fit the window height) and the games panel moves below. Open a game's tagging screen → still in cinema mode, tag panel below the timeline; keys work as before. Default view restores the side panel; reload keeps the choice.
+1. **Cinema (ADR-0024):** on the video screen click Cinema → the video and the games panel beside it span the whole window width, and the video gets taller (video and controls still fit the window height). Open a game's tagging screen → still in cinema mode, the tag panel stays beside the video; keys work as before. Default view restores the side panel; reload keeps the choice.
 2. **Window sizes:** in cinema mode, narrow the window and make it short → no sideways scroll, the video shrinks to fit.
 3. **Side:** a new video asks "Which side of the frame do you stand on?"; the game rows say "My side". Check existing games show the side you stand on.
 4. **Doubles:** switch a game to Doubles, enter teammate and both opponents → the tagging header shows "with … · vs … & …"; the statistics Opponent filter lists both opponents and either one selects the game.

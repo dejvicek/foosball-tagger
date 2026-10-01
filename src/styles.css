@@ -67,11 +67,10 @@ td.title-cell { white-space: normal; min-width: 200px; }
 .meta { margin: 2px 0 12px; }
 .video-grid { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; align-items: start; }
 @media (max-width: 960px) { .video-grid { grid-template-columns: minmax(0, 1fr); } }
-/* Cinema mode (ADR-0023): the player column spans the viewport, sized so video and
-   controls fit its height; the side panel moves below. */
-.video-grid.cinema, .grid.cinema { grid-template-columns: minmax(0, 1fr); }
-.cinema > .player-col { --cw: min(100vw - 32px, (100vh - 190px) * var(--ar, 1.7778)); width: var(--cw); margin-left: calc((100% - var(--cw)) / 2); }
-.cinema .stage { max-width: none; }
+/* Cinema mode (ADR-0024): the player and its side panel span the viewport instead of
+   the page width, and the video may grow up to the window height less the controls. */
+.video-grid.cinema, .grid.cinema { --cw: calc(100vw - 32px); width: var(--cw); margin-left: calc((100% - var(--cw)) / 2); }
+.cinema .stage { max-width: calc((100vh - 190px) * var(--ar, 1.7778)); }
 .ctl .cinema-btn[aria-pressed="true"] { border-color: var(--focus); }
 .video-side .card + .card { margin-top: 12px; }
 
