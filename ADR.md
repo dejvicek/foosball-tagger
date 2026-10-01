@@ -330,3 +330,10 @@ Format: context → decision → consequences. Keep each record short.
 - **Decision:** It moves into the player column, directly under the timeline and beside the tag panel. It stays out of the panel itself because the keyboard map (about 500 px) is wider than the panel (350 px). Cinema mode hides it, keeping that view to the player and its panel (ADR-0025).
 - **Consequences:** Opened, it pushes the game numbers and log further down the page.
 
+
+## ADR-0033 · No Undo button in the tag panel
+
+- **Status:** Accepted · 2026-10-02 (requested by the user) · Amends ADR-0021
+- **Context:** The tag panel had an Undo button next to Save and Clear; a click deletes the last saved possession, which is easy to hit by accident.
+- **Decision:** The button goes. Undo stays on the keyboard (⌘Z / Ctrl+Z), as listed in "How to tag". Deleting any possession is still possible from the log.
+- **Consequences:** Undo is keyboard-only.

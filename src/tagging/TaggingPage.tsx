@@ -290,7 +290,7 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
           />
           <Help side={game.my_side} />
         </section>
-        <TagPanel draft={editing?.draft ?? draft} controller={controller} onEvent={dispatch} onUndo={undo} editing={editing ? numberOf(editing.id) : undefined} side={game.my_side} />
+        <TagPanel draft={editing?.draft ?? draft} controller={controller} onEvent={dispatch} editing={editing ? numberOf(editing.id) : undefined} side={game.my_side} />
       </div>
       <div className="lower">
         <section className="card" aria-labelledby="stats-heading">

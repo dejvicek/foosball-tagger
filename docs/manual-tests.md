@@ -83,7 +83,7 @@ Open a game with "Tag →" on the video screen.
 1. **Mouse + left hand:** tag a whole possession with the left hand on 1–5 / Q–R / A–G / Z–B, seeking with the mouse on the timeline; save with R (next possession) or Enter.
 2. **Keyboard only, two hands:** K plays/pauses, J / L step 1 s (Shift 5 s), U / O step frames, Enter saves, Backspace clears the draft, while the left hand tags.
 3. **Panel order:** Ball set / Shot / No shot, then Shot type (Q W E), Setup (A S D), Hole (1–5, pull long → push long), Execution (Z X), Result (G B). T and C do nothing.
-4. **Undo:** ⌘Z (Mac) / Ctrl+Z (Windows) deletes the last save; inside a text field ⌘Z undoes typing instead. Backspace no longer undoes.
+4. **Undo:** the tag panel has no Undo button (ADR-0033). ⌘Z (Mac) / Ctrl+Z (Windows) deletes the last save; inside a text field ⌘Z undoes typing instead. Backspace no longer undoes.
 5. **Help:** "How to tag" shows the keyboard map; the buttons show the same keys.
 6. On the video screen, J / K / L / U / O work too; B / E still mark games.
 

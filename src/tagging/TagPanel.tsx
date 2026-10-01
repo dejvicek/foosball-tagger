@@ -14,7 +14,6 @@ interface Props {
   draft: Draft
   controller: PlayerController
   onEvent: (event: DraftEvent) => void
-  onUndo: () => void
   /** Set while a saved possession is open for editing, e.g. "possession 3" (ADR-0030). */
   editing?: string | undefined
   /** The side of the frame I stand on; the hole keys follow it (ADR-0031). */
@@ -53,7 +52,7 @@ function Timer({ draft, controller }: { draft: Draft; controller: PlayerControll
 }
 
 /** The tag panel (TAG-1..3). Every button is also a key; none takes focus. */
-export function TagPanel({ draft, controller, onEvent, onUndo, editing, side }: Props) {
+export function TagPanel({ draft, controller, onEvent, editing, side }: Props) {
   useKeyboardLayout()
   const noShot = draft.shot_type === 'No shot'
   return (
@@ -116,9 +115,6 @@ export function TagPanel({ draft, controller, onEvent, onUndo, editing, side }: 
         </button>
         <button className="btn nf" type="button" onClick={() => onEvent({ kind: 'clear' })}>
           {editing ? 'Cancel' : 'Clear'} <kbd>{editing ? 'Esc' : KEY.clear}</kbd>
-        </button>
-        <button className="btn nf" type="button" onClick={onUndo} title="Delete the last possession saved on this page">
-          Undo <kbd>{KEY.undo}</kbd>
         </button>
       </div>
     </aside>
