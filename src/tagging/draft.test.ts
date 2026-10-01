@@ -1,4 +1,4 @@
-import { emptyDraft, reduce, statusText, type Draft, type DraftContext, type DraftEvent } from './draft'
+import { emptyDraft, reduce, reduceEdit, statusText, type Draft, type DraftContext, type DraftEvent } from './draft'
 
 const ctx = (t: number, extra: Partial<DraftContext> = {}): DraftContext => ({
   t,
@@ -122,11 +122,11 @@ describe('draft state machine', () => {
     expect(run([[S, 70], [ENTER, 71]]).saved).toEqual([expect.objectContaining({ start_s: 70, shot_s: null, result: null })])
   })
 
-  it('starts at Straight; C flips Straight ⇄ Z/7; No shot blanks it (ADR-0028)', () => {
+  it('starts at Straight; C flips Straight ⇄ Z; No shot blanks it (ADR-0028)', () => {
     const T = { kind: 'toggleShotDirection' } as const
-    expect(run([[T, 70]]).draft.shot_direction).toBe('Z/7')
+    expect(run([[T, 70]]).draft.shot_direction).toBe('Z')
     expect(run([[T, 70], [T, 70]]).draft.shot_direction).toBe('Straight')
-    expect(run([[T, 70]], { ...emptyDraft(), shot_direction: null }).draft.shot_direction).toBe('Z/7')
+    expect(run([[T, 70]], { ...emptyDraft(), shot_direction: null }).draft.shot_direction).toBe('Z')
     expect(run([[S, 70], [N, 72]]).saved[0]?.shot_direction).toBeNull()
   })
 
@@ -152,5 +152,29 @@ describe('statusText (TAG-3)', () => {
     expect(
       statusText({ start_s: 1, shot_s: 2, setup: 'Middle', shot_type: 'Pin', hole: 'Middle', shot_direction: 'Straight', result: 'Goal', execution: 'Proper' }),
     ).toMatch(/All tagged/)
+  })
+})
+
+describe('reduceEdit (ADR-0030)', () => {
+  const saved = { ...emptyDraft(), start_s: 70, shot_s: 75, hole: 'Middle' as const, result: 'Goal' as const }
+
+  it('tags like a draft; Enter returns the edited values, Esc cancels', () => {
+    const d = reduceEdit(saved, { kind: 'tag', field: 'result', value: 'No goal' }, ctx(80)).draft
+    expect(reduceEdit(d, { kind: 'save' }, ctx(80)).save).toEqual({ ...saved, result: 'No goal' })
+    expect(reduceEdit(d, { kind: 'clear' }, ctx(80)).cancel).toBe(true)
+  })
+
+  it('Ball set and Shot move the start and shot, within the game and in order', () => {
+    expect(reduceEdit(saved, { kind: 'ballSet' }, ctx(72)).draft).toMatchObject({ start_s: 72, shot_s: 75 })
+    expect(reduceEdit(saved, { kind: 'shot' }, ctx(77)).draft).toMatchObject({ start_s: 70, shot_s: 77 })
+    expect(reduceEdit(saved, { kind: 'ballSet' }, ctx(76)).error).toMatch(/can’t be after the shot/)
+    expect(reduceEdit(saved, { kind: 'shot' }, ctx(69)).error).toMatch(/can’t be before the start/)
+    expect(reduceEdit(saved, { kind: 'shot' }, ctx(301)).error).toMatch(/outside Game 2/)
+  })
+
+  it('No shot blanks the shot fields without saving or moving the times', () => {
+    const out = reduceEdit(saved, { kind: 'noShot' }, ctx(90))
+    expect(out.save).toBeUndefined()
+    expect(out.draft).toMatchObject({ start_s: 70, shot_s: 75, shot_type: 'No shot', hole: null, result: null, shot_direction: null })
   })
 })

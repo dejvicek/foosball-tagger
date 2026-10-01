@@ -13,4 +13,9 @@ describe('loadDraft', () => {
     localStorage.setItem('fbtag:draft:v1:g1', JSON.stringify({ ...emptyDraft(), hole: 'Push short' }))
     expect(loadDraft('g1').hole).toBe('Push short')
   })
+
+  it('reads a kept Z/7 as Z (ADR-0030)', () => {
+    localStorage.setItem('fbtag:draft:v1:g1', JSON.stringify({ ...emptyDraft(), shot_direction: 'Z/7' }))
+    expect(loadDraft('g1').shot_direction).toBe('Z')
+  })
 })

@@ -23,10 +23,14 @@ export function Help() {
             side (a pull-side setup into Pull long or Pull short), otherwise Pull or Push.
           </dd>
           <dt>Shot direction</dt>
-          <dd>Path of the shot: Straight or Z/7. Starts at Straight; C flips it.</dd>
+          <dd>Path of the shot: Straight or Z. Starts at Straight; C flips it.</dd>
           <dt>Execution</dt>
           <dd>Proper or Misexecuted, judged against the criteria you set for yourself before tagging.</dd>
         </dl>
+        <p>
+          To fix a saved possession, click its row in the log or its segment on the timeline: it opens in the tag panel, where the same keys
+          change it, R and F move its start and shot to the current time, Enter saves the changes and Esc cancels.
+        </p>
         <p>Blank fields stay blank and never count as misses. Keys do nothing while you type in a field; press Esc to leave it.</p>
       </div>
     </details>

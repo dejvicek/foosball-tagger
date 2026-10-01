@@ -19,7 +19,7 @@ const ROWS: { name: string; caps: Cap[] }[] = [
   { name: 'Hole', caps: [f('Digit1', 'Pull long'), f('Digit2', 'Pull short'), f('Digit3', 'Middle'), f('Digit4', 'Push short'), f('Digit5', 'Push long')] },
   { name: 'Shot type', caps: [f('KeyQ', 'Pin'), f('KeyW', 'Pull'), f('KeyE', 'Other'), m('KeyR', 'Ball set')] },
   { name: 'Setup', caps: [f('KeyA', 'Pull side'), f('KeyS', 'Middle'), f('KeyD', 'Push side'), m('KeyF', 'Shot'), v('KeyG', 'Goal')] },
-  { name: 'Execution · shot dir.', caps: [f('KeyZ', 'Proper'), f('KeyX', 'Misexecuted'), f('KeyC', 'Straight ⇄ Z/7'), m('KeyV', 'No shot'), v('KeyB', 'No goal')] },
+  { name: 'Execution · shot dir.', caps: [f('KeyZ', 'Proper'), f('KeyX', 'Misexecuted'), f('KeyC', 'Straight ⇄ Z'), m('KeyV', 'No shot'), v('KeyB', 'No goal')] },
 ]
 
 const right = (): [string, string][] => [

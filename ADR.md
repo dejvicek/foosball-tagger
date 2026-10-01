@@ -303,3 +303,16 @@ Format: context → decision → consequences. Keep each record short.
   - **Width:** the player column of the video and tagging screens is exactly as wide as the video (70 % of the window height × aspect ratio in the default view, the cinema heights of ADR-0025 in cinema mode, never more than the space available), and the grid is centered, so the seek bar or timeline and the controls line up with the video's edges and the side panel sits next to it.
 - **Consequences:** On a short, wide window there is empty space on both sides of the player + panel rather than between them. Fouls are not counted anywhere in the statistics; that would be a separate decision.
 
+## ADR-0030 · Edit a saved possession in the tag panel; read-only log; Z/7 renamed Z
+
+- **Status:** Accepted · 2026-10-02 (requested by the user; edit-mode keys, save/cancel and the draft's handling chosen by Claude) · Amends TAG-6, TAG-7, ADR-0028
+- **Context:** The log's inline dropdowns were hard to use and, in Chrome on Windows with the dark theme, their open lists were nearly unreadable (the list takes the select's transparent background, so light text sat on white). The user wants to edit a shot in the tag panel instead, and the Z/7 shot direction to be called Z.
+- **Decision:**
+  - **Open for editing:** clicking a timeline segment or a log row (or its start time) seeks 1 s before the possession, as before, and opens it in the tag panel; clicking the shot time seeks to the shot. The row and the segment are highlighted; the panel shows "Editing possession N" with a blue border.
+  - **Edit mode:** the panel shows the possession's values. Tag keys and buttons change them as for a draft (pressing the selected value blanks it, C flips Straight ⇄ Z). R / F set the start / shot to the current time, refused outside the game or out of order. V marks it No shot, blanking the shot fields, without saving and without moving the times. Changes are held in the panel until **Enter / Save changes**, which writes them through the queue; **Esc / Backspace / Cancel** drops them. Opening another possession drops unsaved changes and says so. Deleting or undoing the open possession closes the edit. Review status is unchanged by an edit.
+  - **The new-possession draft** is set aside while editing (still drawn on the timeline) and comes back afterwards; edit mode is not kept across a reload.
+  - **Log:** read-only. Tag fields are plain text; the ⌖ set-to-current-time buttons are gone (R / F in edit mode replace them). Delete (×, one confirmation) and Confirm / Reject for candidates stay.
+  - **Z:** shot direction values are `Straight`, `Z`. Migration `0005_shot_direction_z.sql` renames stored `Z/7` to `Z` and changes the check constraint; a draft kept in localStorage with Z/7 loads as Z.
+  - **Dropdowns:** `option` elements get explicit `--panel` / `--ink` colors so every open list is readable on Windows.
+- **Consequences:** Editing a field takes a click and Enter instead of one dropdown change. Apply migration 0005 before deploying the frontend, and let pending writes sync first: a pending write still carrying Z/7 would be refused.
+

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { EXECUTIONS, HOLES, RESULTS, SETUPS, SHOT_DIRECTIONS, SHOT_TYPES, type Possession } from '../data/types'
+import type { MouseEvent } from 'react'
+import type { Possession, ReviewStatus } from '../data/types'
 import type { PlayerController } from '../player/controller'
 import { formatTime } from '../player/time'
 import type { TagField } from './draft'
@@ -7,27 +8,27 @@ import { FOUL_LIMIT_S, anchor, isFoul, possessionAt, possessionLength } from './
 import { KEY } from './keyLabels'
 import { useKeyboardLayout } from '../player/useKeyboardLayout'
 
-export type PossessionPatch = Partial<Pick<Possession, TagField | 'start_s' | 'shot_s' | 'review_status'>>
-
 interface Props {
   /** In time order, with their number (null for rejected rows). */
   rows: { p: Possession; n: number | null }[]
   controller: PlayerController
-  onSeek: (t: number) => void
-  onChange: (id: string, patch: PossessionPatch) => void
-  /** Set start or shot to the current player time. */
-  onSetTime: (id: string, field: 'start_s' | 'shot_s') => void
+  /** Open a possession in the tag panel and seek to `t`, if any (ADR-0030). */
+  onSelect: (id: string, t: number | null) => void
+  onReview: (id: string, status: ReviewStatus) => void
   onDelete: (id: string) => void
+  /** The possession open in the tag panel. */
+  editingId: string | null
 }
 
-const COLUMNS: { field: TagField; label: string; options: readonly string[] }[] = [
-  { field: 'shot_type', label: 'Shot type', options: SHOT_TYPES },
-  { field: 'setup', label: 'Setup', options: SETUPS },
-  { field: 'hole', label: 'Hole', options: HOLES },
-  { field: 'shot_direction', label: 'Shot direction', options: SHOT_DIRECTIONS },
-  { field: 'execution', label: 'Execution', options: EXECUTIONS },
-  { field: 'result', label: 'Result', options: RESULTS },
+const COLUMNS: { field: TagField; label: string }[] = [
+  { field: 'shot_type', label: 'Shot type' },
+  { field: 'setup', label: 'Setup' },
+  { field: 'hole', label: 'Hole' },
+  { field: 'shot_direction', label: 'Shot direction' },
+  { field: 'execution', label: 'Execution' },
+  { field: 'result', label: 'Result' },
 ]
+
 
 /** The row under the playhead, updated only when it changes. */
 function useActiveId(rows: Props['rows'], controller: PlayerController): string | null {
@@ -56,8 +57,8 @@ function useActiveId(rows: Props['rows'], controller: PlayerController): string 
   return active
 }
 
-/** Possession log: every field editable inline (TAG-7). */
-export function PossessionLog({ rows, controller, onSeek, onChange, onSetTime, onDelete }: Props) {
+/** Possession log: read-only; click a row to edit it in the tag panel (TAG-7, ADR-0030). */
+export function PossessionLog({ rows, controller, onSelect, onReview, onDelete, editingId }: Props) {
   useKeyboardLayout()
   const active = useActiveId(rows, controller)
   const [armed, setArmed] = useState<string | null>(null)
@@ -108,37 +109,36 @@ export function PossessionLog({ rows, controller, onSeek, onChange, onSetTime, o
             const name = n != null ? `possession ${n}` : 'rejected possession'
             const len = possessionLength(p)
             const a = anchor(p)
-            const classes = [p.id === active ? 'active' : '', p.review_status === 'rejected' ? 'rejected' : '', p.review_status === 'unreviewed' ? 'unreviewed' : '']
+            const classes = ['pick', p.id === active ? 'active' : '', p.id === editingId ? 'editing' : '', p.review_status === 'rejected' ? 'rejected' : '', p.review_status === 'unreviewed' ? 'unreviewed' : '']
             return (
-              <tr key={p.id} className={classes.filter(Boolean).join(' ')}>
+              <tr
+                key={p.id}
+                className={classes.filter(Boolean).join(' ')}
+                aria-selected={p.id === editingId}
+                onClick={(e: MouseEvent) => {
+                  // Buttons in the row do their own thing.
+                  if (!(e.target instanceof Element && e.target.closest('button'))) onSelect(p.id, a != null ? a - 1 : null)
+                }}
+                title="Edit in the tag panel"
+              >
                 <td className="num">{n ?? '–'}</td>
                 <td>
-                  <span className="time-cell">
-                    {a != null ? (
-                      <button className="seek" type="button" onClick={() => onSeek(a - 1)} title="Jump to one second before this possession">
-                        {formatTime(p.start_s)}
-                      </button>
-                    ) : (
-                      '–'
-                    )}
-                    <button className="now nf" type="button" onClick={() => onSetTime(p.id, 'start_s')} aria-label={`Set start of ${name} to the current time`} title="Set to the current time">
-                      ⌖
+                  {a != null ? (
+                    <button className="seek nf" type="button" onClick={() => onSelect(p.id, a - 1)} title="Edit, from one second before this possession">
+                      {formatTime(p.start_s)}
                     </button>
-                  </span>
+                  ) : (
+                    '–'
+                  )}
                 </td>
                 <td>
-                  <span className="time-cell">
-                    {p.shot_s != null ? (
-                      <button className="seek" type="button" onClick={() => onSeek(p.shot_s as number)} title="Jump to the shot">
-                        {formatTime(p.shot_s)}
-                      </button>
-                    ) : (
-                      '–'
-                    )}
-                    <button className="now nf" type="button" onClick={() => onSetTime(p.id, 'shot_s')} aria-label={`Set shot of ${name} to the current time`} title="Set to the current time">
-                      ⌖
+                  {p.shot_s != null ? (
+                    <button className="seek nf" type="button" onClick={() => onSelect(p.id, p.shot_s as number)} title="Edit, from the shot">
+                      {formatTime(p.shot_s)}
                     </button>
-                  </span>
+                  ) : (
+                    '–'
+                  )}
                 </td>
                 {isFoul(len) ? (
                   <td className="num foul" title={`Foul: over ${FOUL_LIMIT_S} s`}>
@@ -148,29 +148,17 @@ export function PossessionLog({ rows, controller, onSeek, onChange, onSetTime, o
                   <td className="num">{len != null ? `${len.toFixed(1)} s` : '–'}</td>
                 )}
                 {COLUMNS.map((c) => (
-                  <td key={c.field}>
-                    <select
-                      aria-label={`${c.label} for ${name}`}
-                      value={p[c.field] ?? ''}
-                      disabled={p.shot_type === 'No shot' && c.field !== 'shot_type' && c.field !== 'setup'}
-                      onChange={(e) => onChange(p.id, { [c.field]: e.target.value || null })}
-                    >
-                      <option value="">–</option>
-                      {c.options.map((o) => (
-                        <option key={o} value={o}>
-                          {o}
-                        </option>
-                      ))}
-                    </select>
+                  <td key={c.field} className={p[c.field] == null ? 'muted' : undefined}>
+                    {p[c.field] ?? '–'}
                   </td>
                 ))}
                 <td>
                   {p.review_status === 'unreviewed' && (
                     <span className="review">
-                      <button className="btn small nf" type="button" onClick={() => onChange(p.id, { review_status: 'confirmed' })}>
+                      <button className="btn small nf" type="button" onClick={() => onReview(p.id, 'confirmed')}>
                         Confirm
                       </button>
-                      <button className="btn small nf danger" type="button" onClick={() => onChange(p.id, { review_status: 'rejected' })}>
+                      <button className="btn small nf danger" type="button" onClick={() => onReview(p.id, 'rejected')}>
                         Reject
                       </button>
                     </span>
@@ -178,7 +166,7 @@ export function PossessionLog({ rows, controller, onSeek, onChange, onSetTime, o
                   {p.review_status === 'rejected' && (
                     <span className="review">
                       <span className="muted">Rejected</span>
-                      <button className="btn small nf" type="button" onClick={() => onChange(p.id, { review_status: 'confirmed' })}>
+                      <button className="btn small nf" type="button" onClick={() => onReview(p.id, 'confirmed')}>
                         Confirm
                       </button>
                     </span>

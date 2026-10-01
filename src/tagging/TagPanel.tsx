@@ -14,6 +14,8 @@ interface Props {
   controller: PlayerController
   onEvent: (event: DraftEvent) => void
   onUndo: () => void
+  /** Set while a saved possession is open for editing, e.g. "possession 3" (ADR-0030). */
+  editing?: string | undefined
 }
 
 /** Large possession timer: live while running, frozen after F (TAG-3). */
@@ -48,11 +50,12 @@ function Timer({ draft, controller }: { draft: Draft; controller: PlayerControll
 }
 
 /** The tag panel (TAG-1..3). Every button is also a key; none takes focus. */
-export function TagPanel({ draft, controller, onEvent, onUndo }: Props) {
+export function TagPanel({ draft, controller, onEvent, onUndo, editing }: Props) {
   useKeyboardLayout()
   const noShot = draft.shot_type === 'No shot'
   return (
-    <aside className="panel card" aria-label="Tag the possession">
+    <aside className={editing ? 'panel card editing' : 'panel card'} aria-label={editing ? `Edit ${editing}` : 'Tag the possession'}>
+      {editing && <p className="edit-banner">Editing {editing}</p>}
       <div className="timer">
         <Timer draft={draft} controller={controller} />
         <div className="se">
@@ -61,14 +64,14 @@ export function TagPanel({ draft, controller, onEvent, onUndo }: Props) {
           shot {formatTime(draft.shot_s)}
         </div>
         <p className="status" aria-live="polite">
-          {statusText(draft)}
+          {statusText(draft, editing)}
         </p>
       </div>
       <div className="markrow">
-        <button className="btn nf" type="button" onClick={() => onEvent({ kind: 'ballSet' })}>
-          Ball set <kbd>{KEY.ballSet}</kbd>
+        <button className="btn nf" type="button" onClick={() => onEvent({ kind: 'ballSet' })} title={editing ? 'Set the start to the current time' : undefined}>
+          {editing ? 'Start' : 'Ball set'} <kbd>{KEY.ballSet}</kbd>
         </button>
-        <button className="btn nf" type="button" onClick={() => onEvent({ kind: 'shot' })}>
+        <button className="btn nf" type="button" onClick={() => onEvent({ kind: 'shot' })} title={editing ? 'Set the shot to the current time' : undefined}>
           Shot <kbd>{KEY.shot}</kbd>
         </button>
         <button className="btn nf" type="button" onClick={() => onEvent({ kind: 'noShot' })} title="Possession ended without a shot">
@@ -106,10 +109,10 @@ export function TagPanel({ draft, controller, onEvent, onUndo }: Props) {
       ))}
       <div className="actions">
         <button className="btn primary nf" type="button" onClick={() => onEvent({ kind: 'save' })}>
-          Save <kbd>{KEY.save}</kbd>
+          {editing ? 'Save changes' : 'Save'} <kbd>{KEY.save}</kbd>
         </button>
         <button className="btn nf" type="button" onClick={() => onEvent({ kind: 'clear' })}>
-          Clear <kbd>{KEY.clear}</kbd>
+          {editing ? 'Cancel' : 'Clear'} <kbd>{editing ? 'Esc' : KEY.clear}</kbd>
         </button>
         <button className="btn nf" type="button" onClick={onUndo} title="Delete the last possession saved on this page">
           Undo <kbd>{KEY.undo}</kbd>

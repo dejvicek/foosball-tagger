@@ -29,7 +29,7 @@ export type DraftEvent =
   | { kind: 'noShot' }
   | { kind: 'save' }
   | { kind: 'clear' }
-  /** Straight ⇄ Z/7 (ADR-0028); from blank, Z/7. */
+  /** Straight ⇄ Z (ADR-0028); from blank, Z. */
   | { kind: 'toggleShotDirection' }
   | { [F in TagField]: { kind: 'tag'; field: F; value: TagValue<F> } }[TagField]
 
@@ -107,13 +107,68 @@ export function reduce(draft: Draft, event: DraftEvent, ctx: DraftContext): Outc
     case 'clear':
       return { draft: emptyDraft(), ...(hasContent(draft) ? { message: 'Cleared the draft.' } : {}) }
     case 'toggleShotDirection':
-      return { draft: { ...draft, shot_direction: draft.shot_direction === 'Z/7' ? 'Straight' : 'Z/7' } }
-    case 'tag': {
-      // Pressing a tag key a second time clears that field (TAG-1).
-      const current = draft[event.field]
-      return { draft: { ...draft, [event.field]: current === event.value ? null : event.value } }
-    }
+    case 'tag':
+      return { draft: applyTag(draft, event) }
   }
+}
+
+function applyTag(draft: Draft, event: Extract<DraftEvent, { kind: 'tag' | 'toggleShotDirection' }>): Draft {
+  if (event.kind === 'toggleShotDirection') return { ...draft, shot_direction: draft.shot_direction === 'Z' ? 'Straight' : 'Z' }
+  // Pressing a tag key a second time clears that field (TAG-1).
+  return { ...draft, [event.field]: draft[event.field] === event.value ? null : event.value }
+}
+
+export interface EditOutcome {
+  draft: Draft
+  /** The edited values to write to the possession. */
+  save?: Draft
+  /** Leave edit mode without saving. */
+  cancel?: true
+  /** Set when the event was refused; `draft` is then unchanged. */
+  error?: string
+}
+
+/**
+ * Editing a saved possession in the panel (ADR-0030). Tag keys change its fields as
+ * for a draft; Ball set and Shot move its start and shot to the current time; No shot
+ * marks it without a shot; Enter saves the changes, Esc / Backspace cancels.
+ */
+export function reduceEdit(draft: Draft, event: DraftEvent, ctx: DraftContext): EditOutcome {
+  const t = ctx.t
+  switch (event.kind) {
+    case 'ballSet': {
+      const out = outsideRange(ctx)
+      if (out) return { draft, error: out }
+      if (draft.shot_s != null && t > draft.shot_s) return { draft, error: `The start (${formatTime(t)}) can’t be after the shot (${formatTime(draft.shot_s)}).` }
+      return { draft: { ...draft, start_s: t } }
+    }
+    case 'shot': {
+      const out = outsideRange(ctx)
+      if (out) return { draft, error: out }
+      if (draft.start_s != null && t < draft.start_s) return { draft, error: `The shot (${formatTime(t)}) can’t be before the start (${formatTime(draft.start_s)}).` }
+      return { draft: { ...draft, shot_s: t, shot_type: draft.shot_type === 'No shot' ? null : draft.shot_type } }
+    }
+    case 'noShot':
+      return { draft: { ...draft, shot_type: 'No shot', hole: null, shot_direction: null, result: null, execution: null } }
+    case 'save':
+      return { draft, save: draft }
+    case 'clear':
+      return { draft, cancel: true }
+    case 'toggleShotDirection':
+    case 'tag':
+      return { draft: applyTag(draft, event) }
+  }
+}
+
+/** A saved possession's values, to edit in the panel. */
+export function toDraft(p: Draft): Draft {
+  const { start_s, shot_s, setup, shot_type, hole, shot_direction, result, execution } = p
+  return { start_s, shot_s, setup, shot_type, hole, shot_direction, result, execution }
+}
+
+/** Whether two drafts hold the same values. */
+export function sameDraft(a: Draft, b: Draft): boolean {
+  return (Object.keys(a) as (keyof Draft)[]).every((k) => a[k] === b[k])
 }
 
 const FIELD_LABEL: Record<TagField, string> = {
@@ -126,8 +181,9 @@ const FIELD_LABEL: Record<TagField, string> = {
 }
 const FIELDS: TagField[] = ['shot_type', 'setup', 'hole', 'shot_direction', 'execution', 'result']
 
-/** The next step, as shown under the timer (TAG-3). */
-export function statusText(d: Draft): string {
+/** The next step, as shown under the timer (TAG-3). `editing` names the possession being edited (ADR-0030). */
+export function statusText(d: Draft, editing?: string): string {
+  if (editing) return `Editing ${editing}. ${KEY.ballSet} / ${KEY.shot} set its start / shot to the current time. ${KEY.save} saves the changes, Esc cancels.`
   if (d.start_s == null && d.shot_s == null) return `Press ${KEY.ballSet} when the ball is set.`
   if (d.shot_s == null) return `Possession running. Press ${KEY.shot} at the shot, or ${KEY.noShot} if it ends without one.`
   const blank = FIELDS.filter((f) => d[f] == null).map((f) => FIELD_LABEL[f])

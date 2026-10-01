@@ -4,7 +4,7 @@ import { Link, useParams } from 'react-router'
 import { getVideo } from '../data/videos'
 import { loadGames } from '../data/games'
 import { deletePossession, loadPossessions, savePossession } from '../data/possessions'
-import type { Game, Possession, VideoSummary } from '../data/types'
+import type { Game, Possession, ReviewStatus, VideoSummary } from '../data/types'
 import { PlayerController } from '../player/controller'
 import { PlayerControls } from '../player/PlayerControls'
 import { YouTubePlayer } from '../player/YouTubePlayer'
@@ -15,11 +15,11 @@ import { useResource } from '../app/useResource'
 import { useToast } from '../app/useToast'
 import { gameNumber, gameRange } from '../videos/games'
 import { playersLabel, videoTitle } from '../videos/format'
-import { reduce, type Draft, type DraftEvent } from './draft'
+import { reduce, reduceEdit, sameDraft, toDraft, type Draft, type DraftEvent } from './draft'
 import { loadDraft, storeDraft } from './draftStore'
 import { tagAction } from './keymap'
 import { fromDraft, sortPossessions } from './possessions'
-import { PossessionLog, type PossessionPatch } from './PossessionLog'
+import { PossessionLog } from './PossessionLog'
 import { TagPanel } from './TagPanel'
 import { Timeline } from './Timeline'
 import { Help } from './Help'
@@ -91,6 +91,13 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
   const [possessions, setPossessions] = useState(loaded.possessions)
   const [draft, setDraftState] = useState<Draft>(() => loadDraft(game.id))
   const draftRef = useRef(draft)
+  // A saved possession open in the panel (ADR-0030); the new-possession draft waits meanwhile.
+  const [editing, setEditingState] = useState<{ id: string; draft: Draft } | null>(null)
+  const editingRef = useRef(editing)
+  const setEditing = useCallback((e: { id: string; draft: Draft } | null) => {
+    editingRef.current = e
+    setEditingState(e)
+  }, [])
   const undoStack = useRef<string[]>([])
 
   const setDraft = useCallback(
@@ -120,9 +127,54 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
     if (t < range.start || t > range.end) controller.seek(range.start)
   }, [snapshot.ready, controller, range.start, range.end])
 
+  const update = useCallback(
+    (id: string, patch: Partial<Possession>) => {
+      const current = possessions.find((p) => p.id === id)
+      if (!current) return
+      let next: Possession = { ...current, ...patch, updated_at: nowIso() }
+      if (next.shot_type === 'No shot') next = { ...next, hole: null, shot_direction: null, result: null, execution: null }
+      setPossessions((list) => list.map((p) => (p.id === id ? next : p)))
+      savePossession(queue, next)
+    },
+    [possessions, queue],
+  )
+
+  const numberOf = useCallback((id: string) => {
+    const n = rows.find((r) => r.p.id === id)?.n
+    return n != null ? `possession ${n}` : 'the rejected possession'
+  }, [rows])
+
+  /** Open a possession in the panel (ADR-0030), from the timeline or the log. */
+  const select = useCallback(
+    (id: string, t: number | null) => {
+      const p = possessions.find((x) => x.id === id)
+      if (!p) return
+      const current = editingRef.current
+      if (current && current.id !== id) {
+        const before = possessions.find((x) => x.id === current.id)
+        if (before && !sameDraft(toDraft(before), current.draft)) show(`Discarded the unsaved changes to ${numberOf(current.id)}.`)
+      }
+      if (current?.id !== id) setEditing({ id, draft: toDraft(p) })
+      if (t != null) controller.seek(t)
+    },
+    [possessions, controller, setEditing, show, numberOf],
+  )
+
   const dispatch = useCallback(
     (event: DraftEvent) => {
       const t = controller.time()
+      const current = editingRef.current
+      if (current) {
+        const out = reduceEdit(current.draft, event, { t, range, gameLabel: label })
+        if (out.error) show(out.error, 'error')
+        else if (out.save) {
+          update(current.id, out.save)
+          setEditing(null)
+          show(`Saved the changes to ${numberOf(current.id)}.`)
+        } else if (out.cancel) setEditing(null)
+        else setEditing({ ...current, draft: out.draft })
+        return
+      }
       const out = reduce(draftRef.current, event, { t, range, gameLabel: label })
       if (out.error) {
         // Kept for diagnosing refusals caused by an unexpected player time.
@@ -143,7 +195,7 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
       setDraft(out.draft)
       if (out.message) show(out.message)
     },
-    [controller, range, label, show, userId, game.id, queue, setDraft],
+    [controller, range, label, show, userId, game.id, queue, setDraft, setEditing, update, numberOf],
   )
 
   // Undo (⌘Z / Ctrl+Z): delete the most recently saved possession on this page (ADR-0021).
@@ -156,50 +208,20 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
       return
     }
     const target = last
+    if (editingRef.current?.id === target) setEditing(null)
     deletePossession(queue, target)
     setPossessions((list) => list.filter((p) => p.id !== target))
     show('Deleted the last saved possession.')
-  }, [possessions, queue, show])
-
-  const update = useCallback(
-    (id: string, patch: PossessionPatch, flushDelayMs: number) => {
-      const current = possessions.find((p) => p.id === id)
-      if (!current) return
-      let next: Possession = { ...current, ...patch, updated_at: nowIso() }
-      if (next.shot_type === 'No shot') next = { ...next, hole: null, shot_direction: null, result: null, execution: null }
-      setPossessions((list) => list.map((p) => (p.id === id ? next : p)))
-      savePossession(queue, next, flushDelayMs)
-    },
-    [possessions, queue],
-  )
-
-  const setTime = useCallback(
-    (id: string, field: 'start_s' | 'shot_s') => {
-      const p = possessions.find((x) => x.id === id)
-      if (!p) return
-      const t = controller.time()
-      if (t < range.start - 0.05 || t > range.end + 0.05) {
-        show(`${formatTime(t)} is outside ${label}. Adjust the game’s start or end on the video screen if it belongs here.`, 'error')
-        return
-      }
-      const start = field === 'start_s' ? t : p.start_s
-      const shot = field === 'shot_s' ? t : p.shot_s
-      if (start != null && shot != null && shot < start) {
-        show(`The shot (${formatTime(shot)}) can’t be before the start (${formatTime(start)}).`, 'error')
-        return
-      }
-      update(id, { [field]: t }, 0)
-    },
-    [possessions, controller, range, label, show, update],
-  )
+  }, [possessions, queue, show, setEditing])
 
   const remove = useCallback(
     (id: string) => {
+      if (editingRef.current?.id === id) setEditing(null)
       deletePossession(queue, id)
       setPossessions((list) => list.filter((p) => p.id !== id))
       show('Deleted the possession.')
     },
-    [queue, show],
+    [queue, show, setEditing],
   )
 
   // Keyboard: player keys and tag keys (TAG-1).
@@ -257,9 +279,17 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
         <section aria-label="Player" className="player-col">
           <YouTubePlayer youtubeId={video.youtube_id} aspectRatio={ar} controller={controller} />
           <PlayerControls controller={controller} fps={video.fps} />
-          <Timeline range={shownRange} possessions={numbered} draft={draft} controller={controller} onSeek={(t) => controller.seek(t)} />
+          <Timeline
+            range={shownRange}
+            possessions={numbered}
+            draft={draft}
+            controller={controller}
+            onSeek={(t) => controller.seek(t)}
+            onSelect={select}
+            editingId={editing?.id ?? null}
+          />
         </section>
-        <TagPanel draft={draft} controller={controller} onEvent={dispatch} onUndo={undo} />
+        <TagPanel draft={editing?.draft ?? draft} controller={controller} onEvent={dispatch} onUndo={undo} editing={editing ? numberOf(editing.id) : undefined} />
       </div>
       <div className="lower">
         <section className="card" aria-labelledby="stats-heading">
@@ -275,10 +305,10 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
           <PossessionLog
             rows={rows}
             controller={controller}
-            onSeek={(t) => controller.seek(t)}
-            onChange={(id, patch) => update(id, patch, 500)}
-            onSetTime={setTime}
+            onSelect={select}
+            onReview={(id: string, status: ReviewStatus) => update(id, { review_status: status })}
             onDelete={remove}
+            editingId={editing?.id ?? null}
           />
         </section>
       </div>

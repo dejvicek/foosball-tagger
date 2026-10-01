@@ -16,7 +16,7 @@ export const MOVEMENTS = ['Pull', 'Push', 'Straight'] as const
 export type Movement = (typeof MOVEMENTS)[number]
 
 /** Path of the shot (ADR-0028); new drafts start at Straight. */
-export const SHOT_DIRECTIONS = ['Straight', 'Z/7'] as const
+export const SHOT_DIRECTIONS = ['Straight', 'Z'] as const
 export type ShotDirection = (typeof SHOT_DIRECTIONS)[number]
 
 export const RESULTS = ['Goal', 'No goal'] as const

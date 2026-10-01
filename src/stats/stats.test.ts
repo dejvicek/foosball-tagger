@@ -138,7 +138,7 @@ describe('by shot direction (ADR-0028)', () => {
   it('conversion and proper rate over shots with a shot direction', () => {
     expect(byShotDirection(items).map((b) => [b.label, b.attempts, b.conversion.num, b.conversion.den, b.proper.num, b.proper.den])).toEqual([
       ['Straight', 6, 4, 6, 5, 5], // #1 #2 #5 #6 #7 #11; #6 has no execution
-      ['Z/7', 3, 1, 2, 1, 3], // #3 #4 #12; #12 has no result
+      ['Z', 3, 1, 2, 1, 3], // #3 #4 #12; #12 has no result
     ])
   })
 })

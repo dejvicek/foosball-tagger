@@ -15,6 +15,9 @@ interface Props {
   draft: Draft
   controller: PlayerController
   onSeek: (t: number) => void
+  /** Click on a segment: open that possession in the tag panel and jump 1 s before it (ADR-0030). */
+  onSelect: (id: string, t: number) => void
+  editingId: string | null
 }
 
 const LEGEND: (Outcome | 'draft')[] = ['goal', 'nogoal', 'noshot', 'untagged', 'candidate', 'draft']
@@ -24,9 +27,9 @@ const foulFrom = (length: number) => `${(FOUL_LIMIT_S / length) * 100}%`
 
 /**
  * Timeline strip: one segment per possession and a playhead (TAG-6). Click to seek,
- * click a segment to jump just before it, or drag anywhere to scrub through the game.
+ * click a segment to edit it from just before it (ADR-0030), or drag anywhere to scrub through the game.
  */
-export function Timeline({ range, possessions, draft, controller, onSeek }: Props) {
+export function Timeline({ range, possessions, draft, controller, onSeek, onSelect, editingId }: Props) {
   const headRef = useRef<HTMLDivElement>(null)
   const draftRef = useRef<HTMLDivElement>(null)
   const draftFoulRef = useRef<HTMLSpanElement>(null)
@@ -68,7 +71,7 @@ export function Timeline({ range, possessions, draft, controller, onSeek }: Prop
         className={`strip nf${dragging ? ' dragging' : ''}`}
         onClick={onStripClick}
         role="group"
-        aria-label="Game timeline: click or drag to seek, click a possession to jump to one second before it"
+        aria-label="Game timeline: click or drag to seek, click a possession to edit it"
         {...handlers}
       >
         <div className="strip-bg" />
@@ -83,11 +86,12 @@ export function Timeline({ range, possessions, draft, controller, onSeek }: Prop
             <button
               key={p.id}
               type="button"
-              className={`seg nf ${outcome}`}
+              className={`seg nf ${outcome}${p.id === editingId ? ' editing' : ''}`}
               style={{ left: `${pos(a)}%`, width: `${Math.max(0, pos(b) - pos(a))}%` }}
               title={label}
-              aria-label={`${label}. ${OUTCOME_LABEL[outcome]}. Jump to one second before it.`}
-              onClick={() => onSeek(a - 1)}
+              aria-label={`${label}. ${OUTCOME_LABEL[outcome]}. Edit it, from one second before it.`}
+              aria-pressed={p.id === editingId}
+              onClick={() => onSelect(p.id, a - 1)}
             >
               {isFoul(len) && <span className="seg-foul" style={{ left: foulFrom(len as number) }} />}
             </button>

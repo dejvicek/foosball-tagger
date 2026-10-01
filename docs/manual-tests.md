@@ -58,9 +58,9 @@ Open a game with "Tag →" on the video screen.
 2. **Keyboard-only possession (ADR-0026 keys):** Shot type shows Pin before anything is pressed (ADR-0027). R → timer runs and status says "Press F…"; A, W; F → timer freezes, status lists what is blank (hole, execution, result); 2, G, Z → "All tagged"; Enter → row appears in the log with the right length and hole Pull short; Setup is back on Middle and Shot type on Pin (TAG-2, TAG-3). R, F, Enter without touching Shot type → the row says Pin.
 3. **R after F** saves and starts the next; **V** saves a No shot at once; **Backspace** or **Esc** clears; **⌘Z / Ctrl+Z** deletes the last saved (press twice: the one before); pressing a tag key twice clears it.
 4. **Refusals:** F before the ball-set time (seek back) → message, nothing swapped (TAG-4). Seek outside the game, press R → message suggesting to adjust the game (TAG-5).
-5. **Focus:** clicking any tag button, then Space/Enter still play/save. Clicking the video picture, then R still works. Nothing happens while a log select is open; Esc leaves it.
-6. **Timeline (TAG-6):** goal, no goal, no shot, untagged look different even in greyscale; hover shows tags; click a segment → 1 s before it; click empty strip → seek there.
-7. **Log (TAG-7):** change a result → reload → kept; ⌖ sets start/shot to the current time (refused outside the game or with shot before start); the row under the playhead is highlighted; × → "Delete?" → click again deletes.
+5. **Focus:** clicking any tag button, then Space/Enter still play/save. Clicking the video picture, then R still works. Nothing happens while a text field has focus; Esc leaves it.
+6. **Timeline (TAG-6):** goal, no goal, no shot, untagged look different even in greyscale; hover shows tags; click a segment → 1 s before it, and it opens in the tag panel (ADR-0030); click empty strip → seek there.
+7. **Log (TAG-7, ADR-0030):** read-only, no dropdowns; the row under the playhead is highlighted; × → "Delete?" → click again deletes, without opening the row.
 8. **Help (TAG-8):** "How to tag" opens the key table and definitions; it says frame stepping is approximate.
 9. **Reload mid-draft:** press R, tag a field, reload → the running draft is still there.
 10. **Offline (SYN):** Wi-Fi off, tag 5 possessions → "Unsynced changes: 5"; reload offline → the draft survives, the tagged rows are safe in the queue (the page may show a load error until online); Wi-Fi on → counter clears; reload → all 5 on the server, none twice.
@@ -95,15 +95,15 @@ Open a game with "Tag →" on the video screen.
 
 ## Shot direction and movement (ADR-0028)
 
-1. A new draft shows Shot direction Straight. C → Z/7, C again → Straight. Clicking the selected button blanks it; V saves a No shot with it blank.
+1. A new draft shows Shot direction Straight. C → Z, C again → Straight. Clicking the selected button blanks it; V saves a No shot with it blank.
 2. Setup Pull side + hole Pull long → "Movement Straight" under Hole; hole Middle → "Movement Push"; no setup → "Movement –".
 3. After `npx supabase db push`: old shots show Straight in the log's Shot direction column, No shot rows a blank.
-4. Statistics → By shot direction lists Straight and Z/7 with shots, conversion and proper; By shot rows read "type · movement · hole".
+4. Statistics → By shot direction lists Straight and Z with shots, conversion and proper; By shot rows read "type · movement · hole".
 
 ## Dragging and keyboard layouts (ADR-0022)
 
 1. **Seek bar drag:** on the video screen, grab the round handle and drag: the handle follows the pointer, the video follows a few times a second, the time shows above the pointer; release lands exactly there. Dragging over the video or past either end still works.
-2. **Timeline drag:** on the tagging screen, drag along the timeline strip: same behaviour, limited to the game. A plain click on a possession still jumps 1 s before it; a drag that starts on a possession does not.
+2. **Timeline drag:** on the tagging screen, drag along the timeline strip: same behaviour, limited to the game. A plain click on a possession still jumps 1 s before it (and opens it for editing); a drag that starts on a possession does not.
 3. **Czech/Slovak keyboard:** switch the OS keyboard to Czech (QWERTZ). The bottom-left letter key (labelled Y) selects Pin and the Shot type buttons show "Y"; the number row keys (+ ě š č ř) select setup, save and Proper; ⌘Z / Ctrl+Z still undoes with the key labelled Z.
 4. In Chrome the labels are right from the start; in Firefox/Safari they correct themselves after the first press of a key if the browser language is not Czech/Slovak.
 
@@ -119,3 +119,14 @@ Open a game with "Tag →" on the video screen.
 1. **Colors:** on the tagging screen the strip is dark grey; goals are solid green, no goals red stripes, no shots grey dots, untagged white stripes. Same in dark mode.
 2. **Foul:** tag a possession longer than 15 s (R, wait, F, G, Enter). While it runs, the timer turns red and reads FOUL after 15.0 s, and the running segment grows orange-black stripes past 15 s. Saved, the segment keeps its outcome color with the striped tail, the hover text says "foul, 17.3 s", and the log's Length cell reads "17.3 s · foul" in red. A possession of exactly 15.0 s is not a foul. The tags are saved as entered.
 3. **Width:** on a wide monitor (e.g. 23", 1920×1080), in default and cinema view, the left and right edges of the video, the seek bar / timeline and the player controls line up on both the video and the tagging screen; the tag panel sits right next to the video. Narrow the window below 960 px: the panel stacks under the player and the edges still line up.
+
+## Editing in the tag panel; Z (ADR-0030)
+
+1. **Open:** click a row in the possession log (or its start time) → the video jumps 1 s before it, the row turns blue and the tag panel shows "Editing possession N" with its tags. Clicking the shot time jumps to the shot instead. Clicking a timeline segment does the same as clicking the row.
+2. **Change and save:** press B, C → buttons follow; seek and press R / F → start / shot move to the current time (refused outside the game, or start after shot / shot before start). Enter or Save changes → "Saved the changes to possession N", the log row and segment update, the panel is back on the new-possession draft. Reload → kept.
+3. **Cancel:** open a row, change something, Esc (or Cancel) → nothing changes. A possession you had running (R pressed) before opening the row is still running afterwards. Opening another row with unsaved changes says they were discarded.
+4. **No shot:** open a shot, V → hole, shot direction, execution and result blank, times kept; Enter saves it as No shot.
+5. **Delete / undo while editing:** deleting the open row, or ⌘Z / Ctrl+Z removing it, closes the edit.
+6. **Z:** after `npx supabase db push`, shots tagged Z/7 show Z in the log, the panel and Statistics → By shot direction.
+7. **Windows + Chrome, dark mode:** every dropdown (statistics filters, game fields) shows readable options when open.
+

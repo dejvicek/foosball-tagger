@@ -143,7 +143,7 @@ describe('tagging screen keyboard (TAG-1..5, PRD §8)', () => {
         setup: 'Pull side',
         shot_type: 'Pull',
         hole: 'Pull short',
-        shot_direction: 'Z/7',
+        shot_direction: 'Z',
         result: 'Goal',
         execution: 'Proper',
         source: 'manual',
@@ -244,12 +244,13 @@ describe('tagging screen keyboard (TAG-1..5, PRD §8)', () => {
     expect(screen.getByText(/outside Game 1 \(1:00.0–5:00.0\)/)).toBeInTheDocument()
   })
 
-  it('ignores tag keys while a log field has focus', async () => {
-    vi.mocked(loadPossessions).mockResolvedValue([possession(70, 75)])
+  it('ignores tag keys while a field has focus', async () => {
+    const input = document.createElement('input')
+    document.body.append(input)
     await renderPage()
-    const select = screen.getByLabelText('Result for possession 1')
-    fireEvent.keyDown(select, { key: 'r' })
+    fireEvent.keyDown(input, { key: 'r' })
     expect(screen.getByText('Press R when the ball is set.')).toBeInTheDocument()
+    input.remove()
   })
 
   it('keeps an unsaved draft across a reload', async () => {
@@ -273,21 +274,56 @@ describe('tagging screen keyboard (TAG-1..5, PRD §8)', () => {
   })
 })
 
-describe('possession log (TAG-7)', () => {
-  it('edits a field inline; No shot clears the shot fields', async () => {
+describe('possession log (TAG-7, ADR-0030)', () => {
+  const log = () => screen.getByRole('table', { name: 'Possessions' })
+
+  it('is read-only: no fields to edit in the table', async () => {
     vi.mocked(loadPossessions).mockResolvedValue([possession(70, 75, { result: 'Goal', hole: 'Middle' })])
     await renderPage()
-    fireEvent.change(screen.getByLabelText('Shot type for possession 1'), { target: { value: 'No shot' } })
-    await flush()
-    expect(saved()[0]).toMatchObject({ shot_type: 'No shot', result: null, hole: null, shot_direction: null })
-    expect(screen.getByLabelText('Result for possession 1')).toBeDisabled()
+    expect(within(log()).queryAllByRole('combobox')).toEqual([])
+    expect(log()).toHaveTextContent('Goal')
   })
 
-  it('clicking the start time seeks one second before it', async () => {
-    vi.mocked(loadPossessions).mockResolvedValue([possession(70, 75)])
+  it('clicking a row opens it in the panel and seeks one second before it; Enter saves the changes', async () => {
+    vi.mocked(loadPossessions).mockResolvedValue([possession(70, 75, { result: 'Goal', hole: 'Middle' })])
     await renderPage()
-    fireEvent.click(within(screen.getByRole('table', { name: 'Possessions' })).getByRole('button', { name: '1:10.0' }))
+    fireEvent.click(within(log()).getByText('Goal'))
     expect(fake.t).toBe(69)
+    expect(screen.getByText('Editing possession 1')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Goal\s*G$/i })).toHaveAttribute('aria-pressed', 'true')
+    press('b')
+    press('c')
+    at(76)
+    press('f')
+    press('Enter')
+    await flush()
+    expect(saved()[0]).toMatchObject({ start_s: 70, shot_s: 76, result: 'No goal', shot_direction: 'Z', hole: 'Middle' })
+    expect(screen.queryByText('Editing possession 1')).not.toBeInTheDocument()
+    expect(screen.getByText(/Saved the changes to possession 1/)).toBeInTheDocument()
+  })
+
+  it('Esc cancels the edit and the new-possession draft comes back', async () => {
+    vi.mocked(loadPossessions).mockResolvedValue([possession(70, 75, { result: 'Goal' })])
+    await renderPage()
+    at(100)
+    press('r')
+    fireEvent.click(within(log()).getByText('Goal'))
+    press('b')
+    press('Escape')
+    await flush()
+    expect(saved()).toEqual([])
+    expect(screen.getByText(/Possession running/)).toBeInTheDocument()
+  })
+
+  it('No shot in edit mode clears the shot fields and keeps the times', async () => {
+    vi.mocked(loadPossessions).mockResolvedValue([possession(70, 75, { result: 'Goal', hole: 'Middle' })])
+    await renderPage()
+    fireEvent.click(within(log()).getByRole('button', { name: '1:15.0' }))
+    expect(fake.t).toBe(75)
+    press('v')
+    press('Enter')
+    await flush()
+    expect(saved()[0]).toMatchObject({ start_s: 70, shot_s: 75, shot_type: 'No shot', result: null, hole: null, shot_direction: null })
   })
 
   it('deletes a row after one confirmation', async () => {
@@ -309,7 +345,7 @@ describe('possession log (TAG-7)', () => {
 })
 
 describe('timeline (TAG-6)', () => {
-  it('draws one segment per possession, with its tags on hover, and jumps before it on click', async () => {
+  it('draws one segment per possession, with its tags on hover; a click opens it for editing from 1 s before it', async () => {
     vi.mocked(loadPossessions).mockResolvedValue([possession(70, 75, { result: 'Goal' }), possession(100, 104, { shot_type: 'No shot', shot_direction: null })])
     await renderPage()
     const seg = screen.getByRole('button', { name: /^#1 Middle · Pin · Straight · Goal\. Goal\./ })
@@ -317,5 +353,7 @@ describe('timeline (TAG-6)', () => {
     expect(screen.getByRole('button', { name: /^#2 Middle · No shot\./ })).toHaveClass('noshot')
     fireEvent.click(seg)
     expect(fake.t).toBe(69)
+    expect(screen.getByText('Editing possession 1')).toBeInTheDocument()
+    expect(seg).toHaveAttribute('aria-pressed', 'true')
   })
 })

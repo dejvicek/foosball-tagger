@@ -14,6 +14,7 @@ export function loadDraft(gameId: string): Draft {
     const d = emptyDraft()
     const stored = parsed as Partial<Draft>
     for (const k of Object.keys(d) as (keyof Draft)[]) if (k in stored) Object.assign(d, { [k]: stored[k] })
+    if ((d.shot_direction as string) === 'Z/7') d.shot_direction = 'Z' // renamed in ADR-0030
     return d.hole != null && !HOLES.includes(d.hole) ? { ...d, hole: null } : d
   } catch {
     return emptyDraft()

@@ -5,7 +5,7 @@
 //   Q W E      Shot type  Pin · Pull · Other          │ R Ball set │
 //   A S D      Setup      pull side · middle · push   │ F Shot     │ G Goal
 //   Z X        Execution  Proper · Misexecuted        │ V No shot  │ B No goal
-//   C          Shot direction  Straight ⇄ Z/7 (ADR-0028)
+//   C          Shot direction  Straight ⇄ Z (ADR-0028)
 //
 // Enter saves, Backspace / Esc clear the draft, ⌘Z / Ctrl+Z undoes the last save.
 // The pull → push options run left to right. Keys are physical positions
@@ -69,7 +69,7 @@ export const TAG_GROUPS: TagGroup[] = [
     toggle: true,
     options: [
       { code: 'KeyC', value: 'Straight', label: 'Straight' },
-      { code: 'KeyC', value: 'Z/7', label: 'Z/7' },
+      { code: 'KeyC', value: 'Z', label: 'Z' },
     ],
   },
   {

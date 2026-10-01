@@ -20,7 +20,7 @@ function setup() {
   controller.attach(player)
   const seeks: number[] = []
   const p = { ...fromDraft({ ...emptyDraft(), start_s: 150, shot_s: 160 }, { id: 'p1', userId: 'u', gameId: 'g', now: '' }), result: 'Goal' as const }
-  render(<Timeline range={{ start: 100, end: 200 }} possessions={[{ p, n: 1 }]} draft={emptyDraft()} controller={controller} onSeek={(t) => seeks.push(Math.round(t))} />)
+  render(<Timeline range={{ start: 100, end: 200 }} possessions={[{ p, n: 1 }]} draft={emptyDraft()} controller={controller} onSeek={(t) => seeks.push(Math.round(t))} onSelect={(_id, t) => seeks.push(Math.round(t))} editingId={null} />)
   const strip = screen.getByRole('group', { name: /Game timeline/ })
   strip.getBoundingClientRect = () => ({ left: 0, width: 1000, top: 0, height: 34, right: 1000, bottom: 34, x: 0, y: 0, toJSON: () => ({}) })
   return { strip, seeks, segment: screen.getByRole('button', { name: /^#1/ }) }
