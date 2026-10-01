@@ -38,8 +38,6 @@ describe('tagAction (ADR-0026)', () => {
     expect(tagAction({ key: 'z', code: 'KeyY' })).toBeNull()
     expect(tagAction({ key: '+', code: 'Digit1' })).toEqual({ kind: 'tag', field: 'hole', value: 'Pull long' })
     expect(tagAction({ key: 'ř', code: 'Digit5' })).toEqual({ kind: 'tag', field: 'hole', value: 'Push long' })
-    // Undo follows the letter, like the operating system: Czech ⌘Z is the key labelled Z.
-    expect(tagAction({ key: 'z', code: 'KeyY', metaKey: true })).toEqual({ kind: 'undo' })
   })
 
   it('reverses the hole keys and buttons when I stand on the right (ADR-0031)', () => {
@@ -58,10 +56,9 @@ describe('tagAction (ADR-0026)', () => {
     ])
   })
 
-  it('undoes with ⌘Z or Ctrl+Z, and ignores other chords', () => {
-    expect(tagAction({ key: 'z', metaKey: true })).toEqual({ kind: 'undo' })
-    expect(tagAction({ key: 'z', ctrlKey: true })).toEqual({ kind: 'undo' })
-    expect(tagAction({ key: 'z', metaKey: true, shiftKey: true })).toBeNull()
+  it('ignores ⌘ / Ctrl chords, including ⌘Z (ADR-0033)', () => {
+    expect(tagAction({ key: 'z', metaKey: true })).toBeNull()
+    expect(tagAction({ key: 'z', ctrlKey: true })).toBeNull()
     expect(tagAction({ key: 'r', metaKey: true })).toBeNull()
   })
 

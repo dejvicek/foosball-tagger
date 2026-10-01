@@ -98,7 +98,6 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
     editingRef.current = e
     setEditingState(e)
   }, [])
-  const undoStack = useRef<string[]>([])
 
   const setDraft = useCallback(
     (d: Draft) => {
@@ -189,7 +188,6 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
       if (out.save) {
         const p = fromDraft(out.save, { id: crypto.randomUUID(), userId, gameId: game.id, now: nowIso() })
         savePossession(queue, p) // SYN-1
-        undoStack.current.push(p.id)
         setPossessions((list) => [...list, p])
       }
       setDraft(out.draft)
@@ -197,22 +195,6 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
     },
     [controller, range, label, show, userId, game.id, queue, setDraft, setEditing, update, numberOf],
   )
-
-  // Undo (⌘Z / Ctrl+Z): delete the most recently saved possession on this page (ADR-0021).
-  const undo = useCallback(() => {
-    const ids = new Set(possessions.map((p) => p.id))
-    let last = undoStack.current.pop()
-    while (last && !ids.has(last)) last = undoStack.current.pop()
-    if (!last) {
-      show('Nothing to undo: no possession was saved on this page yet.', 'error')
-      return
-    }
-    const target = last
-    if (editingRef.current?.id === target) setEditing(null)
-    deletePossession(queue, target)
-    setPossessions((list) => list.filter((p) => p.id !== target))
-    show('Deleted the last saved possession.')
-  }, [possessions, queue, show, setEditing])
 
   const remove = useCallback(
     (id: string) => {
@@ -232,13 +214,6 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
         target.blur()
         return
       }
-      // ⌘Z / Ctrl+Z undo outside fields (inside a field it stays the field's own undo).
-      const undoChord = (e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === 'z' && !e.shiftKey
-      if (undoChord && !target?.closest('input, select, textarea') && !document.querySelector('.modal')) {
-        e.preventDefault()
-        undo()
-        return
-      }
       if (!isShortcut(e) || document.querySelector('.modal')) return
       const player = playerAction(e)
       if (player) {
@@ -253,12 +228,11 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
       const action = tagAction(e, game.my_side)
       if (!action) return
       e.preventDefault()
-      if (action.kind === 'undo') undo()
-      else dispatch(action)
+      dispatch(action)
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [controller, snapshot.ready, video.fps, dispatch, undo, show, game.my_side])
+  }, [controller, snapshot.ready, video.fps, dispatch, show, game.my_side])
 
   const ar = video.aspect_ratio ?? 16 / 9
   const cinema = useCinemaPage()

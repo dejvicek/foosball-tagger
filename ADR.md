@@ -333,7 +333,14 @@ Format: context → decision → consequences. Keep each record short.
 
 ## ADR-0033 · No Undo button in the tag panel
 
-- **Status:** Accepted · 2026-10-02 (requested by the user) · Amends ADR-0021
+- **Status:** Superseded by ADR-0034 · was Accepted · 2026-10-02 (requested by the user) · Amends ADR-0021
 - **Context:** The tag panel had an Undo button next to Save and Clear; a click deletes the last saved possession, which is easy to hit by accident.
 - **Decision:** The button goes. Undo stays on the keyboard (⌘Z / Ctrl+Z), as listed in "How to tag". Deleting any possession is still possible from the log.
 - **Consequences:** Undo is keyboard-only.
+
+## ADR-0034 · No undo at all
+
+- **Status:** Accepted · 2026-10-02 (requested by the user) · Supersedes ADR-0033 · Amends ADR-0021, TAG-1
+- **Context:** With the Undo button gone (ADR-0033), the user found the ⌘Z / Ctrl+Z shortcut alone useless.
+- **Decision:** The shortcut goes too. The tagging screen leaves ⌘ / Ctrl chords to the browser; inside a text field ⌘Z still undoes typing. A possession is deleted from the log, with its confirmation.
+- **Consequences:** There is no single-step undo (the PRD's U key); a stray save is removed from the log.

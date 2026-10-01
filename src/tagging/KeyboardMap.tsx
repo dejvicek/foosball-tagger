@@ -57,7 +57,7 @@ export function KeyboardMap({ side }: { side: Side }) {
         ))}
       </div>
       <p className="keymap-foot">
-        <kbd>{KEY.save}</kbd> save · <kbd>{KEY.clear}</kbd> or <kbd>Esc</kbd> clear the draft · <kbd>{KEY.undo}</kbd> undo the last save · <kbd>Space</kbd> play/pause ·
+        <kbd>{KEY.save}</kbd> save · <kbd>{KEY.clear}</kbd> or <kbd>Esc</kbd> clear the draft · <kbd>Space</kbd> play/pause ·
         pressing a key again clears that field · {KEY.ballSet} after a shot saves it and starts the next possession.
       </p>
       <h4>Right hand (optional)</h4>

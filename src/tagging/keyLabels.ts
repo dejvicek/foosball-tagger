@@ -3,8 +3,6 @@
 import { keyLabel } from '../player/keyboardLayout'
 import { ACTION_CODE } from './keymap'
 
-const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)
-
 export const KEY = {
   get ballSet() {
     return keyLabel(ACTION_CODE.ballSet)
@@ -17,5 +15,4 @@ export const KEY = {
   },
   save: 'Enter',
   clear: '⌫',
-  undo: isMac ? '⌘Z' : 'Ctrl+Z',
 }

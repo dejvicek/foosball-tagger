@@ -9,7 +9,7 @@
 //   Z X        Execution  Proper · Misexecuted        │ V No shot  │ B No goal
 //   C          Shot direction  Straight ⇄ Z (ADR-0028)
 //
-// Enter saves, Backspace / Esc clear the draft, ⌘Z / Ctrl+Z undoes the last save.
+// Enter saves, Backspace / Esc clear the draft.
 // The pull → push options run left to right. Keys are physical positions
 // (KeyboardEvent.code), so the grid stays put on QWERTZ and other layouts; the
 // labels shown come from src/player/keyboardLayout.ts (ADR-0022).
@@ -109,7 +109,7 @@ export function tagGroups(side: Side): TagGroup[] {
 /** Physical keys of the non-field actions. */
 export const ACTION_CODE = { ballSet: 'KeyR', shot: 'KeyF', noShot: 'KeyV' } as const
 
-export type TagAction = DraftEvent | { kind: 'undo' }
+export type TagAction = DraftEvent
 
 function byCode(side: Side): Map<string, TagAction> {
   const map = new Map<string, TagAction>()
@@ -135,12 +135,12 @@ export interface KeyPress {
 
 /**
  * The tagging action for a key press, or null. Plain keys match by position;
- * ⌘Z / Ctrl+Z match the letter Z, like every other app's undo. `side` is the
- * side of the frame I stand on in this game (ADR-0031).
+ * ⌘ / Ctrl chords are left to the browser (ADR-0033). `side` is the side of
+ * the frame I stand on in this game (ADR-0031).
  */
 export function tagAction(e: KeyPress | string, side: Side = 'left'): TagAction | null {
   const press = typeof e === 'string' ? { key: e } : e
-  if (press.metaKey || press.ctrlKey) return press.key.toLowerCase() === 'z' && !press.shiftKey ? { kind: 'undo' } : null
+  if (press.metaKey || press.ctrlKey) return null
   switch (press.key) {
     case 'Enter':
       return { kind: 'save' }

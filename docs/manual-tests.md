@@ -83,7 +83,7 @@ Open a game with "Tag →" on the video screen.
 1. **Mouse + left hand:** tag a whole possession with the left hand on 1–5 / Q–R / A–G / Z–B, seeking with the mouse on the timeline; save with R (next possession) or Enter.
 2. **Keyboard only, two hands:** K plays/pauses, J / L step 1 s (Shift 5 s), U / O step frames, Enter saves, Backspace clears the draft, while the left hand tags.
 3. **Panel order:** Ball set / Shot / No shot, then Shot type (Q W E), Setup (A S D), Hole (1–5, pull long → push long), Execution (Z X), Result (G B). T and C do nothing.
-4. **Undo:** the tag panel has no Undo button (ADR-0033). ⌘Z (Mac) / Ctrl+Z (Windows) deletes the last save; inside a text field ⌘Z undoes typing instead. Backspace no longer undoes.
+4. **No undo:** the tag panel has no Undo button and ⌘Z / Ctrl+Z deletes nothing (ADR-0033); delete a possession from the log instead. Inside a text field ⌘Z still undoes typing.
 5. **Help:** "How to tag" shows the keyboard map; the buttons show the same keys.
 6. On the video screen, J / K / L / U / O work too; B / E still mark games.
 
@@ -104,7 +104,7 @@ Open a game with "Tag →" on the video screen.
 
 1. **Seek bar drag:** on the video screen, grab the round handle and drag: the handle follows the pointer, the video follows a few times a second, the time shows above the pointer; release lands exactly there. Dragging over the video or past either end still works.
 2. **Timeline drag:** on the tagging screen, drag along the timeline strip: same behaviour, limited to the game. A plain click on a possession still jumps 1 s before it (and opens it for editing); a drag that starts on a possession does not.
-3. **Czech/Slovak keyboard:** switch the OS keyboard to Czech (QWERTZ). The bottom-left letter key (labelled Y) selects Pin and the Shot type buttons show "Y"; the number row keys (+ ě š č ř) select setup, save and Proper; ⌘Z / Ctrl+Z still undoes with the key labelled Z.
+3. **Czech/Slovak keyboard:** switch the OS keyboard to Czech (QWERTZ). The bottom-left letter key (labelled Y) selects Pin and the Shot type buttons show "Y"; the number row keys (+ ě š č ř) select setup, save and Proper.
 4. In Chrome the labels are right from the start; in Firefox/Safari they correct themselves after the first press of a key if the browser language is not Czech/Slovak.
 
 ## Cinema mode and players (ADR-0023)
@@ -126,7 +126,7 @@ Open a game with "Tag →" on the video screen.
 2. **Change and save:** press B, C → buttons follow; seek and press R / F → start / shot move to the current time (refused outside the game, or start after shot / shot before start). Enter or Save changes → "Saved the changes to possession N", the log row and segment update, the panel is back on the new-possession draft. Reload → kept.
 3. **Cancel:** open a row, change something, Esc (or Cancel) → nothing changes. A possession you had running (R pressed) before opening the row is still running afterwards. Opening another row with unsaved changes says they were discarded.
 4. **No shot:** open a shot, V → hole, shot direction, execution and result blank, times kept; Enter saves it as No shot.
-5. **Delete / undo while editing:** deleting the open row, or ⌘Z / Ctrl+Z removing it, closes the edit.
+5. **Delete while editing:** deleting the open row closes the edit.
 6. **Z:** after `npx supabase db push`, shots tagged Z/7 show Z in the log, the panel and Statistics → By shot direction.
 7. **Windows + Chrome, dark mode:** every dropdown (statistics filters, game fields) shows readable options when open.
 
