@@ -3,12 +3,12 @@
 // Blank fields are left out of denominators, never counted as failures (STA-1):
 // conversion counts only shots with a result, proper rate only shots with an
 // execution, and so on.
-import { DIRECTIONS, HOLES, SHOT_TYPES, type Direction, type Hole, type Setup, type ShotType } from '../data/types'
-import { directionOf } from './direction'
+import { HOLES, MOVEMENTS, SHOT_DIRECTIONS, SHOT_TYPES, type Movement, type Hole, type Setup, type ShotType } from '../data/types'
+import { movementOf } from './movement'
 import { ratio } from './ratio'
 import type { Ratio, StatItem } from './types'
 
-type P = Pick<StatItem, 'start_s' | 'shot_s' | 'setup' | 'shot_type' | 'hole' | 'result' | 'execution'>
+type P = Pick<StatItem, 'start_s' | 'shot_s' | 'setup' | 'shot_type' | 'hole' | 'shot_direction' | 'result' | 'execution'>
 
 /**
  * Whether a possession ended in a shot. "No shot" → no; a shot type → yes; no type
@@ -79,7 +79,7 @@ export function headline(items: readonly P[]): Headline {
 
 export interface ShotRow {
   shotType: ShotType | null
-  direction: Direction | null
+  movement: Movement | null
   hole: Hole | null
   attempts: number
   goals: number
@@ -92,11 +92,11 @@ export interface ShotRow {
 
 const order = <T,>(list: readonly T[], v: T | null) => (v == null ? list.length : list.indexOf(v))
 
-/** STA-6: shots grouped by type + direction (derived, ADR-0026) + hole, most attempts first. */
+/** STA-6: shots grouped by type + movement (derived, ADR-0026) + hole, most attempts first. */
 export function byShot(items: readonly P[]): ShotRow[] {
   const groups = new Map<string, P[]>()
   for (const p of items.filter(isShot)) {
-    const k = `${p.shot_type}|${directionOf(p.setup, p.hole)}|${p.hole}`
+    const k = `${p.shot_type}|${movementOf(p.setup, p.hole)}|${p.hole}`
     groups.set(k, [...(groups.get(k) ?? []), p])
   }
   const rows = [...groups.values()].map((list): ShotRow => {
@@ -104,7 +104,7 @@ export function byShot(items: readonly P[]): ShotRow[] {
     const lengths = list.map(lengthOf).filter((v): v is number => v != null)
     return {
       shotType: first.shot_type,
-      direction: directionOf(first.setup, first.hole),
+      movement: movementOf(first.setup, first.hole),
       hole: first.hole,
       attempts: list.length,
       goals: list.filter((p) => p.result === 'Goal').length,
@@ -118,7 +118,7 @@ export function byShot(items: readonly P[]): ShotRow[] {
     (a, b) =>
       b.attempts - a.attempts ||
       order(SHOT_TYPES, a.shotType) - order(SHOT_TYPES, b.shotType) ||
-      order(DIRECTIONS, a.direction) - order(DIRECTIONS, b.direction) ||
+      order(MOVEMENTS, a.movement) - order(MOVEMENTS, b.movement) ||
       order(HOLES, a.hole) - order(HOLES, b.hole),
   )
 }
@@ -187,6 +187,12 @@ export function bySetup(items: readonly P[]): GroupRow[] {
     group('Pull side', shots.filter(is('Pull side')), true),
     group('Push side', shots.filter(is('Push side')), true),
   ]
+}
+
+/** Conversion and proper rate per shot direction (ADR-0028), shots with a shot direction only. */
+export function byShotDirection(items: readonly P[]): GroupRow[] {
+  const shots = items.filter((p) => isShot(p) && p.shot_direction != null)
+  return SHOT_DIRECTIONS.map((d) => group(d, shots.filter((p) => p.shot_direction === d)))
 }
 
 /** STA-10: conversion per hole, shots with a hole only. */

@@ -281,3 +281,14 @@ Format: context → decision → consequences. Keep each record short.
 - **Context:** Most possessions end in a pin shot, so pressing Q every time was wasted effort.
 - **Decision:** A new draft has Shot type Pin, like Setup starts at Middle; it resets to Pin after every save and clear. Q on a draft showing Pin clears the field, W / E switch it, V saves No shot as before. Pin and Middle together do not count as content: Enter on an untouched draft still says there is nothing to save.
 - **Consequences:** A possession saved without F (R, then Enter) is saved as a Pin and counts as a shot in the statistics, where before it was left out as unknown (ADR-0020). Clear the shot type with Q, or press V, for possessions that ended without a shot.
+
+## ADR-0028 · Shot direction (Straight, Z/7); derived direction renamed Movement
+
+- **Status:** Accepted · 2026-10-02 (requested by the user; key, old rows, statistics and naming chosen by the user) · Amends ADR-0026, TAG-1, STA-6, EXP-1
+- **Context:** The user wants to tell straight shots from Z/7 shots. The value derived from setup + hole (ADR-0026) was also called "direction", which would clash.
+- **Decision:**
+  - **Field:** new column `possessions.shot_direction` with values `Straight`, `Z/7` (migration `0004_shot_direction.sql`). Existing possessions get `Straight`, except No shot rows, which stay blank: the No-shot check now also requires a blank shot direction.
+  - **Tagging:** a new draft starts at Straight, like Setup at Middle and Shot type at Pin; the defaults alone are not content. **C** flips Straight ⇄ Z/7 (from blank: Z/7), so the key never blanks it; clicking the selected button blanks it, as for every field, and so does the log. V (No shot) blanks it. The panel order is Shot type, Setup, Hole, Shot direction, Execution, Result; the log and the "Still blank" status follow it.
+  - **Movement:** the derived Pull / Straight / Push of ADR-0026 is called Movement (`movementOf`, `src/stats/movement.ts`). The tag panel shows it read-only under Hole; By shot groups by shot type · movement · hole. EXP-1 will name its column `movement` and add `shot_direction`.
+  - **Statistics:** a "By shot direction" table after "By hole": attempts, conversion and proper rate for Straight and Z/7, over shots with a shot direction.
+- **Consequences:** Old shots read Straight even where they were Z/7; re-tag those in the log. Apply migration 0004 together with 0003 before deploying the frontend.

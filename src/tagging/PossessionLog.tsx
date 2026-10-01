@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { EXECUTIONS, HOLES, RESULTS, SETUPS, SHOT_TYPES, type Possession } from '../data/types'
+import { EXECUTIONS, HOLES, RESULTS, SETUPS, SHOT_DIRECTIONS, SHOT_TYPES, type Possession } from '../data/types'
 import type { PlayerController } from '../player/controller'
 import { formatTime } from '../player/time'
 import type { TagField } from './draft'
@@ -24,6 +24,7 @@ const COLUMNS: { field: TagField; label: string; options: readonly string[] }[] 
   { field: 'shot_type', label: 'Shot type', options: SHOT_TYPES },
   { field: 'setup', label: 'Setup', options: SETUPS },
   { field: 'hole', label: 'Hole', options: HOLES },
+  { field: 'shot_direction', label: 'Shot direction', options: SHOT_DIRECTIONS },
   { field: 'execution', label: 'Execution', options: EXECUTIONS },
   { field: 'result', label: 'Result', options: RESULTS },
 ]

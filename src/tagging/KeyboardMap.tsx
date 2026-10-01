@@ -2,7 +2,7 @@ import { KEY } from './keyLabels'
 import { keyLabel } from '../player/keyboardLayout'
 import { useKeyboardLayout } from '../player/useKeyboardLayout'
 
-type Kind = 'field' | 'moment' | 'verdict' | 'gap'
+type Kind = 'field' | 'moment' | 'verdict'
 interface Cap {
   /** Physical key (KeyboardEvent.code). */
   k: string
@@ -13,14 +13,13 @@ interface Cap {
 const f = (k: string, label: string): Cap => ({ k, label, kind: 'field' })
 const m = (k: string, label: string): Cap => ({ k, label, kind: 'moment' })
 const v = (k: string, label: string): Cap => ({ k, label, kind: 'verdict' })
-const gap = (k: string): Cap => ({ k, label: '', kind: 'gap' })
 
 /** The left-hand grid, as on the keyboard (ADR-0026). */
 const ROWS: { name: string; caps: Cap[] }[] = [
   { name: 'Hole', caps: [f('Digit1', 'Pull long'), f('Digit2', 'Pull short'), f('Digit3', 'Middle'), f('Digit4', 'Push short'), f('Digit5', 'Push long')] },
   { name: 'Shot type', caps: [f('KeyQ', 'Pin'), f('KeyW', 'Pull'), f('KeyE', 'Other'), m('KeyR', 'Ball set')] },
   { name: 'Setup', caps: [f('KeyA', 'Pull side'), f('KeyS', 'Middle'), f('KeyD', 'Push side'), m('KeyF', 'Shot'), v('KeyG', 'Goal')] },
-  { name: 'Execution', caps: [f('KeyZ', 'Proper'), f('KeyX', 'Misexecuted'), gap('KeyC'), m('KeyV', 'No shot'), v('KeyB', 'No goal')] },
+  { name: 'Execution · shot dir.', caps: [f('KeyZ', 'Proper'), f('KeyX', 'Misexecuted'), f('KeyC', 'Straight ⇄ Z/7'), m('KeyV', 'No shot'), v('KeyB', 'No goal')] },
 ]
 
 const right = (): [string, string][] => [
@@ -45,16 +44,12 @@ export function KeyboardMap() {
             <span className="keymap-name" role="rowheader">
               {row.name}
             </span>
-            {row.caps.map((c) =>
-              c.kind === 'gap' ? (
-                <span key={c.k} className="keycap gap" role="cell" />
-              ) : (
-                <span key={c.k} className={`keycap ${c.kind}`} role="cell">
-                  <kbd>{keyLabel(c.k)}</kbd>
-                  <span>{c.label}</span>
-                </span>
-              ),
-            )}
+            {row.caps.map((c) => (
+              <span key={c.k} className={`keycap ${c.kind}`} role="cell">
+                <kbd>{keyLabel(c.k)}</kbd>
+                <span>{c.label}</span>
+              </span>
+            ))}
           </div>
         ))}
       </div>

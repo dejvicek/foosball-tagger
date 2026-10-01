@@ -2,7 +2,7 @@
 // worked out by hand from the fixture's possession list, not from the code.
 import synthetic from '../../fixtures/synthetic-01.json'
 import { fixtureItems, type Fixture } from './fixture'
-import { byHole, byLength, directionOf, bySetup, byShot, confirmedOnly, executionVsResult, headline, shotStatus, applyFilters, NO_FILTERS, formatRatio, ratio, opponentsOf, gameOpponents, type StatItem } from '.'
+import { byHole, byLength, byShotDirection, movementOf, bySetup, byShot, confirmedOnly, executionVsResult, headline, shotStatus, applyFilters, NO_FILTERS, formatRatio, ratio, opponentsOf, gameOpponents, type StatItem } from '.'
 
 const all = fixtureItems(synthetic as Fixture)
 const items = confirmedOnly(all)
@@ -44,9 +44,9 @@ describe('headline (STA-5)', () => {
 
 describe('by shot (STA-6)', () => {
   const rows = byShot(items)
-  const key = (x: (typeof rows)[number]) => [x.shotType, x.direction, x.hole].map((v) => v ?? '–').join(' · ')
+  const key = (x: (typeof rows)[number]) => [x.shotType, x.movement, x.hole].map((v) => v ?? '–').join(' · ')
 
-  it('groups by type + derived direction + hole, most attempts first (ADR-0026)', () => {
+  it('groups by type + derived movement + hole, most attempts first (ADR-0026)', () => {
     expect(rows.map((x) => [key(x), x.attempts])).toEqual([
       ['Pin · Pull · Pull long', 2], // #1 #6
       ['Pin · Pull · Pull short', 1], // #2
@@ -54,7 +54,7 @@ describe('by shot (STA-6)', () => {
       ['Pin · Straight · Pull long', 1], // #3: pull-side setup
       ['Pull · Pull · Pull short', 1], // #5: push-side setup
       ['Pull · Straight · Middle', 1], // #4
-      ['Pull · – · Middle', 1], // #12: no setup, so no direction
+      ['Pull · – · Middle', 1], // #12: no setup, so no movement
       ['Other · – · –', 1],
       ['– · – · –', 1],
     ])
@@ -71,23 +71,23 @@ describe('by shot (STA-6)', () => {
   })
 })
 
-describe('direction (ADR-0026)', () => {
+describe('movement (ADR-0026, ADR-0028)', () => {
   it('is Straight when the hole is on the setup’s side; a setup covers its whole lane', () => {
-    expect(directionOf('Pull side', 'Pull long')).toBe('Straight')
-    expect(directionOf('Pull side', 'Pull short')).toBe('Straight')
-    expect(directionOf('Pull side', 'Middle')).toBe('Push')
-    expect(directionOf('Pull side', 'Push long')).toBe('Push')
-    expect(directionOf('Middle', 'Pull long')).toBe('Pull')
-    expect(directionOf('Middle', 'Middle')).toBe('Straight')
-    expect(directionOf('Middle', 'Push short')).toBe('Push')
-    expect(directionOf('Push side', 'Push long')).toBe('Straight')
-    expect(directionOf('Push side', 'Middle')).toBe('Pull')
-    expect(directionOf('Push side', 'Pull short')).toBe('Pull')
+    expect(movementOf('Pull side', 'Pull long')).toBe('Straight')
+    expect(movementOf('Pull side', 'Pull short')).toBe('Straight')
+    expect(movementOf('Pull side', 'Middle')).toBe('Push')
+    expect(movementOf('Pull side', 'Push long')).toBe('Push')
+    expect(movementOf('Middle', 'Pull long')).toBe('Pull')
+    expect(movementOf('Middle', 'Middle')).toBe('Straight')
+    expect(movementOf('Middle', 'Push short')).toBe('Push')
+    expect(movementOf('Push side', 'Push long')).toBe('Straight')
+    expect(movementOf('Push side', 'Middle')).toBe('Pull')
+    expect(movementOf('Push side', 'Pull short')).toBe('Pull')
   })
 
   it('is blank when the setup or the hole is blank', () => {
-    expect(directionOf(null, 'Middle')).toBeNull()
-    expect(directionOf('Middle', null)).toBeNull()
+    expect(movementOf(null, 'Middle')).toBeNull()
+    expect(movementOf('Middle', null)).toBeNull()
   })
 })
 
@@ -130,6 +130,15 @@ describe('by hole (STA-10)', () => {
       ['Middle', 2, 0, 1], // #12 has no result
       ['Push short', 1, 1, 1],
       ['Push long', 0, 0, 0],
+    ])
+  })
+})
+
+describe('by shot direction (ADR-0028)', () => {
+  it('conversion and proper rate over shots with a shot direction', () => {
+    expect(byShotDirection(items).map((b) => [b.label, b.attempts, b.conversion.num, b.conversion.den, b.proper.num, b.proper.den])).toEqual([
+      ['Straight', 6, 4, 6, 5, 5], // #1 #2 #5 #6 #7 #11; #6 has no execution
+      ['Z/7', 3, 1, 2, 1, 3], // #3 #4 #12; #12 has no result
     ])
   })
 })

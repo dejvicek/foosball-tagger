@@ -6,6 +6,7 @@ import {
   byLength,
   bySetup,
   byShot,
+  byShotDirection,
   executionVsResult,
   headline,
   type GroupRow,
@@ -127,9 +128,9 @@ export function StatsView({ items }: { items: StatItem[] }) {
       ) : (
         <Table head={['Shot', 'Att.', 'Goals', 'Conv.', 'Proper', 'Avg poss.']} numeric={[1, 2, 3, 4, 5]}>
           {shots.map((s) => (
-            <tr key={`${s.shotType}|${s.direction}|${s.hole}`}>
+            <tr key={`${s.shotType}|${s.movement}|${s.hole}`}>
               <td>
-                {blank(s.shotType)} · {blank(s.direction)} · {blank(s.hole)}
+                {blank(s.shotType)} · {blank(s.movement)} · {blank(s.hole)}
               </td>
               <td className="num">{s.attempts}</td>
               <td className="num">{s.goals}</td>
@@ -169,6 +170,9 @@ export function StatsView({ items }: { items: StatItem[] }) {
 
       <h3>By hole</h3>
       <Groups rows={byHole(items)} label="Hole" withProper={false} />
+
+      <h3>By shot direction</h3>
+      <Groups rows={byShotDirection(items)} label="Shot direction" />
     </div>
   )
 }

@@ -17,11 +17,13 @@ export function Help() {
           <dd>Where the ball sits when the possession starts: Pull side, Middle, Push side. Resets to Middle after each save.</dd>
           <dt>Hole</dt>
           <dd>Where the ball crossed or was aimed at, seen from the shooter: Pull long, Pull short, Middle, Push short, Push long.</dd>
-          <dt>Direction</dt>
+          <dt>Movement</dt>
           <dd>
-            Not tagged: the statistics work it out from setup and hole. Straight when the hole is on the setup’s side
-            (a pull-side setup into Pull long or Pull short), otherwise Pull or Push.
+            Not tagged: worked out from setup and hole and shown under Hole. Straight when the hole is on the setup’s
+            side (a pull-side setup into Pull long or Pull short), otherwise Pull or Push.
           </dd>
+          <dt>Shot direction</dt>
+          <dd>Path of the shot: Straight or Z/7. Starts at Straight; C flips it.</dd>
           <dt>Execution</dt>
           <dd>Proper or Misexecuted, judged against the criteria you set for yourself before tagging.</dd>
         </dl>

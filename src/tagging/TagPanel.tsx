@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react'
+import { Fragment, useEffect, useRef } from 'react'
 import type { PlayerController } from '../player/controller'
 import { formatTime } from '../player/time'
+import { movementOf } from '../stats/movement'
 import { statusText, type Draft, type DraftEvent } from './draft'
 import { TAG_GROUPS } from './keymap'
 import { KEY } from './keyLabels'
@@ -73,26 +74,33 @@ export function TagPanel({ draft, controller, onEvent, onUndo }: Props) {
         </button>
       </div>
       {TAG_GROUPS.map((g) => (
-        <div className="group" key={g.field}>
-          <h3 id={`grp-${g.field}`}>{g.label}</h3>
-          <div className={g.options.length > 3 ? 'seg-ctl many' : 'seg-ctl'} role="group" aria-labelledby={`grp-${g.field}`}>
-            {g.options.map((o) => (
-              <button
-                key={o.code}
-                type="button"
-                className="opt nf"
-                data-tone={o.negative ? 'neg' : undefined}
-                aria-pressed={draft[g.field] === o.value}
-                disabled={noShot && g.field !== 'shot_type' && g.field !== 'setup'}
-                onClick={() => onEvent({ kind: 'tag', field: g.field, value: o.value } as DraftEvent)}
-                title={o.value}
-              >
-                <span>{o.label}</span>
-                <kbd>{keyLabel(o.code)}</kbd>
-              </button>
-            ))}
+        <Fragment key={g.field}>
+          <div className="group">
+            <h3 id={`grp-${g.field}`}>{g.label}</h3>
+            <div className={g.options.length > 3 ? 'seg-ctl many' : 'seg-ctl'} role="group" aria-labelledby={`grp-${g.field}`}>
+              {g.options.map((o) => (
+                <button
+                  key={o.value}
+                  type="button"
+                  className="opt nf"
+                  data-tone={o.negative ? 'neg' : undefined}
+                  aria-pressed={draft[g.field] === o.value}
+                  disabled={noShot && g.field !== 'shot_type' && g.field !== 'setup'}
+                  onClick={() => onEvent({ kind: 'tag', field: g.field, value: o.value } as DraftEvent)}
+                  title={o.value}
+                >
+                  <span>{o.label}</span>
+                  <kbd>{keyLabel(o.code)}</kbd>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+          {g.field === 'hole' && (
+            <p className="derived" title="Worked out from setup and hole (ADR-0026)">
+              Movement <b>{movementOf(draft.setup, draft.hole) ?? '–'}</b>
+            </p>
+          )}
+        </Fragment>
       ))}
       <div className="actions">
         <button className="btn primary nf" type="button" onClick={() => onEvent({ kind: 'save' })}>

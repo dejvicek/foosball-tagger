@@ -166,7 +166,7 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
       const current = possessions.find((p) => p.id === id)
       if (!current) return
       let next: Possession = { ...current, ...patch, updated_at: nowIso() }
-      if (next.shot_type === 'No shot') next = { ...next, hole: null, result: null, execution: null }
+      if (next.shot_type === 'No shot') next = { ...next, hole: null, shot_direction: null, result: null, execution: null }
       setPossessions((list) => list.map((p) => (p.id === id ? next : p)))
       savePossession(queue, next, flushDelayMs)
     },

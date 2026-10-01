@@ -177,6 +177,8 @@ kbd { font-family: var(--sans); font-size: 11px; font-weight: 600; min-width: 18
 .timer .status { grid-column: 1 / -1; font-size: 14px; margin: 8px 0 0; min-height: 2.9em; }
 .group { margin-bottom: 10px; }
 .group h3 { font-size: 13px; font-weight: 600; color: var(--muted); margin: 0 0 5px; }
+.derived { margin: -4px 0 10px; font-size: 13px; color: var(--muted); }
+.derived b { color: var(--ink); font-weight: 600; }
 .opt[aria-pressed="true"][data-tone="neg"] { background: var(--miss); border-color: var(--miss); color: #fff; }
 .opt:disabled { opacity: 0.4; cursor: default; }
 /* Five holes in a 350 px panel: key under the label, labels may wrap (ADR-0026). */
@@ -267,7 +269,6 @@ table.log td, table.log th { padding: 5px 6px; }
 .keycap.field { border-bottom: 3px solid var(--felt); }
 .keycap.moment { border-bottom: 3px solid var(--wood); font-weight: 600; }
 .keycap.verdict { border-bottom: 3px solid var(--focus); }
-.keycap.gap { visibility: hidden; }
 .keymap-foot { margin: 8px 0; }
 .help .keymap-right { display: grid; grid-template-columns: 1fr; gap: 3px; margin: 4px 0 8px; }
 .keymap-right div { display: grid; grid-template-columns: 70px 1fr; gap: 8px; }

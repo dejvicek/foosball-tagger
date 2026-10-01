@@ -38,7 +38,7 @@ describe('draft state machine', () => {
       [ENTER, 76],
     ])
     expect(saved).toEqual([
-      { start_s: 70, shot_s: 75.5, setup: 'Pull side', shot_type: 'Pull', hole: null, result: 'Goal', execution: null },
+      { start_s: 70, shot_s: 75.5, setup: 'Pull side', shot_type: 'Pull', hole: null, shot_direction: 'Straight', result: 'Goal', execution: null },
     ])
     expect(draft).toEqual(emptyDraft())
     expect(draft.setup).toBe('Middle')
@@ -122,6 +122,14 @@ describe('draft state machine', () => {
     expect(run([[S, 70], [ENTER, 71]]).saved).toEqual([expect.objectContaining({ start_s: 70, shot_s: null, result: null })])
   })
 
+  it('starts at Straight; C flips Straight ⇄ Z/7; No shot blanks it (ADR-0028)', () => {
+    const T = { kind: 'toggleShotDirection' } as const
+    expect(run([[T, 70]]).draft.shot_direction).toBe('Z/7')
+    expect(run([[T, 70], [T, 70]]).draft.shot_direction).toBe('Straight')
+    expect(run([[T, 70]], { ...emptyDraft(), shot_direction: null }).draft.shot_direction).toBe('Z/7')
+    expect(run([[S, 70], [N, 72]]).saved[0]?.shot_direction).toBeNull()
+  })
+
   it('starts with Shot type Pin; S, F, Enter saves a Pin (ADR-0027)', () => {
     expect(emptyDraft().shot_type).toBe('Pin')
     expect(run([[S, 70], [F, 72], [ENTER, 73]]).saved).toEqual([expect.objectContaining({ shot_type: 'Pin' })])
@@ -142,7 +150,7 @@ describe('statusText (TAG-3)', () => {
       'Tag the shot, then press Enter to save. Still blank: hole, execution, result.',
     )
     expect(
-      statusText({ start_s: 1, shot_s: 2, setup: 'Middle', shot_type: 'Pin', hole: 'Middle', result: 'Goal', execution: 'Proper' }),
+      statusText({ start_s: 1, shot_s: 2, setup: 'Middle', shot_type: 'Pin', hole: 'Middle', shot_direction: 'Straight', result: 'Goal', execution: 'Proper' }),
     ).toMatch(/All tagged/)
   })
 })

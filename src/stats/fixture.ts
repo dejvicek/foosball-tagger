@@ -17,6 +17,7 @@ export function fixtureItems(f: Fixture): StatItem[] {
     setup: p.setup,
     shot_type: p.shot_type,
     hole: p.hole,
+    shot_direction: p.shot_direction,
     result: p.result,
     execution: p.execution,
     review_status: p.review_status,

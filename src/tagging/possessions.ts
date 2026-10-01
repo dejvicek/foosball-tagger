@@ -39,7 +39,7 @@ export const OUTCOME_LABEL: Record<Outcome | 'draft', string> = {
 
 /** Hover text: number and tags (TAG-6). */
 export function describe(p: Possession, n: number): string {
-  const tags = [p.setup, p.shot_type, p.hole, p.result, p.execution].filter(Boolean).join(' · ')
+  const tags = [p.setup, p.shot_type, p.hole, p.shot_direction, p.result, p.execution].filter(Boolean).join(' · ')
   return `#${n}${tags ? ` ${tags}` : ' (no tags)'}${p.review_status === 'unreviewed' ? ' — unreviewed' : ''}`
 }
 
@@ -66,6 +66,7 @@ export function fromDraft(d: Draft, input: NewPossessionInput): Possession {
     setup: d.setup,
     shot_type: d.shot_type,
     hole: d.hole,
+    shot_direction: d.shot_direction,
     result: d.result,
     execution: d.execution,
     source: 'manual',

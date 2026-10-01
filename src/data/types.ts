@@ -11,9 +11,13 @@ export type ShotType = (typeof SHOT_TYPES)[number]
 export const HOLES = ['Pull long', 'Pull short', 'Middle', 'Push short', 'Push long'] as const
 export type Hole = (typeof HOLES)[number]
 
-/** Not stored: derived from setup + hole (ADR-0026, src/stats/direction.ts). */
-export const DIRECTIONS = ['Pull', 'Push', 'Straight'] as const
-export type Direction = (typeof DIRECTIONS)[number]
+/** Not stored: derived from setup + hole (ADR-0026, ADR-0028, src/stats/movement.ts). */
+export const MOVEMENTS = ['Pull', 'Push', 'Straight'] as const
+export type Movement = (typeof MOVEMENTS)[number]
+
+/** Path of the shot (ADR-0028); new drafts start at Straight. */
+export const SHOT_DIRECTIONS = ['Straight', 'Z/7'] as const
+export type ShotDirection = (typeof SHOT_DIRECTIONS)[number]
 
 export const RESULTS = ['Goal', 'No goal'] as const
 export type Result = (typeof RESULTS)[number]
@@ -111,6 +115,7 @@ export type Possession = {
   setup: Setup | null
   shot_type: ShotType | null
   hole: Hole | null
+  shot_direction: ShotDirection | null
   result: Result | null
   execution: Execution | null
   source: Source

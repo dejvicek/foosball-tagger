@@ -1,6 +1,6 @@
 // Tag panel state machine (TAG-1..5). Pure: the screen feeds it events with the
 // current player time and persists what it returns.
-import type { Execution, Hole, Result, Setup, ShotType } from '../data/types'
+import type { Execution, Hole, Result, Setup, ShotDirection, ShotType } from '../data/types'
 import { formatTime } from '../player/time'
 import { KEY } from './keyLabels'
 
@@ -10,16 +10,17 @@ export interface Draft {
   setup: Setup | null
   shot_type: ShotType | null
   hole: Hole | null
+  shot_direction: ShotDirection | null
   result: Result | null
   execution: Execution | null
 }
 
-export type TagField = 'setup' | 'shot_type' | 'hole' | 'result' | 'execution'
+export type TagField = 'setup' | 'shot_type' | 'hole' | 'shot_direction' | 'result' | 'execution'
 type TagValue<F extends TagField> = NonNullable<Draft[F]>
 
-/** A new draft; Setup starts at Middle (TAG-2) and Shot type at Pin (ADR-0027). */
+/** A new draft; Setup starts at Middle (TAG-2), Shot type at Pin (ADR-0027), Shot direction at Straight (ADR-0028). */
 export function emptyDraft(): Draft {
-  return { start_s: null, shot_s: null, setup: 'Middle', shot_type: 'Pin', hole: null, result: null, execution: null }
+  return { start_s: null, shot_s: null, setup: 'Middle', shot_type: 'Pin', hole: null, shot_direction: 'Straight', result: null, execution: null }
 }
 
 export type DraftEvent =
@@ -28,6 +29,8 @@ export type DraftEvent =
   | { kind: 'noShot' }
   | { kind: 'save' }
   | { kind: 'clear' }
+  /** Straight ⇄ Z/7 (ADR-0028); from blank, Z/7. */
+  | { kind: 'toggleShotDirection' }
   | { [F in TagField]: { kind: 'tag'; field: F; value: TagValue<F> } }[TagField]
 
 export interface DraftContext {
@@ -54,7 +57,7 @@ const EDGE = 0.05
 /** Whether the draft holds anything worth saving (the defaults alone are not). */
 export function hasContent(d: Draft): boolean {
   const e = emptyDraft()
-  return d.start_s != null || d.shot_s != null || d.shot_type !== e.shot_type || d.hole != null || d.result != null || d.execution != null
+  return d.start_s != null || d.shot_s != null || d.shot_type !== e.shot_type || d.hole != null || d.shot_direction !== e.shot_direction || d.result != null || d.execution != null
 }
 
 function outsideRange(ctx: DraftContext): string | null {
@@ -94,7 +97,7 @@ export function reduce(draft: Draft, event: DraftEvent, ctx: DraftContext): Outc
       if (draft.start_s != null && t < draft.start_s) {
         return { draft, error: `This time (${formatTime(t)}) is before the start of the possession (${formatTime(draft.start_s)}).` }
       }
-      const saved: Draft = { ...draft, shot_s: t, shot_type: 'No shot', hole: null, result: null, execution: null }
+      const saved: Draft = { ...draft, shot_s: t, shot_type: 'No shot', hole: null, shot_direction: null, result: null, execution: null }
       return { draft: emptyDraft(), save: saved, message: 'Saved a possession without a shot.' }
     }
     case 'save': {
@@ -103,6 +106,8 @@ export function reduce(draft: Draft, event: DraftEvent, ctx: DraftContext): Outc
     }
     case 'clear':
       return { draft: emptyDraft(), ...(hasContent(draft) ? { message: 'Cleared the draft.' } : {}) }
+    case 'toggleShotDirection':
+      return { draft: { ...draft, shot_direction: draft.shot_direction === 'Z/7' ? 'Straight' : 'Z/7' } }
     case 'tag': {
       // Pressing a tag key a second time clears that field (TAG-1).
       const current = draft[event.field]
@@ -115,10 +120,11 @@ const FIELD_LABEL: Record<TagField, string> = {
   setup: 'setup',
   shot_type: 'shot type',
   hole: 'hole',
+  shot_direction: 'shot direction',
   result: 'result',
   execution: 'execution',
 }
-const FIELDS: TagField[] = ['shot_type', 'setup', 'hole', 'execution', 'result']
+const FIELDS: TagField[] = ['shot_type', 'setup', 'hole', 'shot_direction', 'execution', 'result']
 
 /** The next step, as shown under the timer (TAG-3). */
 export function statusText(d: Draft): string {

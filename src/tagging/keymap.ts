@@ -5,6 +5,7 @@
 //   Q W E      Shot type  Pin · Pull · Other          │ R Ball set │
 //   A S D      Setup      pull side · middle · push   │ F Shot     │ G Goal
 //   Z X        Execution  Proper · Misexecuted        │ V No shot  │ B No goal
+//   C          Shot direction  Straight ⇄ Z/7 (ADR-0028)
 //
 // Enter saves, Backspace / Esc clear the draft, ⌘Z / Ctrl+Z undoes the last save.
 // The pull → push options run left to right. Keys are physical positions
@@ -26,6 +27,8 @@ export interface TagOption {
 export interface TagGroup {
   field: TagField
   label: string
+  /** Every option shows this one key, which flips between them (Shot direction, ADR-0028). */
+  toggle?: true
   options: TagOption[]
 }
 
@@ -61,6 +64,15 @@ export const TAG_GROUPS: TagGroup[] = [
     ],
   },
   {
+    field: 'shot_direction',
+    label: 'Shot direction',
+    toggle: true,
+    options: [
+      { code: 'KeyC', value: 'Straight', label: 'Straight' },
+      { code: 'KeyC', value: 'Z/7', label: 'Z/7' },
+    ],
+  },
+  {
     field: 'execution',
     label: 'Execution',
     options: [
@@ -85,8 +97,10 @@ export type TagAction = DraftEvent | { kind: 'undo' }
 
 const BY_CODE = new Map<string, TagAction>()
 for (const g of TAG_GROUPS) {
+  if (g.toggle) continue
   for (const o of g.options) BY_CODE.set(o.code, { kind: 'tag', field: g.field, value: o.value } as DraftEvent)
 }
+BY_CODE.set('KeyC', { kind: 'toggleShotDirection' })
 BY_CODE.set(ACTION_CODE.ballSet, { kind: 'ballSet' })
 BY_CODE.set(ACTION_CODE.shot, { kind: 'shot' })
 BY_CODE.set(ACTION_CODE.noShot, { kind: 'noShot' })

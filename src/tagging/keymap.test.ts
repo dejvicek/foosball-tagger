@@ -1,6 +1,6 @@
 import { TAG_GROUPS, tagAction } from './keymap'
 import { playerAction } from '../player/keys'
-import { EXECUTIONS, HOLES, RESULTS, SETUPS, SHOT_TYPES } from '../data/types'
+import { EXECUTIONS, HOLES, RESULTS, SETUPS, SHOT_DIRECTIONS, SHOT_TYPES } from '../data/types'
 
 describe('tagAction (ADR-0026)', () => {
   it.each([
@@ -25,8 +25,8 @@ describe('tagAction (ADR-0026)', () => {
     ['x', { kind: 'tag', field: 'execution', value: 'Misexecuted' }],
     ['g', { kind: 'tag', field: 'result', value: 'Goal' }],
     ['b', { kind: 'tag', field: 'result', value: 'No goal' }],
+    ['c', { kind: 'toggleShotDirection' }],
     ['t', null],
-    ['c', null],
     ['n', null],
     ['h', null],
   ])('%s', (key, action) => {
@@ -62,7 +62,7 @@ describe('tagAction (ADR-0026)', () => {
   })
 
   it('lists the fields in tag panel order', () => {
-    expect(TAG_GROUPS.map((g) => g.field)).toEqual(['shot_type', 'setup', 'hole', 'execution', 'result'])
+    expect(TAG_GROUPS.map((g) => g.field)).toEqual(['shot_type', 'setup', 'hole', 'shot_direction', 'execution', 'result'])
   })
 
   it('never collides with a player key', () => {
@@ -75,6 +75,7 @@ describe('tagAction (ADR-0026)', () => {
     expect(values('setup')).toEqual([...SETUPS].sort())
     expect(values('shot_type')).toEqual(SHOT_TYPES.filter((t) => t !== 'No shot').sort())
     expect(values('hole')).toEqual([...HOLES].sort())
+    expect(values('shot_direction')).toEqual([...SHOT_DIRECTIONS].sort())
     expect(values('result')).toEqual([...RESULTS].sort())
     expect(values('execution')).toEqual([...EXECUTIONS].sort())
   })

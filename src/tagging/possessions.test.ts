@@ -40,7 +40,7 @@ describe('possession helpers', () => {
   })
 
   it('describes tags for hover', () => {
-    expect(describeP(p(1, 2, { shot_type: 'Pull', result: 'Goal' }), 3)).toBe('#3 Middle · Pull · Goal')
+    expect(describeP(p(1, 2, { shot_type: 'Pull', result: 'Goal', shot_direction: 'Z/7' }), 3)).toBe('#3 Middle · Pull · Z/7 · Goal')
   })
 
   it('makes manual confirmed rows from drafts', () => {

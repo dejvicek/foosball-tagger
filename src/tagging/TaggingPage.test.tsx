@@ -129,6 +129,8 @@ describe('tagging screen keyboard (TAG-1..5, PRD §8)', () => {
     press('f')
     expect(screen.getByText(/Still blank: hole, execution, result/)).toBeInTheDocument()
     press('2')
+    expect(screen.getByTitle(/Worked out from setup and hole/)).toHaveTextContent('Movement Straight') // pull side → pull short
+    press('c')
     press('g')
     press('z')
     expect(screen.getByText(/All tagged/)).toBeInTheDocument()
@@ -141,6 +143,7 @@ describe('tagging screen keyboard (TAG-1..5, PRD §8)', () => {
         setup: 'Pull side',
         shot_type: 'Pull',
         hole: 'Pull short',
+        shot_direction: 'Z/7',
         result: 'Goal',
         execution: 'Proper',
         source: 'manual',
@@ -276,7 +279,7 @@ describe('possession log (TAG-7)', () => {
     await renderPage()
     fireEvent.change(screen.getByLabelText('Shot type for possession 1'), { target: { value: 'No shot' } })
     await flush()
-    expect(saved()[0]).toMatchObject({ shot_type: 'No shot', result: null, hole: null })
+    expect(saved()[0]).toMatchObject({ shot_type: 'No shot', result: null, hole: null, shot_direction: null })
     expect(screen.getByLabelText('Result for possession 1')).toBeDisabled()
   })
 
@@ -307,9 +310,9 @@ describe('possession log (TAG-7)', () => {
 
 describe('timeline (TAG-6)', () => {
   it('draws one segment per possession, with its tags on hover, and jumps before it on click', async () => {
-    vi.mocked(loadPossessions).mockResolvedValue([possession(70, 75, { result: 'Goal' }), possession(100, 104, { shot_type: 'No shot' })])
+    vi.mocked(loadPossessions).mockResolvedValue([possession(70, 75, { result: 'Goal' }), possession(100, 104, { shot_type: 'No shot', shot_direction: null })])
     await renderPage()
-    const seg = screen.getByRole('button', { name: /^#1 Middle · Pin · Goal\. Goal\./ })
+    const seg = screen.getByRole('button', { name: /^#1 Middle · Pin · Straight · Goal\. Goal\./ })
     expect(seg).toHaveClass('goal')
     expect(screen.getByRole('button', { name: /^#2 Middle · No shot\./ })).toHaveClass('noshot')
     fireEvent.click(seg)

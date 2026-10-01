@@ -93,6 +93,13 @@ Open a game with "Tag →" on the video screen.
 2. The five hole buttons fit on one row of the tag panel at full width and in cinema mode.
 3. Statistics → By shot: a Pin from a pull-side setup into Pull long reads "Pin · Straight · Pull long"; from a middle setup "Pin · Pull · Pull long"; with no setup the direction is "–". By hole lists the five holes.
 
+## Shot direction and movement (ADR-0028)
+
+1. A new draft shows Shot direction Straight. C → Z/7, C again → Straight. Clicking the selected button blanks it; V saves a No shot with it blank.
+2. Setup Pull side + hole Pull long → "Movement Straight" under Hole; hole Middle → "Movement Push"; no setup → "Movement –".
+3. After `npx supabase db push`: old shots show Straight in the log's Shot direction column, No shot rows a blank.
+4. Statistics → By shot direction lists Straight and Z/7 with shots, conversion and proper; By shot rows read "type · movement · hole".
+
 ## Dragging and keyboard layouts (ADR-0022)
 
 1. **Seek bar drag:** on the video screen, grab the round handle and drag: the handle follows the pointer, the video follows a few times a second, the time shows above the pointer; release lands exactly there. Dragging over the video or past either end still works.
