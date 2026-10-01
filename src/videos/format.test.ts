@@ -1,5 +1,5 @@
 import { summary } from './testData'
-import { deleteSummary, formatDate, formatDuration, plural } from './format'
+import { deleteSummary, formatDate, formatDuration, playersLabel, plural } from './format'
 
 const base = summary()
 
@@ -16,6 +16,16 @@ describe('deleteSummary', () => {
 
   it('says when nothing else is removed', () => {
     expect(deleteSummary(base)).toMatch(/no games or possessions yet/)
+  })
+})
+
+describe('playersLabel (GAM-2)', () => {
+  const g = { format: 'singles' as const, teammate: null, opponent: null, opponent2: null }
+  it('names the opponent in singles, and teammate and both opponents in doubles', () => {
+    expect(playersLabel(g)).toBe('')
+    expect(playersLabel({ ...g, opponent: 'Olaf' })).toBe('vs Olaf')
+    expect(playersLabel({ ...g, format: 'doubles', teammate: 'Eva', opponent: 'Olaf', opponent2: 'Tom' })).toBe('with Eva · vs Olaf & Tom')
+    expect(playersLabel({ ...g, format: 'doubles', opponent2: 'Tom' })).toBe('vs Tom')
   })
 })
 

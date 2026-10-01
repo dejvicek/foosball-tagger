@@ -15,7 +15,8 @@ export interface StatItem {
   gameId: string
   videoId: string
   format: Format
-  opponent: string | null
+  /** Opponents' names in the game (one in singles, up to two in doubles); empty when none entered. */
+  opponents: string[]
   /** Calendar date of the video (YYYY-MM-DD). */
   date: string
 }

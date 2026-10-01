@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react'
+import { useCinema } from '../player/useCinema'
 import { Link, useParams } from 'react-router'
 import { getVideo } from '../data/videos'
 import { loadGames } from '../data/games'
@@ -13,7 +14,7 @@ import { useQueue } from '../app/QueueProvider'
 import { useResource } from '../app/useResource'
 import { useToast } from '../app/useToast'
 import { gameNumber, gameRange } from '../videos/games'
-import { videoTitle } from '../videos/format'
+import { playersLabel, videoTitle } from '../videos/format'
 import { reduce, type Draft, type DraftEvent } from './draft'
 import { loadDraft, storeDraft } from './draftStore'
 import { tagAction } from './keymap'
@@ -237,7 +238,8 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
     return () => document.removeEventListener('keydown', onKey)
   }, [controller, snapshot.ready, video.fps, dispatch, undo, show])
 
-  const side = game.my_side === 'left' ? 'left' : 'right'
+  const ar = video.aspect_ratio ?? 16 / 9
+  const cinema = useCinema()
   return (
     <div className="tagging-page">
       <p className="crumbs">
@@ -247,13 +249,13 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
         {label}
         <span className="muted game-meta">
           {' '}
-          · {formatTime(range.start)}–{Number.isFinite(range.end) ? formatTime(range.end) : 'end'} · my goal on the {side}
-          {game.opponent ? ` · vs ${game.opponent}` : ''}
+          · {formatTime(range.start)}–{Number.isFinite(range.end) ? formatTime(range.end) : 'end'} · {game.format === 'doubles' ? 'doubles' : 'singles'}, on the {game.my_side}
+          {playersLabel(game) ? ` · ${playersLabel(game)}` : ''}
         </span>
       </h2>
-      <div className="grid">
-        <section aria-label="Player">
-          <YouTubePlayer youtubeId={video.youtube_id} aspectRatio={video.aspect_ratio ?? 16 / 9} controller={controller} />
+      <div className={cinema ? 'grid cinema' : 'grid'}>
+        <section aria-label="Player" className="player-col" style={{ '--ar': ar } as CSSProperties}>
+          <YouTubePlayer youtubeId={video.youtube_id} aspectRatio={ar} controller={controller} />
           <PlayerControls controller={controller} fps={video.fps} />
           <Timeline range={shownRange} possessions={numbered} draft={draft} controller={controller} onSeek={(t) => controller.seek(t)} />
         </section>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import type { PlayerController } from './controller'
 import { loadYouTubeApi } from './loadYouTubeApi'
 import { describePlayerError, type PlayerErrorInfo } from './playerErrors'
@@ -88,7 +88,7 @@ export function YouTubePlayer({ youtubeId, aspectRatio, controller }: Props) {
         ref={stageRef}
         tabIndex={-1}
         aria-label="Video"
-        style={{ aspectRatio: String(aspectRatio), maxWidth: `calc(70vh * ${aspectRatio})` }}
+        style={{ aspectRatio: String(aspectRatio), '--ar': aspectRatio } as CSSProperties}
       >
         <div className="stage-host" ref={hostRef} />
         {(error || loadError) && (

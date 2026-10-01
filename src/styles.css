@@ -67,9 +67,15 @@ td.title-cell { white-space: normal; min-width: 200px; }
 .meta { margin: 2px 0 12px; }
 .video-grid { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; align-items: start; }
 @media (max-width: 960px) { .video-grid { grid-template-columns: minmax(0, 1fr); } }
+/* Cinema mode (ADR-0023): the player column spans the viewport, sized so video and
+   controls fit its height; the side panel moves below. */
+.video-grid.cinema, .grid.cinema { grid-template-columns: minmax(0, 1fr); }
+.cinema > .player-col { --cw: min(100vw - 32px, (100vh - 190px) * var(--ar, 1.7778)); width: var(--cw); margin-left: calc((100% - var(--cw)) / 2); }
+.cinema .stage { max-width: none; }
+.ctl .cinema-btn[aria-pressed="true"] { border-color: var(--focus); }
 .video-side .card + .card { margin-top: 12px; }
 
-.stage { position: relative; width: 100%; margin: 0 auto; background: var(--stage); border-radius: 8px; overflow: hidden; }
+.stage { position: relative; width: 100%; max-width: calc(70vh * var(--ar, 1.7778)); margin: 0 auto; background: var(--stage); border-radius: 8px; overflow: hidden; }
 .stage-host, .stage-host > iframe, .stage-host > div { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .stage-error { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; gap: 4px; padding: 20px; background: #080b09; color: #e5ece8; text-align: center; }
 .stage-error p { margin: 0 auto; max-width: 52ch; }
@@ -258,3 +264,4 @@ table.log td, table.log th { padding: 5px 6px; }
 .keymap-right div { display: grid; grid-template-columns: 70px 1fr; gap: 8px; }
 .keymap-right dd { margin: 0; color: var(--muted); }
 .help h4 { font-size: 13px; margin: 10px 0 2px; }
+.game-fields .seg-ctl .opt { padding: 4px 8px; }

@@ -93,7 +93,9 @@ function game(start_s: number, end_s: number | null, extra: Partial<Game> = {}):
     end_s,
     my_side: 'right',
     format: 'singles',
+    teammate: null,
     opponent: null,
+    opponent2: null,
     my_score: null,
     opp_score: null,
     notes: null,
@@ -152,7 +154,7 @@ describe('VideoPage', () => {
 describe('games on the video screen (GAM-1..4)', () => {
   it('asks for the side before the first game, then B starts and E ends it', async () => {
     renderPage()
-    await screen.findByText(/Which side of the frame is your goal on/)
+    await screen.findByText(/Which side of the frame do you stand on/)
     fake.t = 12
     press('b')
     expect(await screen.findByRole('status', { name: '' })).toHaveTextContent(/Choose which side/)
@@ -161,7 +163,7 @@ describe('games on the video screen (GAM-1..4)', () => {
     press('b')
     expect(await screen.findByRole('heading', { name: 'Game 1' })).toBeInTheDocument()
     expect(screen.getByText('open')).toBeInTheDocument()
-    expect(screen.getByLabelText('My goal')).toHaveValue('right')
+    expect(screen.getByLabelText('My side')).toHaveValue('right')
 
     fake.t = 95.5
     press('E')
@@ -179,7 +181,7 @@ describe('games on the video screen (GAM-1..4)', () => {
     press('b')
     expect(await screen.findByRole('heading', { name: 'Game 2' })).toBeInTheDocument()
     expect(screen.getByText(/Ended Game 1 and started Game 2 at 5:00.0/)).toBeInTheDocument()
-    const selects = screen.getAllByLabelText('My goal')
+    const selects = screen.getAllByLabelText('My side')
     expect(selects.map((s) => (s as HTMLSelectElement).value)).toEqual(['right', 'right'])
   })
 
@@ -197,11 +199,37 @@ describe('games on the video screen (GAM-1..4)', () => {
     vi.mocked(loadGames).mockResolvedValue([game(10, 100)])
     renderPage()
     fireEvent.change(await screen.findByLabelText('Opponent'), { target: { value: 'Tomáš' } })
-    fireEvent.change(screen.getByLabelText('Format'), { target: { value: 'doubles' } })
+    expect(screen.queryByLabelText('Teammate')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Doubles' }))
+    fireEvent.change(screen.getByLabelText('Teammate'), { target: { value: 'Eva' } })
+    fireEvent.change(screen.getByLabelText('Opponent 2'), { target: { value: 'Olaf' } })
     fireEvent.change(screen.getByLabelText('My score'), { target: { value: '5' } })
     expect(queue.getStatus().pending).toBe(1)
     await act(() => queue.flush())
-    expect(written[0]).toMatch(/"format":"doubles","opponent":"Tomáš","my_score":5/)
+    expect(written[0]).toMatch(/"format":"doubles","teammate":"Eva","opponent":"Tomáš","opponent2":"Olaf","my_score":5/)
+  })
+
+  it('switching back to singles clears the teammate and second opponent (GAM-2, ADR-0023)', async () => {
+    vi.mocked(loadGames).mockResolvedValue([game(10, 100, { format: 'doubles', teammate: 'Eva', opponent: 'Tomáš', opponent2: 'Olaf' })])
+    renderPage()
+    expect(await screen.findByLabelText('Opponent 1')).toHaveValue('Tomáš')
+    fireEvent.click(screen.getByRole('button', { name: 'Singles' }))
+    expect(screen.getByLabelText('Opponent')).toHaveValue('Tomáš')
+    expect(screen.queryByLabelText('Opponent 2')).not.toBeInTheDocument()
+    await act(() => queue.flush())
+    expect(written[0]).toMatch(/"format":"singles","teammate":null,"opponent":"Tomáš","opponent2":null/)
+  })
+
+  it('cinema mode widens the player and is remembered (ADR-0023)', async () => {
+    renderPage()
+    const toggle = await screen.findByRole('button', { name: 'Cinema' })
+    const grid = () => screen.getByRole('region', { name: 'Player' }).parentElement
+    expect(grid()).not.toHaveClass('cinema')
+    fireEvent.click(toggle)
+    expect(grid()).toHaveClass('cinema')
+    expect(localStorage.getItem('fbtag:cinema:v1')).toBe('1')
+    fireEvent.click(screen.getByRole('button', { name: 'Default view' }))
+    expect(grid()).not.toHaveClass('cinema')
   })
 
   it('clicking a game start seeks there (GAM-3), and Tag opens its tagging screen', async () => {

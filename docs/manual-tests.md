@@ -43,7 +43,7 @@ Use a real practice video. Repeat 1–4 in Chrome, Firefox and Safari.
 6. **First game:** press B without choosing a side → message asks for the side. Choose Left, press B → Game 1 "open"; press E later → Game 1 has an end time.
 7. **Next game (GAM-1/2):** with Game 1 open, press B → Game 1 ends and Game 2 starts at the same time, with the same side and format.
 8. **Overlap (GAM-4):** seek inside Game 1 and press B → refused with an explanation. Seek before Game 2's start and use "End here" on Game 1 past Game 2's start → refused. Touching games (end of 1 = start of 2) are fine.
-9. **Inline edits (GAM-2):** change side, format, opponent, scores, notes; reload → all kept.
+9. **Inline edits (GAM-2):** change side, format, opponent, scores, notes; reload → all kept. Doubles shows Teammate, Opponent 1 and Opponent 2; Singles hides them and clears them (ADR-0023).
 10. **GAM-3:** click a game's start time → the player seeks there; "Tag →" opens the tagging placeholder.
 11. **Delete a game:** Delete… → confirmation; Esc cancels; confirm removes it.
 12. **Offline (SYN-2):** turn Wi-Fi off, press B and E, edit a name → header shows "Unsynced changes: n"; reload while still offline → the games are still there (games list may show a load error: Try again once online); turn Wi-Fi on → the counter disappears within a minute; reload → everything is on the server.
@@ -92,3 +92,10 @@ Open a game with "Tag →" on the video screen.
 2. **Timeline drag:** on the tagging screen, drag along the green strip: same behaviour, limited to the game. A plain click on a possession still jumps 1 s before it; a drag that starts on a possession does not.
 3. **Czech/Slovak keyboard:** switch the OS keyboard to Czech (QWERTZ). The bottom-left letter key (labelled Y) selects Pin and the Shot type buttons show "Y"; the number row keys (+ ě š č ř) select setup, save and Proper; ⌘Z / Ctrl+Z still undoes with the key labelled Z.
 4. In Chrome the labels are right from the start; in Firefox/Safari they correct themselves after the first press of a key if the browser language is not Czech/Slovak.
+
+## Cinema mode and players (ADR-0023)
+
+1. **Cinema:** on the video screen click Cinema → the video spans the window width (video and controls still fit the window height) and the games panel moves below. Open a game's tagging screen → still in cinema mode, tag panel below the timeline; keys work as before. Default view restores the side panel; reload keeps the choice.
+2. **Window sizes:** in cinema mode, narrow the window and make it short → no sideways scroll, the video shrinks to fit.
+3. **Side:** a new video asks "Which side of the frame do you stand on?"; the game rows say "My side". Check existing games show the side you stand on.
+4. **Doubles:** switch a game to Doubles, enter teammate and both opponents → the tagging header shows "with … · vs … & …"; the statistics Opponent filter lists both opponents and either one selects the game.

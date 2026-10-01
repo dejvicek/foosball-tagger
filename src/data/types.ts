@@ -79,7 +79,10 @@ export type Game = {
   end_s: number | null
   my_side: Side
   format: Format
+  /** Doubles only (null in singles), like opponent2. */
+  teammate: string | null
   opponent: string | null
+  opponent2: string | null
   my_score: number | null
   opp_score: number | null
   notes: string | null

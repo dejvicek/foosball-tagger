@@ -6,7 +6,7 @@ import { gameRange, sortGames } from './games'
 import { keyLabel } from '../player/keyboardLayout'
 import { useKeyboardLayout } from '../player/useKeyboardLayout'
 
-export type GameField = Partial<Pick<Game, 'my_side' | 'format' | 'opponent' | 'my_score' | 'opp_score' | 'notes'>>
+export type GameField = Partial<Pick<Game, 'my_side' | 'format' | 'teammate' | 'opponent' | 'opponent2' | 'my_score' | 'opp_score' | 'notes'>>
 
 interface Props {
   videoId: string
@@ -43,7 +43,7 @@ export function GamesPanel(props: Props) {
       <h2 id="games-heading">Games</h2>
       {sorted.length === 0 && (
         <div className="first-side">
-          <p id="side-q">Which side of the frame is your goal on?</p>
+          <p id="side-q">Which side of the frame do you stand on?</p>
           <div className="seg-ctl" role="group" aria-labelledby="side-q">
             {SIDES.map((s) => (
               <button key={s} type="button" className="opt nf" aria-pressed={firstSide === s} onClick={() => onFirstSide(s)}>
@@ -105,7 +105,7 @@ function GameRow({ game, index, games, duration, videoId, onSeek, onChange, onBo
         </Link>
       </div>
       <div className="game-fields">
-        <label htmlFor={`${id}-side`}>My goal</label>
+        <label htmlFor={`${id}-side`}>My side</label>
         <select id={`${id}-side`} value={game.my_side} onChange={(e) => onChange(game.id, { my_side: e.target.value as Side })}>
           {SIDES.map((s) => (
             <option key={s} value={s}>
@@ -113,22 +113,31 @@ function GameRow({ game, index, games, duration, videoId, onSeek, onChange, onBo
             </option>
           ))}
         </select>
-        <label htmlFor={`${id}-format`}>Format</label>
-        <select id={`${id}-format`} value={game.format} onChange={(e) => onChange(game.id, { format: e.target.value as Format })}>
+        <span className="label" id={`${id}-format`}>
+          Format
+        </span>
+        <span className="seg-ctl" role="group" aria-labelledby={`${id}-format`}>
           {FORMATS.map((f) => (
-            <option key={f} value={f}>
+            <button
+              key={f}
+              type="button"
+              className="opt nf"
+              aria-pressed={game.format === f}
+              // Singles has no teammate or second opponent (CHECK in 0002_game_players.sql).
+              onClick={() => onChange(game.id, f === 'singles' ? { format: f, teammate: null, opponent2: null } : { format: f })}
+            >
               {FORMAT_LABEL[f]}
-            </option>
+            </button>
           ))}
-        </select>
-        <label htmlFor={`${id}-opp`}>Opponent</label>
-        <input
+        </span>
+        {game.format === 'doubles' && <NameField id={`${id}-mate`} label="Teammate" value={game.teammate} onChange={(v) => onChange(game.id, { teammate: v })} />}
+        <NameField
           id={`${id}-opp`}
-          type="text"
-          value={game.opponent ?? ''}
-          onChange={(e) => onChange(game.id, { opponent: e.target.value || null })}
-          onBlur={(e) => onChange(game.id, { opponent: e.target.value.trim() || null })}
+          label={game.format === 'doubles' ? 'Opponent 1' : 'Opponent'}
+          value={game.opponent}
+          onChange={(v) => onChange(game.id, { opponent: v })}
         />
+        {game.format === 'doubles' && <NameField id={`${id}-opp2`} label="Opponent 2" value={game.opponent2} onChange={(v) => onChange(game.id, { opponent2: v })} />}
         <span className="label" id={`${id}-score`}>
           Score
         </span>
@@ -178,5 +187,20 @@ function GameRow({ game, index, games, duration, videoId, onSeek, onChange, onBo
         </button>
       </div>
     </li>
+  )
+}
+
+function NameField({ id, label, value, onChange }: { id: string; label: string; value: string | null; onChange: (v: string | null) => void }) {
+  return (
+    <>
+      <label htmlFor={id}>{label}</label>
+      <input
+        id={id}
+        type="text"
+        value={value ?? ''}
+        onChange={(e) => onChange(e.target.value || null)}
+        onBlur={(e) => onChange(e.target.value.trim() || null)}
+      />
+    </>
   )
 }

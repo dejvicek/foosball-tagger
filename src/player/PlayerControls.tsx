@@ -1,6 +1,7 @@
 import { useEffect, useRef, useSyncExternalStore } from 'react'
 import type { PlayerController } from './controller'
 import { formatTime } from './time'
+import { setCinema, useCinema } from './useCinema'
 
 function usePlayerSnapshot(controller: PlayerController) {
   return useSyncExternalStore(controller.subscribe, controller.getSnapshot)
@@ -36,6 +37,7 @@ export function PlayerTime({ controller }: { controller: PlayerController }) {
 /** The app's own transport controls; buttons never take focus (TAG-1). */
 export function PlayerControls({ controller, fps }: { controller: PlayerController; fps: number }) {
   const { ready, playing, rate, speeds } = usePlayerSnapshot(controller)
+  const cinema = useCinema()
 
   return (
     <div className="ctl" role="toolbar" aria-label="Player controls">
@@ -92,6 +94,15 @@ export function PlayerControls({ controller, fps }: { controller: PlayerControll
         ))}
       </select>
       <PlayerTime controller={controller} />
+      <button
+        className="btn nf cinema-btn"
+        type="button"
+        aria-pressed={cinema}
+        onClick={() => setCinema(!cinema)}
+        title={cinema ? 'Default view' : 'Cinema mode: larger video, panel below'}
+      >
+        {cinema ? 'Default view' : 'Cinema'}
+      </button>
     </div>
   )
 }

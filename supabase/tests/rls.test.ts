@@ -143,6 +143,17 @@ describe('constraints', () => {
     )
   })
 
+  it('keeps a teammate and second opponent for doubles only (ADR-0023)', async () => {
+    const { gameId } = await videoWithGame(USER_A)
+    await expect(db.query(`update games set teammate = 'Eva' where id = $1`, [gameId])).rejects.toThrow(/check constraint/)
+    await expect(db.query(`update games set opponent2 = 'Olaf' where id = $1`, [gameId])).rejects.toThrow(/check constraint/)
+    const g = await one<{ teammate: string; opponent2: string }>(
+      `update games set format = 'doubles', teammate = 'Eva', opponent = 'Tom', opponent2 = 'Olaf' where id = $1 returning teammate, opponent2`,
+      [gameId],
+    )
+    expect(g).toEqual({ teammate: 'Eva', opponent2: 'Olaf' })
+  })
+
   it('refuses a malformed YouTube id', async () => {
     await as(db, USER_A)
     await expect(db.query(`insert into videos (youtube_id) values ('https://youtu.be/x')`)).rejects.toThrow(/check constraint/)

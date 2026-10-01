@@ -1,11 +1,11 @@
-import type { Format, ShotType } from '../data/types'
+import type { Format, Game, ShotType } from '../data/types'
 import type { StatItem } from './types'
 
 /** STA-4 filters. Empty / null means "all". */
 export interface StatFilters {
   shotTypes: ShotType[]
   format: Format | null
-  /** '' selects possessions from games without an opponent. */
+  /** A name selects games with that opponent (either one in doubles); '' selects games without one. */
   opponent: string | null
 }
 
@@ -21,11 +21,16 @@ export function applyFilters(items: readonly StatItem[], f: StatFilters): StatIt
     (p) =>
       (f.shotTypes.length === 0 || (p.shot_type != null && f.shotTypes.includes(p.shot_type))) &&
       (f.format == null || p.format === f.format) &&
-      (f.opponent == null || (p.opponent ?? '') === f.opponent),
+      (f.opponent == null || (f.opponent === '' ? p.opponents.length === 0 : p.opponents.includes(f.opponent))),
   )
 }
 
 /** Opponents present in the scope, for the filter menu. */
 export function opponentsOf(items: readonly StatItem[]): string[] {
-  return [...new Set(items.map((p) => p.opponent ?? ''))].sort((a, b) => a.localeCompare(b))
+  return [...new Set(items.flatMap((p) => (p.opponents.length === 0 ? [''] : p.opponents)))].sort((a, b) => a.localeCompare(b))
+}
+
+/** The named opponents of a game, in order. */
+export function gameOpponents(g: Pick<Game, 'opponent' | 'opponent2'>): string[] {
+  return [g.opponent, g.opponent2].filter((o): o is string => o != null && o !== '')
 }

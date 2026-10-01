@@ -7,7 +7,7 @@ import { FORMATS, SHOT_TYPES, type Format, type ShotType } from '../data/types'
 import { applyFilters, confirmedOnly, opponentsOf, type StatFilters } from '../stats'
 import { useQueue } from '../app/QueueProvider'
 import { useResource } from '../app/useResource'
-import { formatDate, plural, videoTitle } from '../videos/format'
+import { formatDate, playersLabel, plural, videoTitle } from '../videos/format'
 import { sortGames } from '../videos/games'
 import { formatTime } from '../player/time'
 import { StatsView } from './StatsView'
@@ -150,7 +150,7 @@ export function StatsPage() {
                   {gameList.map((g, i) => (
                     <option key={g.id} value={g.id}>
                       Game {i + 1} · {formatTime(g.start_s, 0)}
-                      {g.opponent ? ` · vs ${g.opponent}` : ''}
+                      {playersLabel(g) ? ` · ${playersLabel(g)}` : ''}
                     </option>
                   ))}
                 </select>

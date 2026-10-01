@@ -2,7 +2,7 @@
 // worked out by hand from the fixture's possession list, not from the code.
 import synthetic from '../../fixtures/synthetic-01.json'
 import { fixtureItems, type Fixture } from './fixture'
-import { byHole, byLength, bySetup, byShot, confirmedOnly, executionVsResult, headline, shotStatus, applyFilters, NO_FILTERS, formatRatio, ratio, opponentsOf, type StatItem } from '.'
+import { byHole, byLength, bySetup, byShot, confirmedOnly, executionVsResult, headline, shotStatus, applyFilters, NO_FILTERS, formatRatio, ratio, opponentsOf, gameOpponents, type StatItem } from '.'
 
 const all = fixtureItems(synthetic as Fixture)
 const items = confirmedOnly(all)
@@ -123,7 +123,7 @@ describe('percentages (STA-2, STA-3)', () => {
 })
 
 describe('filters (STA-4)', () => {
-  const other: StatItem[] = items.slice(0, 3).map((p, i) => ({ ...p, id: `o${i}`, gameId: 'g2', format: 'doubles', opponent: null }))
+  const other: StatItem[] = items.slice(0, 3).map((p, i) => ({ ...p, id: `o${i}`, gameId: 'g2', format: 'doubles', opponents: [] }))
   const mixed = [...items, ...other]
 
   it('by shot type', () => {
@@ -137,6 +137,16 @@ describe('filters (STA-4)', () => {
     expect(applyFilters(mixed, { ...NO_FILTERS, opponent: 'Tomáš' })).toHaveLength(13)
     expect(applyFilters(mixed, { ...NO_FILTERS, opponent: '' })).toHaveLength(3)
     expect(opponentsOf(mixed)).toEqual(['', 'Tomáš'])
+  })
+
+  it('matches either opponent of a doubles game', () => {
+    const pair: StatItem[] = items.slice(0, 2).map((p, i) => ({ ...p, id: `d${i}`, gameId: 'g3', format: 'doubles', opponents: ['Eva', 'Olaf'] }))
+    const withPair = [...mixed, ...pair]
+    expect(applyFilters(withPair, { ...NO_FILTERS, opponent: 'Olaf' }).map((p) => p.id)).toEqual(['d0', 'd1'])
+    expect(applyFilters(withPair, { ...NO_FILTERS, opponent: 'Eva' })).toHaveLength(2)
+    expect(opponentsOf(withPair)).toEqual(['', 'Eva', 'Olaf', 'Tomáš'])
+    expect(gameOpponents({ opponent: 'Eva', opponent2: null })).toEqual(['Eva'])
+    expect(gameOpponents({ opponent: null, opponent2: 'Olaf' })).toEqual(['Olaf'])
   })
 
   it('no filters keeps everything', () => {

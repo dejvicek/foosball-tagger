@@ -24,7 +24,7 @@ export function fixtureItems(f: Fixture): StatItem[] {
     gameId: f.game.id,
     videoId: f.video.id,
     format: f.game.format,
-    opponent: f.game.opponent,
+    opponents: f.game.opponent ? [f.game.opponent] : [],
     date: f.video.recorded_on,
   }))
 }

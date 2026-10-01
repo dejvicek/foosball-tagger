@@ -4,6 +4,7 @@ import type { WriteQueue } from './queue'
 import type { Game, Possession, VideoSummary } from './types'
 import { listVideos, getVideo } from './videos'
 import type { StatItem } from '../stats/types'
+import { gameOpponents } from '../stats/filters'
 
 export type StatScope =
   | { kind: 'game'; videoId: string; gameId: string }
@@ -86,7 +87,7 @@ export function toStatItem(p: Possession, game: Game, video: Pick<VideoSummary, 
     gameId: game.id,
     videoId: video.id,
     format: game.format,
-    opponent: game.opponent,
+    opponents: gameOpponents(game),
     date: videoDate(video),
   }
 }

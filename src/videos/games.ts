@@ -79,7 +79,7 @@ export interface NewGameInput {
 /** B: start a game at `at`, closing the open one there first (GAM-1). */
 export function startGame(games: readonly Game[], at: number, input: NewGameInput, duration: number | null): Plan {
   if (!input.side) {
-    return { ok: false, message: 'Choose which side of the frame your goal is on before starting the first game.' }
+    return { ok: false, message: 'Choose which side of the frame you stand on before starting the first game.' }
   }
   const sorted = sortGames(games)
   const inside = sorted.find((g) => g.end_s != null && at >= g.start_s && at < g.end_s)
@@ -115,7 +115,9 @@ export function startGame(games: readonly Game[], at: number, input: NewGameInpu
     end_s: null,
     my_side: input.side,
     format: defaultFormat(games, at),
+    teammate: null,
     opponent: null,
+    opponent2: null,
     my_score: null,
     opp_score: null,
     notes: null,

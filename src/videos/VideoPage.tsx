@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type FormEvent, type CSSProperties } from 'react'
+import { useCinema } from '../player/useCinema'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { deleteVideo, getVideo, updateVideo } from '../data/videos'
 import { deleteGame, loadGames, possessionCounts, saveGame } from '../data/games'
@@ -188,6 +189,8 @@ function VideoScreen({
     return () => document.removeEventListener('keydown', onKey)
   }, [controller, snapshot.ready, video.fps, start, end, show, toDelete])
 
+  const ar = video.aspect_ratio ?? 16 / 9
+  const cinema = useCinema()
   return (
     <div className="video-page">
       <p className="crumbs">
@@ -207,9 +210,9 @@ function VideoScreen({
         {' · '}
         <Link to={`/stats?scope=video&video=${video.id}`}>Statistics for this video</Link>
       </p>
-      <div className="video-grid">
-        <section aria-label="Player">
-          <YouTubePlayer youtubeId={video.youtube_id} aspectRatio={video.aspect_ratio ?? 16 / 9} controller={controller} />
+      <div className={cinema ? 'video-grid cinema' : 'video-grid'}>
+        <section aria-label="Player" className="player-col" style={{ '--ar': ar } as CSSProperties}>
+          <YouTubePlayer youtubeId={video.youtube_id} aspectRatio={ar} controller={controller} />
           <SeekBar controller={controller} marks={marks} />
           <PlayerControls controller={controller} fps={video.fps} />
           <p className="hint muted">
