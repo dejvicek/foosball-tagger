@@ -38,7 +38,7 @@ describe('draft state machine', () => {
       [ENTER, 76],
     ])
     expect(saved).toEqual([
-      { start_s: 70, shot_s: 75.5, setup: 'Pull side', shot_type: 'Pull', direction: null, hole: null, result: 'Goal', execution: null },
+      { start_s: 70, shot_s: 75.5, setup: 'Pull side', shot_type: 'Pull', hole: null, result: 'Goal', execution: null },
     ])
     expect(draft).toEqual(emptyDraft())
     expect(draft.setup).toBe('Middle')
@@ -67,10 +67,10 @@ describe('draft state machine', () => {
   it('N saves at once as No shot with the shot fields blank', () => {
     const { draft, saved } = run([
       [S, 70],
-      [{ kind: 'tag', field: 'direction', value: 'Push' }, 71],
+      [{ kind: 'tag', field: 'hole', value: 'Push long' }, 71],
       [N, 78],
     ])
-    expect(saved).toEqual([expect.objectContaining({ start_s: 70, shot_s: 78, shot_type: 'No shot', direction: null, hole: null })])
+    expect(saved).toEqual([expect.objectContaining({ start_s: 70, shot_s: 78, shot_type: 'No shot', hole: null })])
     expect(draft).toEqual(emptyDraft())
   })
 
@@ -100,8 +100,8 @@ describe('draft state machine', () => {
 
   it('pressing a tag key again clears the field, including Setup (TAG-1, ADR-0002)', () => {
     const { draft } = run([
-      [{ kind: 'tag', field: 'hole', value: 'Middle lane' }, 70],
-      [{ kind: 'tag', field: 'hole', value: 'Middle lane' }, 70],
+      [{ kind: 'tag', field: 'hole', value: 'Pull short' }, 70],
+      [{ kind: 'tag', field: 'hole', value: 'Pull short' }, 70],
       [{ kind: 'tag', field: 'setup', value: 'Middle' }, 70],
     ])
     expect(draft.hole).toBeNull()
@@ -131,10 +131,10 @@ describe('statusText (TAG-3)', () => {
     expect(statusText(emptyDraft())).toBe('Press R when the ball is set.')
     expect(statusText({ ...emptyDraft(), start_s: 1 })).toMatch(/Press F at the shot, or V/)
     expect(statusText({ ...emptyDraft(), start_s: 1, shot_s: 2, shot_type: 'Pin' })).toBe(
-      'Tag the shot, then press 4 to save. Still blank: direction, hole, result, execution.',
+      'Tag the shot, then press Enter to save. Still blank: hole, execution, result.',
     )
     expect(
-      statusText({ start_s: 1, shot_s: 2, setup: 'Middle', shot_type: 'Pin', direction: 'Pull', hole: 'Middle lane', result: 'Goal', execution: 'Proper' }),
+      statusText({ start_s: 1, shot_s: 2, setup: 'Middle', shot_type: 'Pin', hole: 'Middle', result: 'Goal', execution: 'Proper' }),
     ).toMatch(/All tagged/)
   })
 })

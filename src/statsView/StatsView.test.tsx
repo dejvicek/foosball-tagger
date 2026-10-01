@@ -25,9 +25,9 @@ describe('StatsView', () => {
 
   it('lists shots and the execution note (STA-6, STA-7)', () => {
     render(<StatsView items={items} />)
-    const firstShotRow = screen.getByText('Pin · Pull · Pull-side lane').closest('tr') as HTMLElement
-    expect(firstShotRow).toHaveTextContent('67% (2/3)')
-    expect(firstShotRow).toHaveTextContent('4.7 s')
+    const firstShotRow = screen.getByText('Pin · Pull · Pull long').closest('tr') as HTMLElement
+    expect(firstShotRow).toHaveTextContent('100% (2/2)')
+    expect(firstShotRow).toHaveTextContent('4.0 s')
     expect(screen.getByText(/point to the goalie reading you/)).toBeInTheDocument()
   })
 

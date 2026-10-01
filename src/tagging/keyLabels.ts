@@ -1,5 +1,5 @@
 // Keys named in messages and on buttons, so text never drifts from the key map
-// (ADR-0021). Letter labels follow the user's keyboard layout (ADR-0022).
+// (ADR-0021, ADR-0026). Letter labels follow the user's keyboard layout (ADR-0022).
 import { keyLabel } from '../player/keyboardLayout'
 import { ACTION_CODE } from './keymap'
 
@@ -15,9 +15,7 @@ export const KEY = {
   get noShot() {
     return keyLabel(ACTION_CODE.noShot)
   },
-  get save() {
-    return keyLabel(ACTION_CODE.save)
-  },
-  clear: 'Esc',
+  save: 'Enter',
+  clear: '⌫',
   undo: isMac ? '⌘Z' : 'Ctrl+Z',
 }

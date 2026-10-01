@@ -253,3 +253,24 @@ Format: context → decision → consequences. Keep each record short.
 - **Context:** The point of cinema mode is maximum focus on tagging (or marking games). A bigger video alone still left the header, titles, forms and tables around it. The user offered a separate page or hiding unrelated elements on the same page.
 - **Decision:** Same page, unrelated elements hidden: the routes, keys, state and Cinema / Default view button stay as they are. While a player screen is in cinema mode it sets `data-cinema` on `<html>`, and CSS hides the app header (except the sync status, fixed in the top-right corner so pending or refused writes stay visible), breadcrumbs, title and meta, the frame-step hint, the video details and delete card on the video screen, and the game numbers and possession log on the tagging screen. The player grid spans the viewport less 16 px each side with the games panel or tag panel beside it, and the video grows to the window height less the controls under it (120 px on the video screen, 150 px on the tagging screen). Below 960 px the panel stacks under the player.
 - **Consequences:** The possession log is not visible in cinema mode; editing earlier possessions means switching to the default view. The choice remains per viewer and shared by both screens.
+
+## ADR-0026 · Five holes, direction derived, tag panel in tagging order
+
+- **Status:** Accepted · 2026-10-02 (requested by the user; keys, direction rule and handling of old data chosen by the user) · Supersedes the key grid of ADR-0021 and the Direction and Hole definitions of PRD §2; amends TAG-1, STA-6, STA-10, EXP-1 and §9
+- **Context:** Three lanes were too coarse: the user wants to see whether a pull-side shot went long or short. Direction was a separate tag, but it follows from setup and hole, so tagging it cost a key press for no new information. The panel listed the fields in keyboard-row order rather than the order the user thinks about a shot.
+- **Decision:**
+  - **Hole:** five values, pull → push: `Pull long`, `Pull short`, `Middle`, `Push short`, `Push long` (fixed positions seen from the shooter, as before). Migration `0003_holes.sql` replaces the CHECK; existing `Middle lane` becomes `Middle`, existing `Pull-side lane` / `Push-side lane` are cleared (they cannot be split) for the user to re-tag.
+  - **Direction:** no longer stored (`possessions.direction` dropped). `directionOf(setup, hole)` in `src/stats/direction.ts` derives it: a setup covers its whole lane, so the hole's lane (pull, middle, push) equal to the setup's is Straight, further toward pull is Pull, toward push is Push. From a pull-side setup, Pull long and Pull short are both Straight. Blank when setup or hole is blank. STA-6 groups by shot type + derived direction + hole; EXP-1 will write the derived value in its `direction` column.
+  - **Tag panel order:** Ball set / Shot / No shot, then Shot type, Setup, Hole, Execution, Result. The possession log and the "Still blank" status use the same order.
+  - **Keys** (physical positions, ADR-0022):
+
+    | | | | | | |
+    |---|---|---|---|---|---|
+    | number row | 1 Pull long | 2 Pull short | 3 Middle | 4 Push short | 5 Push long |
+    | top row | Q Pin | W Pull | E Other | R Ball set | |
+    | home row | A Setup pull side | S Setup middle | D Setup push side | F Shot | G Goal |
+    | bottom row | Z Proper | X Misexecuted | | V No shot | B No goal |
+
+    Enter saves (4 no longer does), Backspace and Esc clear the draft, ⌘Z / Ctrl+Z undoes the last save (Backspace no longer does). T and C are free.
+  - A draft kept in localStorage from before this change loses its direction and any old hole value when loaded.
+- **Consequences:** Muscle memory from ADR-0021 no longer applies. Saving needs Enter (right hand) or R for the next possession. The migration must be applied before the frontend that uses it is deployed, and writes still pending from the old frontend that carry `direction` would be refused, so sync before deploying.

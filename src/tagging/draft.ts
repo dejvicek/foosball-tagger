@@ -1,6 +1,6 @@
 // Tag panel state machine (TAG-1..5). Pure: the screen feeds it events with the
 // current player time and persists what it returns.
-import type { Direction, Execution, Hole, Result, Setup, ShotType } from '../data/types'
+import type { Execution, Hole, Result, Setup, ShotType } from '../data/types'
 import { formatTime } from '../player/time'
 import { KEY } from './keyLabels'
 
@@ -9,18 +9,17 @@ export interface Draft {
   shot_s: number | null
   setup: Setup | null
   shot_type: ShotType | null
-  direction: Direction | null
   hole: Hole | null
   result: Result | null
   execution: Execution | null
 }
 
-export type TagField = 'setup' | 'shot_type' | 'direction' | 'hole' | 'result' | 'execution'
+export type TagField = 'setup' | 'shot_type' | 'hole' | 'result' | 'execution'
 type TagValue<F extends TagField> = NonNullable<Draft[F]>
 
 /** A new draft; Setup starts at Middle (TAG-2). */
 export function emptyDraft(): Draft {
-  return { start_s: null, shot_s: null, setup: 'Middle', shot_type: null, direction: null, hole: null, result: null, execution: null }
+  return { start_s: null, shot_s: null, setup: 'Middle', shot_type: null, hole: null, result: null, execution: null }
 }
 
 export type DraftEvent =
@@ -55,7 +54,7 @@ const EDGE = 0.05
 /** Whether the draft holds anything worth saving (a default Setup alone is not). */
 export function hasContent(d: Draft): boolean {
   return (
-    d.start_s != null || d.shot_s != null || d.shot_type != null || d.direction != null || d.hole != null || d.result != null || d.execution != null
+    d.start_s != null || d.shot_s != null || d.shot_type != null || d.hole != null || d.result != null || d.execution != null
   )
 }
 
@@ -96,7 +95,7 @@ export function reduce(draft: Draft, event: DraftEvent, ctx: DraftContext): Outc
       if (draft.start_s != null && t < draft.start_s) {
         return { draft, error: `This time (${formatTime(t)}) is before the start of the possession (${formatTime(draft.start_s)}).` }
       }
-      const saved: Draft = { ...draft, shot_s: t, shot_type: 'No shot', direction: null, hole: null, result: null, execution: null }
+      const saved: Draft = { ...draft, shot_s: t, shot_type: 'No shot', hole: null, result: null, execution: null }
       return { draft: emptyDraft(), save: saved, message: 'Saved a possession without a shot.' }
     }
     case 'save': {
@@ -116,12 +115,11 @@ export function reduce(draft: Draft, event: DraftEvent, ctx: DraftContext): Outc
 const FIELD_LABEL: Record<TagField, string> = {
   setup: 'setup',
   shot_type: 'shot type',
-  direction: 'direction',
   hole: 'hole',
   result: 'result',
   execution: 'execution',
 }
-const FIELDS: TagField[] = ['setup', 'shot_type', 'direction', 'hole', 'result', 'execution']
+const FIELDS: TagField[] = ['shot_type', 'setup', 'hole', 'execution', 'result']
 
 /** The next step, as shown under the timer (TAG-3). */
 export function statusText(d: Draft): string {

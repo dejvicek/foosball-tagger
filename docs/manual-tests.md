@@ -55,8 +55,8 @@ Open a game with "Tag →" on the video screen.
 
 1. **Opens at the game (GAM-3):** the player jumps to the game start; the header shows game number, range, side, opponent.
    Also on a video uploaded the same day (still processing on YouTube): reload the tagging page a few times → it opens paused at the game start every time, never at 0:00 (ADR-0024).
-2. **Keyboard-only possession (ADR-0021 keys):** R → timer runs and status says "Press F…"; 1, X, E; F → timer freezes, status lists what is blank; A, G, 5 → "All tagged"; 4 → row appears in the log with the right length; Setup is back on Middle (TAG-2, TAG-3).
-3. **R after F** saves and starts the next; **V** saves a No shot at once; **Esc** clears; **⌘Z / Ctrl+Z** (or Backspace) deletes the last saved (press twice: the one before); pressing a tag key twice clears it.
+2. **Keyboard-only possession (ADR-0026 keys):** R → timer runs and status says "Press F…"; A, W; F → timer freezes, status lists what is blank (hole, execution, result); 2, G, Z → "All tagged"; Enter → row appears in the log with the right length and hole Pull short; Setup is back on Middle (TAG-2, TAG-3).
+3. **R after F** saves and starts the next; **V** saves a No shot at once; **Backspace** or **Esc** clears; **⌘Z / Ctrl+Z** deletes the last saved (press twice: the one before); pressing a tag key twice clears it.
 4. **Refusals:** F before the ball-set time (seek back) → message, nothing swapped (TAG-4). Seek outside the game, press R → message suggesting to adjust the game (TAG-5).
 5. **Focus:** clicking any tag button, then Space/Enter still play/save. Clicking the video picture, then R still works. Nothing happens while a log select is open; Esc leaves it.
 6. **Timeline (TAG-6):** goal, no goal, no shot, untagged look different even in greyscale; hover shows tags; click a segment → 1 s before it; click empty strip → seek there.
@@ -78,14 +78,20 @@ Open a game with "Tag →" on the video screen.
 7. **Candidates:** unreviewed or rejected possessions never count; confirming one in the log makes it count.
 8. Phone width: the statistics page has no sideways scroll; wide tables scroll inside their card.
 
-## Keyboard layout (ADR-0021)
+## Keyboard layout (ADR-0021, ADR-0026)
 
-1. **Mouse + left hand:** tag a whole possession without lifting the left hand from 1–5 / Q–T / A–G / Z–B, seeking with the mouse on the timeline. Nothing needs the right side of the keyboard.
-2. **Keyboard only, two hands:** K plays/pauses, J / L step 1 s (Shift 5 s), U / O step frames, Enter saves, Backspace undoes, while the left hand tags.
-3. **Columns:** 1/Q/A = pull side, 2/W/S = middle/straight, 3/E/D = push side; the tag panel buttons are in the same order.
-4. **Undo:** ⌘Z (Mac) / Ctrl+Z (Windows) deletes the last save; inside a text field ⌘Z undoes typing instead.
+1. **Mouse + left hand:** tag a whole possession with the left hand on 1–5 / Q–R / A–G / Z–B, seeking with the mouse on the timeline; save with R (next possession) or Enter.
+2. **Keyboard only, two hands:** K plays/pauses, J / L step 1 s (Shift 5 s), U / O step frames, Enter saves, Backspace clears the draft, while the left hand tags.
+3. **Panel order:** Ball set / Shot / No shot, then Shot type (Q W E), Setup (A S D), Hole (1–5, pull long → push long), Execution (Z X), Result (G B). T and C do nothing.
+4. **Undo:** ⌘Z (Mac) / Ctrl+Z (Windows) deletes the last save; inside a text field ⌘Z undoes typing instead. Backspace no longer undoes.
 5. **Help:** "How to tag" shows the keyboard map; the buttons show the same keys.
 6. On the video screen, J / K / L / U / O work too; B / E still mark games.
+
+## Five holes and derived direction (ADR-0026)
+
+1. After `npx supabase db push`: possessions tagged Middle lane show hole Middle in the log; ones tagged Pull-side / Push-side lane show a blank hole. The log has no Direction column.
+2. The five hole buttons fit on one row of the tag panel at full width and in cinema mode.
+3. Statistics → By shot: a Pin from a pull-side setup into Pull long reads "Pin · Straight · Pull long"; from a middle setup "Pin · Pull · Pull long"; with no setup the direction is "–". By hole lists the five holes.
 
 ## Dragging and keyboard layouts (ADR-0022)
 

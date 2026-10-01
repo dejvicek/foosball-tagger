@@ -7,11 +7,13 @@ export type Setup = (typeof SETUPS)[number]
 export const SHOT_TYPES = ['Pin', 'Pull', 'Other', 'No shot'] as const
 export type ShotType = (typeof SHOT_TYPES)[number]
 
+/** Holes of the goal seen from the shooter, pull → push (ADR-0026). */
+export const HOLES = ['Pull long', 'Pull short', 'Middle', 'Push short', 'Push long'] as const
+export type Hole = (typeof HOLES)[number]
+
+/** Not stored: derived from setup + hole (ADR-0026, src/stats/direction.ts). */
 export const DIRECTIONS = ['Pull', 'Push', 'Straight'] as const
 export type Direction = (typeof DIRECTIONS)[number]
-
-export const HOLES = ['Pull-side lane', 'Middle lane', 'Push-side lane'] as const
-export type Hole = (typeof HOLES)[number]
 
 export const RESULTS = ['Goal', 'No goal'] as const
 export type Result = (typeof RESULTS)[number]
@@ -108,7 +110,6 @@ export type Possession = {
   shot_s: number | null
   setup: Setup | null
   shot_type: ShotType | null
-  direction: Direction | null
   hole: Hole | null
   result: Result | null
   execution: Execution | null

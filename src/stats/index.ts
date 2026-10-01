@@ -2,4 +2,5 @@
 export * from './types'
 export * from './ratio'
 export * from './compute'
+export * from './direction'
 export * from './filters'

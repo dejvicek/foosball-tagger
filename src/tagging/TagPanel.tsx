@@ -75,7 +75,7 @@ export function TagPanel({ draft, controller, onEvent, onUndo }: Props) {
       {TAG_GROUPS.map((g) => (
         <div className="group" key={g.field}>
           <h3 id={`grp-${g.field}`}>{g.label}</h3>
-          <div className="seg-ctl" role="group" aria-labelledby={`grp-${g.field}`}>
+          <div className={g.options.length > 3 ? 'seg-ctl many' : 'seg-ctl'} role="group" aria-labelledby={`grp-${g.field}`}>
             {g.options.map((o) => (
               <button
                 key={o.code}

@@ -4,10 +4,11 @@
 // conversion counts only shots with a result, proper rate only shots with an
 // execution, and so on.
 import { DIRECTIONS, HOLES, SHOT_TYPES, type Direction, type Hole, type Setup, type ShotType } from '../data/types'
+import { directionOf } from './direction'
 import { ratio } from './ratio'
 import type { Ratio, StatItem } from './types'
 
-type P = Pick<StatItem, 'start_s' | 'shot_s' | 'setup' | 'shot_type' | 'direction' | 'hole' | 'result' | 'execution'>
+type P = Pick<StatItem, 'start_s' | 'shot_s' | 'setup' | 'shot_type' | 'hole' | 'result' | 'execution'>
 
 /**
  * Whether a possession ended in a shot. "No shot" → no; a shot type → yes; no type
@@ -91,11 +92,11 @@ export interface ShotRow {
 
 const order = <T,>(list: readonly T[], v: T | null) => (v == null ? list.length : list.indexOf(v))
 
-/** STA-6: shots grouped by type + direction + hole, most attempts first. */
+/** STA-6: shots grouped by type + direction (derived, ADR-0026) + hole, most attempts first. */
 export function byShot(items: readonly P[]): ShotRow[] {
   const groups = new Map<string, P[]>()
   for (const p of items.filter(isShot)) {
-    const k = `${p.shot_type}|${p.direction}|${p.hole}`
+    const k = `${p.shot_type}|${directionOf(p.setup, p.hole)}|${p.hole}`
     groups.set(k, [...(groups.get(k) ?? []), p])
   }
   const rows = [...groups.values()].map((list): ShotRow => {
@@ -103,7 +104,7 @@ export function byShot(items: readonly P[]): ShotRow[] {
     const lengths = list.map(lengthOf).filter((v): v is number => v != null)
     return {
       shotType: first.shot_type,
-      direction: first.direction,
+      direction: directionOf(first.setup, first.hole),
       hole: first.hole,
       attempts: list.length,
       goals: list.filter((p) => p.result === 'Goal').length,
@@ -188,7 +189,7 @@ export function bySetup(items: readonly P[]): GroupRow[] {
   ]
 }
 
-/** STA-10: conversion per hole lane, shots with a hole only. */
+/** STA-10: conversion per hole, shots with a hole only. */
 export function byHole(items: readonly P[]): GroupRow[] {
   const shots = items.filter((p) => isShot(p) && p.hole != null)
   return HOLES.map((h) => group(h, shots.filter((p) => p.hole === h)))

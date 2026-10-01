@@ -2,7 +2,7 @@
 // worked out by hand from the fixture's possession list, not from the code.
 import synthetic from '../../fixtures/synthetic-01.json'
 import { fixtureItems, type Fixture } from './fixture'
-import { byHole, byLength, bySetup, byShot, confirmedOnly, executionVsResult, headline, shotStatus, applyFilters, NO_FILTERS, formatRatio, ratio, opponentsOf, gameOpponents, type StatItem } from '.'
+import { byHole, byLength, directionOf, bySetup, byShot, confirmedOnly, executionVsResult, headline, shotStatus, applyFilters, NO_FILTERS, formatRatio, ratio, opponentsOf, gameOpponents, type StatItem } from '.'
 
 const all = fixtureItems(synthetic as Fixture)
 const items = confirmedOnly(all)
@@ -46,25 +46,48 @@ describe('by shot (STA-6)', () => {
   const rows = byShot(items)
   const key = (x: (typeof rows)[number]) => [x.shotType, x.direction, x.hole].map((v) => v ?? '–').join(' · ')
 
-  it('groups by type + direction + hole, most attempts first', () => {
+  it('groups by type + derived direction + hole, most attempts first (ADR-0026)', () => {
     expect(rows.map((x) => [key(x), x.attempts])).toEqual([
-      ['Pin · Pull · Pull-side lane', 3],
-      ['Pin · Push · Push-side lane', 2],
-      ['Pull · Pull · Pull-side lane', 1],
-      ['Pull · Push · Middle lane', 1],
-      ['Pull · Straight · Middle lane', 1],
+      ['Pin · Pull · Pull long', 2], // #1 #6
+      ['Pin · Pull · Pull short', 1], // #2
+      ['Pin · Push · Push short', 1], // #11
+      ['Pin · Straight · Pull long', 1], // #3: pull-side setup
+      ['Pull · Pull · Pull short', 1], // #5: push-side setup
+      ['Pull · Straight · Middle', 1], // #4
+      ['Pull · – · Middle', 1], // #12: no setup, so no direction
       ['Other · – · –', 1],
       ['– · – · –', 1],
     ])
   })
 
   it('reports goals, conversion, proper rate and average length per row', () => {
-    const [pinPull, pinPush] = rows
-    expect(pinPull).toMatchObject({ goals: 2, conversion: r(2, 3), proper: r(2, 2), avgOf: 3 })
-    expect(pinPull?.avgLength).toBeCloseTo(14 / 3)
-    expect(pinPush).toMatchObject({ goals: 2, conversion: r(2, 2), proper: r(1, 2), avgLength: 3, avgOf: 1 })
-    expect(rows[3]).toMatchObject({ conversion: r(0, 0), proper: r(1, 1), avgLength: 9 }) // #12: no result
-    expect(rows[6]).toMatchObject({ conversion: r(0, 1), proper: r(0, 0), avgLength: 11 }) // #13
+    const [pinPull, pinPullShort, , pinStraight] = rows
+    expect(pinPull).toMatchObject({ goals: 2, conversion: r(2, 2), proper: r(1, 1), avgLength: 4, avgOf: 2 }) // #6 no execution
+    expect(pinPullShort).toMatchObject({ goals: 0, conversion: r(0, 1), proper: r(1, 1), avgLength: 6, avgOf: 1 })
+    expect(pinStraight).toMatchObject({ goals: 1, conversion: r(1, 1), proper: r(0, 1), avgLength: 3 })
+    expect(rows[2]).toMatchObject({ avgLength: null, avgOf: 0 }) // #11: no start
+    expect(rows[6]).toMatchObject({ conversion: r(0, 0), proper: r(1, 1), avgLength: 9 }) // #12: no result
+    expect(rows[8]).toMatchObject({ conversion: r(0, 1), proper: r(0, 0), avgLength: 11 }) // #13
+  })
+})
+
+describe('direction (ADR-0026)', () => {
+  it('is Straight when the hole is on the setup’s side; a setup covers its whole lane', () => {
+    expect(directionOf('Pull side', 'Pull long')).toBe('Straight')
+    expect(directionOf('Pull side', 'Pull short')).toBe('Straight')
+    expect(directionOf('Pull side', 'Middle')).toBe('Push')
+    expect(directionOf('Pull side', 'Push long')).toBe('Push')
+    expect(directionOf('Middle', 'Pull long')).toBe('Pull')
+    expect(directionOf('Middle', 'Middle')).toBe('Straight')
+    expect(directionOf('Middle', 'Push short')).toBe('Push')
+    expect(directionOf('Push side', 'Push long')).toBe('Straight')
+    expect(directionOf('Push side', 'Middle')).toBe('Pull')
+    expect(directionOf('Push side', 'Pull short')).toBe('Pull')
+  })
+
+  it('is blank when the setup or the hole is blank', () => {
+    expect(directionOf(null, 'Middle')).toBeNull()
+    expect(directionOf('Middle', null)).toBeNull()
   })
 })
 
@@ -99,12 +122,14 @@ describe('by setup (STA-9)', () => {
   })
 })
 
-describe('by hole lane (STA-10)', () => {
-  it('conversion per lane over shots with a hole', () => {
+describe('by hole (STA-10)', () => {
+  it('conversion per hole over shots with a hole', () => {
     expect(byHole(items).map((b) => [b.label, b.attempts, b.conversion.num, b.conversion.den])).toEqual([
-      ['Pull-side lane', 4, 3, 4],
-      ['Middle lane', 2, 0, 1],
-      ['Push-side lane', 2, 2, 2],
+      ['Pull long', 3, 3, 3],
+      ['Pull short', 2, 1, 2],
+      ['Middle', 2, 0, 1], // #12 has no result
+      ['Push short', 1, 1, 1],
+      ['Push long', 0, 0, 0],
     ])
   })
 })

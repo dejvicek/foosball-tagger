@@ -118,22 +118,21 @@ describe('tagging screen keyboard (TAG-1..5, PRD §8)', () => {
     expect(fake.t).toBe(60)
   })
 
-  it('S, tag keys, F, Enter saves a possession and resets Setup to Middle', async () => {
+  it('S, tag keys, F, Enter saves a possession and resets Setup to Middle (ADR-0026)', async () => {
     await renderPage()
     at(70)
     press('r')
     expect(screen.getByText(/Possession running/)).toBeInTheDocument()
-    press('1')
-    press('x')
-    press('e')
+    press('a')
+    press('w')
     at(74.2)
     press('f')
-    expect(screen.getByText(/Still blank: hole, result, execution/)).toBeInTheDocument()
-    press('a')
+    expect(screen.getByText(/Still blank: hole, execution, result/)).toBeInTheDocument()
+    press('2')
     press('g')
-    press('5')
+    press('z')
     expect(screen.getByText(/All tagged/)).toBeInTheDocument()
-    press('4')
+    press('Enter')
     await flush()
     expect(saved()).toEqual([
       expect.objectContaining({
@@ -141,15 +140,14 @@ describe('tagging screen keyboard (TAG-1..5, PRD §8)', () => {
         shot_s: 74.2,
         setup: 'Pull side',
         shot_type: 'Pull',
-        direction: 'Push',
-        hole: 'Pull-side lane',
+        hole: 'Pull short',
         result: 'Goal',
         execution: 'Proper',
         source: 'manual',
         review_status: 'confirmed',
       }),
     ])
-    expect(screen.getByRole('button', { name: /^Middle\s*2$/ })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: /^Middle\s*S$/i })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('table', { name: 'Possessions' })).toHaveTextContent('4.2 s')
   })
 
@@ -171,9 +169,12 @@ describe('tagging screen keyboard (TAG-1..5, PRD §8)', () => {
     ])
   })
 
-  it('Esc clears the draft; Enter on an empty draft explains', async () => {
+  it('Backspace or Esc clears the draft; Enter on an empty draft explains', async () => {
     await renderPage()
     at(70)
+    press('r')
+    press('Backspace')
+    expect(screen.getByText('Press R when the ball is set.')).toBeInTheDocument()
     press('r')
     press('Escape')
     expect(screen.getByText('Press R when the ball is set.')).toBeInTheDocument()
@@ -181,7 +182,7 @@ describe('tagging screen keyboard (TAG-1..5, PRD §8)', () => {
     expect(screen.getByText(/Nothing to save yet/)).toBeInTheDocument()
   })
 
-  it('U deletes the last possession saved on this page', async () => {
+  it('⌘Z deletes the last possession saved on this page', async () => {
     await renderPage()
     at(70)
     press('r')
@@ -193,11 +194,12 @@ describe('tagging screen keyboard (TAG-1..5, PRD §8)', () => {
     press('v')
     await flush()
     expect(saved()).toHaveLength(2)
-    press('Backspace')
+    const undo = () => fireEvent.keyDown(document.body, { key: 'z', metaKey: true })
+    undo()
     await flush()
     expect(saved().map((p) => p.start_s)).toEqual([70])
-    press('Backspace')
-    press('Backspace')
+    undo()
+    undo()
     expect(screen.getByText(/Nothing to undo/)).toBeInTheDocument()
   })
 
@@ -259,18 +261,18 @@ describe('tagging screen keyboard (TAG-1..5, PRD §8)', () => {
     await waitFor(() => expect(screen.getByLabelText('Current time')).toHaveTextContent('1:00.0'))
     at(70)
     press('r')
-    press('3')
+    press('d')
     first.unmount()
     at(60)
     await renderPage()
     expect(screen.getByText(/Possession running/)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /^Push side\s*3$/ })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: /^Push side\s*D$/i })).toHaveAttribute('aria-pressed', 'true')
   })
 })
 
 describe('possession log (TAG-7)', () => {
   it('edits a field inline; No shot clears the shot fields', async () => {
-    vi.mocked(loadPossessions).mockResolvedValue([possession(70, 75, { result: 'Goal', hole: 'Middle lane' })])
+    vi.mocked(loadPossessions).mockResolvedValue([possession(70, 75, { result: 'Goal', hole: 'Middle' })])
     await renderPage()
     fireEvent.change(screen.getByLabelText('Shot type for possession 1'), { target: { value: 'No shot' } })
     await flush()

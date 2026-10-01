@@ -1,3 +1,4 @@
+import { HOLES } from '../data/types'
 import { emptyDraft, type Draft } from './draft'
 
 // The unsaved draft survives a reload or a closed tab (ADR-0019). Per-viewer, so localStorage.
@@ -9,7 +10,11 @@ export function loadDraft(gameId: string): Draft {
     if (!raw) return emptyDraft()
     const parsed: unknown = JSON.parse(raw)
     if (typeof parsed !== 'object' || parsed === null) return emptyDraft()
-    return { ...emptyDraft(), ...(parsed as Partial<Draft>) }
+    // Only the current fields: a draft kept from before ADR-0026 may hold a direction or an old hole.
+    const d = emptyDraft()
+    const stored = parsed as Partial<Draft>
+    for (const k of Object.keys(d) as (keyof Draft)[]) if (k in stored) Object.assign(d, { [k]: stored[k] })
+    return d.hole != null && !HOLES.includes(d.hole) ? { ...d, hole: null } : d
   } catch {
     return emptyDraft()
   }

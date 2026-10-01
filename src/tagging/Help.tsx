@@ -11,14 +11,17 @@ export function Help() {
         <dl>
           <dt>Possession</dt>
           <dd>The ball is on your 3-bar, ending with a shot or a loss of the ball.</dd>
-          <dt>Setup</dt>
-          <dd>Where the ball sits when the possession starts: Middle, Pull side, Push side. Resets to Middle after each save.</dd>
           <dt>Shot type</dt>
           <dd>Shot family: Pin, Pull, Other, or No shot.</dd>
-          <dt>Direction</dt>
-          <dd>Lateral movement of the ball from the setup before the shot: Pull, Straight, Push.</dd>
+          <dt>Setup</dt>
+          <dd>Where the ball sits when the possession starts: Pull side, Middle, Push side. Resets to Middle after each save.</dd>
           <dt>Hole</dt>
-          <dd>Lane of the goal the ball crossed or was aimed at, seen from the shooter: Pull-side, Middle, Push-side lane.</dd>
+          <dd>Where the ball crossed or was aimed at, seen from the shooter: Pull long, Pull short, Middle, Push short, Push long.</dd>
+          <dt>Direction</dt>
+          <dd>
+            Not tagged: the statistics work it out from setup and hole. Straight when the hole is on the setup’s side
+            (a pull-side setup into Pull long or Pull short), otherwise Pull or Push.
+          </dd>
           <dt>Execution</dt>
           <dd>Proper or Misexecuted, judged against the criteria you set for yourself before tagging.</dd>
         </dl>

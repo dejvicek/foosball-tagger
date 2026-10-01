@@ -167,7 +167,7 @@ export function StatsView({ items }: { items: StatItem[] }) {
       <h3>By setup</h3>
       <Groups rows={bySetup(items)} label="Setup" />
 
-      <h3>By hole lane</h3>
+      <h3>By hole</h3>
       <Groups rows={byHole(items)} label="Hole" withProper={false} />
     </div>
   )

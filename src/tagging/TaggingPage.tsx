@@ -146,7 +146,7 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
     [controller, range, label, show, userId, game.id, queue, setDraft],
   )
 
-  // Undo (⌘Z / Ctrl+Z / Backspace): delete the most recently saved possession on this page (ADR-0021).
+  // Undo (⌘Z / Ctrl+Z): delete the most recently saved possession on this page (ADR-0021).
   const undo = useCallback(() => {
     const ids = new Set(possessions.map((p) => p.id))
     let last = undoStack.current.pop()
@@ -166,7 +166,7 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
       const current = possessions.find((p) => p.id === id)
       if (!current) return
       let next: Possession = { ...current, ...patch, updated_at: nowIso() }
-      if (next.shot_type === 'No shot') next = { ...next, direction: null, hole: null, result: null, execution: null }
+      if (next.shot_type === 'No shot') next = { ...next, hole: null, result: null, execution: null }
       setPossessions((list) => list.map((p) => (p.id === id ? next : p)))
       savePossession(queue, next, flushDelayMs)
     },

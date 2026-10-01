@@ -1,4 +1,4 @@
-import type { Direction, Execution, Format, Hole, Result, ReviewStatus, Setup, ShotType } from '../data/types'
+import type { Execution, Format, Hole, Result, ReviewStatus, Setup, ShotType } from '../data/types'
 
 /** One possession with the context the filters need (STA-4). */
 export interface StatItem {
@@ -7,7 +7,6 @@ export interface StatItem {
   shot_s: number | null
   setup: Setup | null
   shot_type: ShotType | null
-  direction: Direction | null
   hole: Hole | null
   result: Result | null
   execution: Execution | null

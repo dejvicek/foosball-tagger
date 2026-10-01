@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { DIRECTIONS, EXECUTIONS, HOLES, RESULTS, SETUPS, SHOT_TYPES, type Possession } from '../data/types'
+import { EXECUTIONS, HOLES, RESULTS, SETUPS, SHOT_TYPES, type Possession } from '../data/types'
 import type { PlayerController } from '../player/controller'
 import { formatTime } from '../player/time'
 import type { TagField } from './draft'
@@ -21,12 +21,11 @@ interface Props {
 }
 
 const COLUMNS: { field: TagField; label: string; options: readonly string[] }[] = [
-  { field: 'setup', label: 'Setup', options: SETUPS },
   { field: 'shot_type', label: 'Shot type', options: SHOT_TYPES },
-  { field: 'direction', label: 'Direction', options: DIRECTIONS },
+  { field: 'setup', label: 'Setup', options: SETUPS },
   { field: 'hole', label: 'Hole', options: HOLES },
-  { field: 'result', label: 'Result', options: RESULTS },
   { field: 'execution', label: 'Execution', options: EXECUTIONS },
+  { field: 'result', label: 'Result', options: RESULTS },
 ]
 
 /** The row under the playhead, updated only when it changes. */

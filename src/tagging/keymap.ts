@@ -1,12 +1,13 @@
-// Tagging keys (ADR-0021, replaces the PRD TAG-1 table). Everything is on the left
+// Tagging keys (ADR-0026, replaces the grid of ADR-0021). Every field is on the left
 // hand, so the right hand can stay on the mouse or on the player keys:
 //
-//   1 2 3  Setup      pull side · middle · push side  │ 4 Save      │ 5 Proper
-//   Q W E  Direction  pull · straight · push          │ R Ball set  │ T Misexecuted
-//   A S D  Hole       pull-side · middle · push-side  │ F Shot      │ G Goal
-//   Z X C  Shot type  Pin · Pull · Other              │ V No shot   │ B No goal
+//   1 2 3 4 5  Hole       pull long · pull short · middle · push short · push long
+//   Q W E      Shot type  Pin · Pull · Other          │ R Ball set │
+//   A S D      Setup      pull side · middle · push   │ F Shot     │ G Goal
+//   Z X        Execution  Proper · Misexecuted        │ V No shot  │ B No goal
 //
-// Columns 1–3 always run pull → middle → push. Keys are physical positions
+// Enter saves, Backspace / Esc clear the draft, ⌘Z / Ctrl+Z undoes the last save.
+// The pull → push options run left to right. Keys are physical positions
 // (KeyboardEvent.code), so the grid stays put on QWERTZ and other layouts; the
 // labels shown come from src/player/keyboardLayout.ts (ADR-0022).
 import { codeOf } from '../player/keyboardLayout'
@@ -28,50 +29,43 @@ export interface TagGroup {
   options: TagOption[]
 }
 
-/** In keyboard-row order, so the panel reads like the keyboard. */
+/** In tag panel order (ADR-0026). */
 export const TAG_GROUPS: TagGroup[] = [
+  {
+    field: 'shot_type',
+    label: 'Shot type',
+    options: [
+      { code: 'KeyQ', value: 'Pin', label: 'Pin' },
+      { code: 'KeyW', value: 'Pull', label: 'Pull' },
+      { code: 'KeyE', value: 'Other', label: 'Other' },
+    ],
+  },
   {
     field: 'setup',
     label: 'Setup',
     options: [
-      { code: 'Digit1', value: 'Pull side', label: 'Pull side' },
-      { code: 'Digit2', value: 'Middle', label: 'Middle' },
-      { code: 'Digit3', value: 'Push side', label: 'Push side' },
-    ],
-  },
-  {
-    field: 'direction',
-    label: 'Direction',
-    options: [
-      { code: 'KeyQ', value: 'Pull', label: 'Pull' },
-      { code: 'KeyW', value: 'Straight', label: 'Straight' },
-      { code: 'KeyE', value: 'Push', label: 'Push' },
+      { code: 'KeyA', value: 'Pull side', label: 'Pull side' },
+      { code: 'KeyS', value: 'Middle', label: 'Middle' },
+      { code: 'KeyD', value: 'Push side', label: 'Push side' },
     ],
   },
   {
     field: 'hole',
     label: 'Hole',
     options: [
-      { code: 'KeyA', value: 'Pull-side lane', label: 'Pull-side' },
-      { code: 'KeyS', value: 'Middle lane', label: 'Middle' },
-      { code: 'KeyD', value: 'Push-side lane', label: 'Push-side' },
-    ],
-  },
-  {
-    field: 'shot_type',
-    label: 'Shot type',
-    options: [
-      { code: 'KeyZ', value: 'Pin', label: 'Pin' },
-      { code: 'KeyX', value: 'Pull', label: 'Pull' },
-      { code: 'KeyC', value: 'Other', label: 'Other' },
+      { code: 'Digit1', value: 'Pull long', label: 'Pull long' },
+      { code: 'Digit2', value: 'Pull short', label: 'Pull short' },
+      { code: 'Digit3', value: 'Middle', label: 'Middle' },
+      { code: 'Digit4', value: 'Push short', label: 'Push short' },
+      { code: 'Digit5', value: 'Push long', label: 'Push long' },
     ],
   },
   {
     field: 'execution',
     label: 'Execution',
     options: [
-      { code: 'Digit5', value: 'Proper', label: 'Proper' },
-      { code: 'KeyT', value: 'Misexecuted', label: 'Misexecuted', negative: true },
+      { code: 'KeyZ', value: 'Proper', label: 'Proper' },
+      { code: 'KeyX', value: 'Misexecuted', label: 'Misexecuted', negative: true },
     ],
   },
   {
@@ -85,7 +79,7 @@ export const TAG_GROUPS: TagGroup[] = [
 ]
 
 /** Physical keys of the non-field actions. */
-export const ACTION_CODE = { ballSet: 'KeyR', shot: 'KeyF', noShot: 'KeyV', save: 'Digit4' } as const
+export const ACTION_CODE = { ballSet: 'KeyR', shot: 'KeyF', noShot: 'KeyV' } as const
 
 export type TagAction = DraftEvent | { kind: 'undo' }
 
@@ -96,7 +90,6 @@ for (const g of TAG_GROUPS) {
 BY_CODE.set(ACTION_CODE.ballSet, { kind: 'ballSet' })
 BY_CODE.set(ACTION_CODE.shot, { kind: 'shot' })
 BY_CODE.set(ACTION_CODE.noShot, { kind: 'noShot' })
-BY_CODE.set(ACTION_CODE.save, { kind: 'save' })
 
 export interface KeyPress {
   key: string
@@ -115,11 +108,10 @@ export function tagAction(e: KeyPress | string): TagAction | null {
   if (press.metaKey || press.ctrlKey) return press.key.toLowerCase() === 'z' && !press.shiftKey ? { kind: 'undo' } : null
   switch (press.key) {
     case 'Enter':
-      return { kind: 'save' } // right hand
+      return { kind: 'save' }
     case 'Escape':
-      return { kind: 'clear' }
     case 'Backspace':
-      return { kind: 'undo' } // right hand
+      return { kind: 'clear' }
   }
   return BY_CODE.get(codeOf(press)) ?? null
 }

@@ -7,15 +7,24 @@ const dir = join(import.meta.dirname, '..')
 export const USER_A = '00000000-0000-4000-8000-00000000000a'
 export const USER_B = '00000000-0000-4000-8000-00000000000b'
 
-/** A fresh database with the Supabase stubs, every migration applied, and two users. */
-export async function freshDb(): Promise<PGlite> {
+export const MIGRATIONS = readdirSync(join(dir, 'migrations'))
+  .filter((f) => f.endsWith('.sql'))
+  .sort()
+
+export async function migrate(db: PGlite, file: string): Promise<void> {
+  await db.exec(readFileSync(join(dir, 'migrations', file), 'utf8'))
+}
+
+/**
+ * A fresh database with the Supabase stubs, the migrations applied, and two users.
+ * `before` stops ahead of the migration whose file name starts with it (to test a data migration).
+ */
+export async function freshDb(before?: string): Promise<PGlite> {
   const db = new PGlite()
   await db.exec(readFileSync(join(dir, 'tests/supabase-stub.sql'), 'utf8'))
-  const migrations = readdirSync(join(dir, 'migrations'))
-    .filter((f) => f.endsWith('.sql'))
-    .sort()
-  for (const file of migrations) {
-    await db.exec(readFileSync(join(dir, 'migrations', file), 'utf8'))
+  for (const file of MIGRATIONS) {
+    if (before && file >= before) break
+    await migrate(db, file)
   }
   await db.exec(`insert into auth.users (id, email) values ('${USER_A}', 'a@example.com'), ('${USER_B}', 'b@example.com')`)
   return db
