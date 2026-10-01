@@ -323,3 +323,10 @@ Format: context → decision → consequences. Keep each record short.
 - **Decision:** The hole keys depend on the game's `my_side`. On the left, unchanged: 1 Pull long, 2 Pull short, 3 Middle, 4 Push short, 5 Push long. On the right, reversed: 1 Push long, 2 Push short, 3 Middle, 4 Pull short, 5 Pull long. The tag panel's Hole buttons and the keyboard map in the help follow the same order, so buttons and keys always line up. Stored values are unchanged (a hole is still seen from the shooter). Only the holes are mirrored; Setup (A S D) and the other keys stay as they are.
 - **Consequences:** Muscle memory for 1–5 differs between left and right games. Changing a game's side on the video screen changes its hole keys the next time its tagging screen opens.
 
+## ADR-0032 · "How to tag" under the timeline
+
+- **Status:** Accepted · 2026-10-02 (requested by the user; placement chosen by Claude) · Amends TAG-8
+- **Context:** The collapsible "How to tag" help sat at the end of the game numbers, far from the tag panel it explains.
+- **Decision:** It moves into the player column, directly under the timeline and beside the tag panel. It stays out of the panel itself because the keyboard map (about 500 px) is wider than the panel (350 px). Cinema mode hides it, keeping that view to the player and its panel (ADR-0025).
+- **Consequences:** Opened, it pushes the game numbers and log further down the page.
+

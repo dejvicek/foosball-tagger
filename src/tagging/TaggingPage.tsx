@@ -288,6 +288,7 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
             onSelect={select}
             editingId={editing?.id ?? null}
           />
+          <Help side={game.my_side} />
         </section>
         <TagPanel draft={editing?.draft ?? draft} controller={controller} onEvent={dispatch} onUndo={undo} editing={editing ? numberOf(editing.id) : undefined} side={game.my_side} />
       </div>
@@ -298,7 +299,6 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
           <p className="note">
             <Link to={`/stats?scope=game&video=${video.id}&game=${game.id}`}>Filter these, or compare with other games →</Link>
           </p>
-          <Help side={game.my_side} />
         </section>
         <section className="card" aria-labelledby="log-heading">
           <h2 id="log-heading">Possession log</h2>

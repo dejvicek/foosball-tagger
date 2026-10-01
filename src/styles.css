@@ -86,7 +86,7 @@ td.title-cell { white-space: normal; min-width: 200px; }
 [data-cinema] header.top > :not(.sync),
 [data-cinema] .crumbs, [data-cinema] .notice,
 [data-cinema] .video-page > h2, [data-cinema] .video-page > .meta, [data-cinema] .video-lower, [data-cinema] .player-col > .hint,
-[data-cinema] .tagging-page > h2, [data-cinema] .tagging-page > .lower { display: none; }
+[data-cinema] .tagging-page > h2, [data-cinema] .tagging-page > .lower, [data-cinema] .player-col > .help { display: none; }
 .ctl .cinema-btn[aria-pressed="true"] { border-color: var(--focus); }
 .video-side .card + .card { margin-top: 12px; }
 

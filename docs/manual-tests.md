@@ -61,7 +61,7 @@ Open a game with "Tag →" on the video screen.
 5. **Focus:** clicking any tag button, then Space/Enter still play/save. Clicking the video picture, then R still works. Nothing happens while a text field has focus; Esc leaves it.
 6. **Timeline (TAG-6):** goal, no goal, no shot, untagged look different even in greyscale; hover shows tags; click a segment → 1 s before it, and it opens in the tag panel (ADR-0030); click empty strip → seek there.
 7. **Log (TAG-7, ADR-0030):** read-only, no dropdowns; the row under the playhead is highlighted; × → "Delete?" → click again deletes, without opening the row.
-8. **Help (TAG-8):** "How to tag" opens the key table and definitions; it says frame stepping is approximate.
+8. **Help (TAG-8, ADR-0032):** "How to tag" sits right under the timeline, next to the tag panel (hidden in cinema mode); it opens the key table and definitions; it says frame stepping is approximate.
 9. **Reload mid-draft:** press R, tag a field, reload → the running draft is still there.
 10. **Offline (SYN):** Wi-Fi off, tag 5 possessions → "Unsynced changes: 5"; reload offline → the draft survives, the tagged rows are safe in the queue (the page may show a load error until online); Wi-Fi on → counter clears; reload → all 5 on the server, none twice.
 11. **Speed:** tag a 10-minute game; it should take about 15 minutes (PRD §1.4). Note anything slowing you down.
