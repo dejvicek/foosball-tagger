@@ -227,9 +227,11 @@ describe('games on the video screen (GAM-1..4)', () => {
     expect(grid()).not.toHaveClass('cinema')
     fireEvent.click(toggle)
     expect(grid()).toHaveClass('cinema')
+    expect(document.documentElement).toHaveAttribute('data-cinema') // CSS hides everything else (ADR-0025)
     expect(localStorage.getItem('fbtag:cinema:v1')).toBe('1')
     fireEvent.click(screen.getByRole('button', { name: 'Default view' }))
     expect(grid()).not.toHaveClass('cinema')
+    expect(document.documentElement).not.toHaveAttribute('data-cinema')
   })
 
   it('clicking a game start seeks there (GAM-3), and Tag opens its tagging screen', async () => {

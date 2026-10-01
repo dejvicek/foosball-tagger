@@ -67,10 +67,17 @@ td.title-cell { white-space: normal; min-width: 200px; }
 .meta { margin: 2px 0 12px; }
 .video-grid { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; align-items: start; }
 @media (max-width: 960px) { .video-grid { grid-template-columns: minmax(0, 1fr); } }
-/* Cinema mode (ADR-0024): the player and its side panel span the viewport instead of
-   the page width, and the video may grow up to the window height less the controls. */
-.video-grid.cinema, .grid.cinema { --cw: calc(100vw - 32px); width: var(--cw); margin-left: calc((100% - var(--cw)) / 2); }
-.cinema .stage { max-width: calc((100vh - 190px) * var(--ar, 1.7778)); }
+/* Cinema mode (ADR-0025): only the player and its panel are left, spanning the
+   viewport; the video grows to the window height less the controls under it.
+   The sync status stays reachable in the corner. */
+[data-cinema] .wrap { max-width: none; padding-top: 12px; padding-bottom: 12px; }
+[data-cinema] header.top { position: fixed; top: 8px; right: 16px; margin: 0; z-index: 20; }
+[data-cinema] header.top > :not(.sync),
+[data-cinema] .crumbs, [data-cinema] .notice,
+[data-cinema] .video-page > h2, [data-cinema] .video-page > .meta, [data-cinema] .video-lower, [data-cinema] .player-col > .hint,
+[data-cinema] .tagging-page > h2, [data-cinema] .tagging-page > .lower { display: none; }
+.video-grid.cinema .stage { max-width: calc((100vh - var(--below, 120px)) * var(--ar, 1.7778)); }
+.grid.cinema .stage { max-width: calc((100vh - var(--below, 150px)) * var(--ar, 1.7778)); }
 .ctl .cinema-btn[aria-pressed="true"] { border-color: var(--focus); }
 .video-side .card + .card { margin-top: 12px; }
 

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react'
-import { useCinema } from '../player/useCinema'
+import { useCinemaPage } from '../player/useCinema'
 import { Link, useParams } from 'react-router'
 import { getVideo } from '../data/videos'
 import { loadGames } from '../data/games'
@@ -239,7 +239,7 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
   }, [controller, snapshot.ready, video.fps, dispatch, undo, show])
 
   const ar = video.aspect_ratio ?? 16 / 9
-  const cinema = useCinema()
+  const cinema = useCinemaPage()
   return (
     <div className="tagging-page">
       <p className="crumbs">

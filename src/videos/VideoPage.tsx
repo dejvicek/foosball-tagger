@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type FormEvent, type CSSProperties } from 'react'
-import { useCinema } from '../player/useCinema'
+import { useCinemaPage } from '../player/useCinema'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { deleteVideo, getVideo, updateVideo } from '../data/videos'
 import { deleteGame, loadGames, possessionCounts, saveGame } from '../data/games'
@@ -190,7 +190,7 @@ function VideoScreen({
   }, [controller, snapshot.ready, video.fps, start, end, show, toDelete])
 
   const ar = video.aspect_ratio ?? 16 / 9
-  const cinema = useCinema()
+  const cinema = useCinemaPage()
   return (
     <div className="video-page">
       <p className="crumbs">

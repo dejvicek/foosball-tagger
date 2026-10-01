@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react'
+import { useEffect, useSyncExternalStore } from 'react'
 
 // Cinema mode (ADR-0023): the player takes the full width and the side panel moves
 // below it. A per-viewer preference shared by the video and tagging screens, so localStorage.
@@ -33,4 +33,20 @@ export function setCinema(on: boolean): void {
 
 export function useCinema(): boolean {
   return useSyncExternalStore(subscribe, () => current)
+}
+
+/**
+ * Marks the document while a player screen is in cinema mode, so the CSS can hide
+ * everything that isn't the player and its panel (ADR-0025).
+ */
+export function useCinemaPage(): boolean {
+  const on = useCinema()
+  useEffect(() => {
+    if (!on) return
+    document.documentElement.dataset.cinema = ''
+    return () => {
+      delete document.documentElement.dataset.cinema
+    }
+  }, [on])
+  return on
 }
