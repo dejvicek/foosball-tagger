@@ -253,6 +253,17 @@ describe('tagging screen keyboard (TAG-1..5, PRD §8)', () => {
     input.remove()
   })
 
+  it('reverses the hole keys and buttons when I stand on the right (ADR-0031)', async () => {
+    vi.mocked(loadGames).mockResolvedValue([{ ...game, my_side: 'right' }])
+    await renderPage()
+    at(70)
+    press('r')
+    press('1')
+    expect(screen.getByRole('button', { name: /^Push long\s*1$/i })).toHaveAttribute('aria-pressed', 'true')
+    const holes = within(screen.getByRole('group', { name: 'Hole' })).getAllByRole('button')
+    expect(holes.map((b) => b.title)).toEqual(['Push long', 'Push short', 'Middle', 'Pull short', 'Pull long'])
+  })
+
   it('keeps an unsaved draft across a reload', async () => {
     const first = render(
       <MemoryRouter initialEntries={['/videos/v1/games/g1']}>

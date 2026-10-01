@@ -130,3 +130,9 @@ Open a game with "Tag →" on the video screen.
 6. **Z:** after `npx supabase db push`, shots tagged Z/7 show Z in the log, the panel and Statistics → By shot direction.
 7. **Windows + Chrome, dark mode:** every dropdown (statistics filters, game fields) shows readable options when open.
 
+## Hole keys follow the side (ADR-0031)
+
+1. In a game where you stand on the **left**: Hole buttons read Pull long … Push long with keys 1–5; 1 selects Pull long.
+2. Switch the game to **right** on the video screen, open its tagging screen: Hole buttons read Push long, Push short, Middle, Pull short, Pull long with keys 1–5; 1 selects Push long, 5 Pull long. The help's keyboard map shows the same order. Setup keys A S D are unchanged.
+3. Save a shot tagged with 1 on the right → log and statistics say Push long.
+

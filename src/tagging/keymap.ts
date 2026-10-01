@@ -2,6 +2,8 @@
 // hand, so the right hand can stay on the mouse or on the player keys:
 //
 //   1 2 3 4 5  Hole       pull long · pull short · middle · push short · push long
+//                         (reversed when I stand on the right, so the keys match the
+//                         goal as it appears in the video, ADR-0031)
 //   Q W E      Shot type  Pin · Pull · Other          │ R Ball set │
 //   A S D      Setup      pull side · middle · push   │ F Shot     │ G Goal
 //   Z X        Execution  Proper · Misexecuted        │ V No shot  │ B No goal
@@ -12,6 +14,7 @@
 // (KeyboardEvent.code), so the grid stays put on QWERTZ and other layouts; the
 // labels shown come from src/player/keyboardLayout.ts (ADR-0022).
 import { codeOf } from '../player/keyboardLayout'
+import type { Side } from '../data/types'
 import type { DraftEvent, TagField } from './draft'
 
 export interface TagOption {
@@ -32,8 +35,8 @@ export interface TagGroup {
   options: TagOption[]
 }
 
-/** In tag panel order (ADR-0026). */
-export const TAG_GROUPS: TagGroup[] = [
+/** In tag panel order (ADR-0026), for a player on the left of the frame. */
+const LEFT_GROUPS: TagGroup[] = [
   {
     field: 'shot_type',
     label: 'Shot type',
@@ -90,20 +93,37 @@ export const TAG_GROUPS: TagGroup[] = [
   },
 ]
 
+const HOLE_CODES = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5']
+
+/**
+ * The groups for the side I stand on. On the right the goal is upside down in the
+ * video, so the holes run push long → pull long on 1–5 and in the panel (ADR-0031).
+ */
+export function tagGroups(side: Side): TagGroup[] {
+  if (side === 'left') return LEFT_GROUPS
+  return LEFT_GROUPS.map((g) =>
+    g.field === 'hole' ? { ...g, options: [...g.options].reverse().map((o, i) => ({ ...o, code: HOLE_CODES[i] as string })) } : g,
+  )
+}
+
 /** Physical keys of the non-field actions. */
 export const ACTION_CODE = { ballSet: 'KeyR', shot: 'KeyF', noShot: 'KeyV' } as const
 
 export type TagAction = DraftEvent | { kind: 'undo' }
 
-const BY_CODE = new Map<string, TagAction>()
-for (const g of TAG_GROUPS) {
-  if (g.toggle) continue
-  for (const o of g.options) BY_CODE.set(o.code, { kind: 'tag', field: g.field, value: o.value } as DraftEvent)
+function byCode(side: Side): Map<string, TagAction> {
+  const map = new Map<string, TagAction>()
+  for (const g of tagGroups(side)) {
+    if (g.toggle) continue
+    for (const o of g.options) map.set(o.code, { kind: 'tag', field: g.field, value: o.value } as DraftEvent)
+  }
+  map.set('KeyC', { kind: 'toggleShotDirection' })
+  map.set(ACTION_CODE.ballSet, { kind: 'ballSet' })
+  map.set(ACTION_CODE.shot, { kind: 'shot' })
+  map.set(ACTION_CODE.noShot, { kind: 'noShot' })
+  return map
 }
-BY_CODE.set('KeyC', { kind: 'toggleShotDirection' })
-BY_CODE.set(ACTION_CODE.ballSet, { kind: 'ballSet' })
-BY_CODE.set(ACTION_CODE.shot, { kind: 'shot' })
-BY_CODE.set(ACTION_CODE.noShot, { kind: 'noShot' })
+const BY_CODE: Record<Side, Map<string, TagAction>> = { left: byCode('left'), right: byCode('right') }
 
 export interface KeyPress {
   key: string
@@ -115,9 +135,10 @@ export interface KeyPress {
 
 /**
  * The tagging action for a key press, or null. Plain keys match by position;
- * ⌘Z / Ctrl+Z match the letter Z, like every other app's undo.
+ * ⌘Z / Ctrl+Z match the letter Z, like every other app's undo. `side` is the
+ * side of the frame I stand on in this game (ADR-0031).
  */
-export function tagAction(e: KeyPress | string): TagAction | null {
+export function tagAction(e: KeyPress | string, side: Side = 'left'): TagAction | null {
   const press = typeof e === 'string' ? { key: e } : e
   if (press.metaKey || press.ctrlKey) return press.key.toLowerCase() === 'z' && !press.shiftKey ? { kind: 'undo' } : null
   switch (press.key) {
@@ -127,5 +148,5 @@ export function tagAction(e: KeyPress | string): TagAction | null {
     case 'Backspace':
       return { kind: 'clear' }
   }
-  return BY_CODE.get(codeOf(press)) ?? null
+  return BY_CODE[side].get(codeOf(press)) ?? null
 }

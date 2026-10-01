@@ -1,12 +1,13 @@
 import { KeyboardMap } from './KeyboardMap'
+import type { Side } from '../data/types'
 
 /** Tag definitions (PRD §2) and the keys (TAG-8). */
-export function Help() {
+export function Help({ side }: { side: Side }) {
   return (
     <details className="card help">
       <summary>How to tag</summary>
       <div className="help-body">
-        <KeyboardMap />
+        <KeyboardMap side={side} />
         <h3>Definitions</h3>
         <dl>
           <dt>Possession</dt>
@@ -16,7 +17,7 @@ export function Help() {
           <dt>Setup</dt>
           <dd>Where the ball sits when the possession starts: Pull side, Middle, Push side. Resets to Middle after each save.</dd>
           <dt>Hole</dt>
-          <dd>Where the ball crossed or was aimed at, seen from the shooter: Pull long, Pull short, Middle, Push short, Push long.</dd>
+          <dd>Where the ball crossed or was aimed at, seen from the shooter: Pull long, Pull short, Middle, Push short, Push long. Keys 1–5 follow the goal as it looks in the video, so they run the other way when you stand on the right.</dd>
           <dt>Movement</dt>
           <dd>
             Not tagged: worked out from setup and hole and shown under Hole. Straight when the hole is on the setup’s

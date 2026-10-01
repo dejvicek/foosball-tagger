@@ -3,7 +3,8 @@ import type { PlayerController } from '../player/controller'
 import { formatTime } from '../player/time'
 import { movementOf } from '../stats/movement'
 import { statusText, type Draft, type DraftEvent } from './draft'
-import { TAG_GROUPS } from './keymap'
+import { tagGroups } from './keymap'
+import type { Side } from '../data/types'
 import { isFoul } from './possessions'
 import { KEY } from './keyLabels'
 import { keyLabel } from '../player/keyboardLayout'
@@ -16,6 +17,8 @@ interface Props {
   onUndo: () => void
   /** Set while a saved possession is open for editing, e.g. "possession 3" (ADR-0030). */
   editing?: string | undefined
+  /** The side of the frame I stand on; the hole keys follow it (ADR-0031). */
+  side: Side
 }
 
 /** Large possession timer: live while running, frozen after F (TAG-3). */
@@ -50,7 +53,7 @@ function Timer({ draft, controller }: { draft: Draft; controller: PlayerControll
 }
 
 /** The tag panel (TAG-1..3). Every button is also a key; none takes focus. */
-export function TagPanel({ draft, controller, onEvent, onUndo, editing }: Props) {
+export function TagPanel({ draft, controller, onEvent, onUndo, editing, side }: Props) {
   useKeyboardLayout()
   const noShot = draft.shot_type === 'No shot'
   return (
@@ -78,7 +81,7 @@ export function TagPanel({ draft, controller, onEvent, onUndo, editing }: Props)
           No shot <kbd>{KEY.noShot}</kbd>
         </button>
       </div>
-      {TAG_GROUPS.map((g) => (
+      {tagGroups(side).map((g) => (
         <Fragment key={g.field}>
           <div className="group">
             <h3 id={`grp-${g.field}`}>{g.label}</h3>

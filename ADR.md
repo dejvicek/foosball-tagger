@@ -316,3 +316,10 @@ Format: context → decision → consequences. Keep each record short.
   - **Dropdowns:** `option` elements get explicit `--panel` / `--ink` colors so every open list is readable on Windows.
 - **Consequences:** Editing a field takes a click and Enter instead of one dropdown change. Apply migration 0005 before deploying the frontend, and let pending writes sync first: a pending write still carrying Z/7 would be refused.
 
+## ADR-0031 · Hole keys follow the goal as seen in the video
+
+- **Status:** Accepted · 2026-10-02 (requested by the user) · Amends ADR-0026, TAG-1
+- **Context:** Keys 1–5 ran Pull long → Push long, which matches the goal on screen when I stand on the left of the frame. Standing on the right, the goal is upside down in the video, so the keys ran against it.
+- **Decision:** The hole keys depend on the game's `my_side`. On the left, unchanged: 1 Pull long, 2 Pull short, 3 Middle, 4 Push short, 5 Push long. On the right, reversed: 1 Push long, 2 Push short, 3 Middle, 4 Pull short, 5 Pull long. The tag panel's Hole buttons and the keyboard map in the help follow the same order, so buttons and keys always line up. Stored values are unchanged (a hole is still seen from the shooter). Only the holes are mirrored; Setup (A S D) and the other keys stay as they are.
+- **Consequences:** Muscle memory for 1–5 differs between left and right games. Changing a game's side on the video screen changes its hole keys the next time its tagging screen opens.
+

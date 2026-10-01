@@ -250,7 +250,7 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
         else show(`Speed ${controller.stepRate(player.direction)}×`)
         return
       }
-      const action = tagAction(e)
+      const action = tagAction(e, game.my_side)
       if (!action) return
       e.preventDefault()
       if (action.kind === 'undo') undo()
@@ -258,7 +258,7 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [controller, snapshot.ready, video.fps, dispatch, undo, show])
+  }, [controller, snapshot.ready, video.fps, dispatch, undo, show, game.my_side])
 
   const ar = video.aspect_ratio ?? 16 / 9
   const cinema = useCinemaPage()
@@ -289,7 +289,7 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
             editingId={editing?.id ?? null}
           />
         </section>
-        <TagPanel draft={editing?.draft ?? draft} controller={controller} onEvent={dispatch} onUndo={undo} editing={editing ? numberOf(editing.id) : undefined} />
+        <TagPanel draft={editing?.draft ?? draft} controller={controller} onEvent={dispatch} onUndo={undo} editing={editing ? numberOf(editing.id) : undefined} side={game.my_side} />
       </div>
       <div className="lower">
         <section className="card" aria-labelledby="stats-heading">
@@ -298,7 +298,7 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
           <p className="note">
             <Link to={`/stats?scope=game&video=${video.id}&game=${game.id}`}>Filter these, or compare with other games →</Link>
           </p>
-          <Help />
+          <Help side={game.my_side} />
         </section>
         <section className="card" aria-labelledby="log-heading">
           <h2 id="log-heading">Possession log</h2>
