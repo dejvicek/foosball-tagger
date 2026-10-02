@@ -5,7 +5,7 @@ import { percentAt, timeAtX } from '../player/scrub'
 import { formatTime } from '../player/time'
 import { useScrubber } from '../player/useScrubber'
 import type { Draft } from './draft'
-import { FOUL_LABEL, FOUL_LIMIT_S, OUTCOME_LABEL, anchor, describe, isFoul, outcomeOf, possessionLength, type Outcome } from './possessions'
+import { FOUL_LABEL, FOUL_LIMIT_S, anchor, describe, isFoul, lookLabel, segmentClass, segmentLook, type SegmentLook } from './possessions'
 
 interface Props {
   /** The game's time range; the strip covers only this (TAG-6). */
@@ -20,10 +20,37 @@ interface Props {
   editingId: string | null
 }
 
-const LEGEND: (Outcome | 'draft')[] = ['goal', 'nogoal', 'noshot', 'untagged', 'candidate', 'draft']
+/** Legend groups (ADR-0037): color is the result, pattern the execution, then the markers. */
+const LEGEND: { title: string; items: { label: string; look: Partial<SegmentLook> | 'draft' }[] }[] = [
+  {
+    title: 'Result',
+    items: [
+      { label: 'Goal', look: { result: 'goal', execution: 'proper' } },
+      { label: 'No goal', look: { result: 'nogoal', execution: 'proper' } },
+      { label: 'No result', look: { result: 'noresult', execution: 'proper' } },
+    ],
+  },
+  {
+    title: 'Execution',
+    items: [
+      { label: 'Proper', look: { result: 'goal', execution: 'proper' } },
+      { label: 'Misexecuted', look: { result: 'goal', execution: 'mis' } },
+      { label: 'Not tagged', look: { result: 'goal', execution: 'blank' } },
+    ],
+  },
+  {
+    title: 'Markers',
+    items: [
+      { label: 'No shot', look: { result: 'noshot' } },
+      { label: FOUL_LABEL, look: { result: 'goal', execution: 'proper', foul: true } },
+      { label: 'Unreviewed candidate', look: { result: 'goal', execution: 'proper', candidate: true } },
+      { label: 'Current possession', look: 'draft' },
+    ],
+  },
+]
 
-/** Where the foul part starts inside a segment of `length` seconds, in percent of it. */
-const foulFrom = (length: number) => `${(FOUL_LIMIT_S / length) * 100}%`
+/** Where the 15 s tick sits inside a segment of `length` seconds, in percent of it. */
+const tickAt = (length: number) => `${(FOUL_LIMIT_S / length) * 100}%`
 
 /**
  * Timeline strip: one segment per possession and a playhead (TAG-6). Click to seek,
@@ -50,7 +77,7 @@ export function Timeline({ range, possessions, draft, controller, onSeek, onSele
         draftRef.current.style.width = `${Math.abs(b - a)}%`
         const len = (draft.shot_s ?? t) - draft.start_s
         draftRef.current.classList.toggle('foul', isFoul(len))
-        if (draftFoulRef.current && isFoul(len)) draftFoulRef.current.style.left = foulFrom(len)
+        if (draftFoulRef.current && isFoul(len)) draftFoulRef.current.style.left = tickAt(len)
       }
       frame = requestAnimationFrame(tick)
     }
@@ -79,27 +106,27 @@ export function Timeline({ range, possessions, draft, controller, onSeek, onSele
           const a = anchor(p)
           if (a == null) return null
           const b = p.shot_s ?? a
-          const outcome = outcomeOf(p)
+          const look = segmentLook(p)
           const label = describe(p, n)
-          const len = possessionLength(p)
+          const len = b - a
           return (
             <button
               key={p.id}
               type="button"
-              className={`seg nf ${outcome}${p.id === editingId ? ' editing' : ''}`}
+              className={`seg nf ${segmentClass(look)}${p.id === editingId ? ' editing' : ''}`}
               style={{ left: `${pos(a)}%`, width: `${Math.max(0, pos(b) - pos(a))}%` }}
               title={label}
-              aria-label={`${label}. ${OUTCOME_LABEL[outcome]}. Edit it, from one second before it.`}
+              aria-label={`${label}. ${lookLabel(look)}. Edit it, from one second before it.`}
               aria-pressed={p.id === editingId}
               onClick={() => onSelect(p.id, a - 1)}
             >
-              {isFoul(len) && <span className="seg-foul" style={{ left: foulFrom(len as number) }} />}
+              {look.foul && <span className="foul-tick" style={{ left: tickAt(len) }} />}
             </button>
           )
         })}
         {draft.start_s != null && (
           <div ref={draftRef} className="seg draft" aria-hidden="true">
-            <span ref={draftFoulRef} className="seg-foul" />
+            <span ref={draftFoulRef} className="foul-tick" />
           </div>
         )}
         <div ref={headRef} className="playhead" />
@@ -110,16 +137,19 @@ export function Timeline({ range, possessions, draft, controller, onSeek, onSele
         </div>
       )}
       <div className="legend" aria-hidden="true">
-        {LEGEND.map((o) => (
-          <span key={o}>
-            <i className={`swatch ${o}`} />
-            {OUTCOME_LABEL[o]}
-          </span>
+        {LEGEND.map((g) => (
+          <div key={g.title} className="legend-group">
+            <b>{g.title}</b>
+            {g.items.map((it) => (
+              <span key={it.label}>
+                <i className="swatch">
+                  <i className={`seg ${it.look === 'draft' ? 'draft' : segmentClass(it.look)}`} />
+                </i>
+                {it.label}
+              </span>
+            ))}
+          </div>
         ))}
-        <span>
-          <i className="swatch foul" />
-          {FOUL_LABEL}
-        </span>
       </div>
     </div>
   )

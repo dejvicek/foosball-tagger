@@ -1,4 +1,4 @@
-import { emptyDraft, reduce, reduceEdit, statusText, type Draft, type DraftContext, type DraftEvent } from './draft'
+import { emptyDraft, isComplete, missing, reduce, reduceEdit, statusText, type Draft, type DraftContext, type DraftEvent } from './draft'
 
 const ctx = (t: number, extra: Partial<DraftContext> = {}): DraftContext => ({
   t,
@@ -26,6 +26,12 @@ const F = { kind: 'shot' } as const
 const N = { kind: 'noShot' } as const
 const ENTER = { kind: 'save' } as const
 const ESC = { kind: 'clear' } as const
+/** Tags the fields a new draft leaves blank, so it can be saved (ADR-0037). */
+const TAGS: [DraftEvent, number][] = [
+  [{ kind: 'tag', field: 'hole', value: 'Middle' }, 76],
+  [{ kind: 'tag', field: 'execution', value: 'Proper' }, 76],
+  [{ kind: 'tag', field: 'result', value: 'Goal' }, 76],
+]
 
 describe('draft state machine', () => {
   it('S, tags, F, Enter saves one possession; Setup resets to Middle (TAG-1, TAG-2)', () => {
@@ -35,10 +41,12 @@ describe('draft state machine', () => {
       [{ kind: 'tag', field: 'shot_type', value: 'Pull' }, 72],
       [F, 75.5],
       [{ kind: 'tag', field: 'result', value: 'Goal' }, 76],
+      [{ kind: 'tag', field: 'hole', value: 'Pull long' }, 76],
+      [{ kind: 'tag', field: 'execution', value: 'Misexecuted' }, 76],
       [ENTER, 76],
     ])
     expect(saved).toEqual([
-      { start_s: 70, shot_s: 75.5, setup: 'Pull side', shot_type: 'Pull', hole: null, shot_direction: 'Straight', result: 'Goal', execution: null },
+      { start_s: 70, shot_s: 75.5, setup: 'Pull side', shot_type: 'Pull', hole: 'Pull long', shot_direction: 'Straight', result: 'Goal', execution: 'Misexecuted' },
     ])
     expect(draft).toEqual(emptyDraft())
     expect(draft.setup).toBe('Middle')
@@ -46,13 +54,20 @@ describe('draft state machine', () => {
   })
 
   it('S after F saves the tagged possession and starts the next one', () => {
-    const { draft, saved } = run([
+    const { draft, saved } = run([[S, 70], [F, 80], ...TAGS, [S, 90]])
+    expect(saved).toEqual([expect.objectContaining({ start_s: 70, shot_s: 80 })])
+    expect(draft).toEqual({ ...emptyDraft(), start_s: 90 })
+  })
+
+  it('S after F refuses while a field is blank, and keeps the draft (ADR-0037)', () => {
+    const { draft, saved, errors } = run([
       [S, 70],
       [F, 80],
       [S, 90],
     ])
-    expect(saved).toEqual([expect.objectContaining({ start_s: 70, shot_s: 80 })])
-    expect(draft).toEqual({ ...emptyDraft(), start_s: 90 })
+    expect(saved).toEqual([])
+    expect(errors[0]).toBe('Can’t save yet. Still blank: hole, execution, result.')
+    expect(draft).toMatchObject({ start_s: 70, shot_s: 80 })
   })
 
   it('S again before F moves the start and keeps the tags', () => {
@@ -71,8 +86,14 @@ describe('draft state machine', () => {
       [{ kind: 'tag', field: 'hole', value: 'Push long' }, 71],
       [N, 78],
     ])
-    expect(saved).toEqual([expect.objectContaining({ start_s: 70, shot_s: 78, shot_type: 'No shot', hole: null })])
+    expect(saved).toEqual([{ start_s: 70, shot_s: 78, setup: null, shot_type: 'No shot', hole: null, shot_direction: null, result: null, execution: null }])
     expect(draft).toEqual(emptyDraft())
+  })
+
+  it('N needs a start (ADR-0037)', () => {
+    const { saved, errors } = run([[N, 78]])
+    expect(saved).toEqual([])
+    expect(errors[0]).toMatch(/Press R when the ball is set first/)
   })
 
   it('refuses F before the start, without swapping (TAG-4)', () => {
@@ -117,9 +138,19 @@ describe('draft state machine', () => {
     expect(draft.result).toBe('No goal')
   })
 
-  it('Enter saves with missing fields left blank, but refuses an empty draft', () => {
+  it('Enter refuses an empty draft, and any draft with a blank field (ADR-0037)', () => {
     expect(run([[ENTER, 70]]).errors[0]).toMatch(/Nothing to save/)
-    expect(run([[S, 70], [ENTER, 71]]).saved).toEqual([expect.objectContaining({ start_s: 70, shot_s: null, result: null })])
+    expect(run([[S, 70], ...TAGS, [ENTER, 71]]).errors[0]).toBe('Can’t save yet. Still blank: shot.')
+    expect(run([[S, 70], [F, 72], ...TAGS, [{ kind: 'tag', field: 'setup', value: 'Middle' }, 73], [ENTER, 73]]).errors[0]).toBe(
+      'Can’t save yet. Still blank: setup.',
+    )
+  })
+
+  it('lists what blocks saving: times, and every tag of a shot (ADR-0037)', () => {
+    expect(missing(emptyDraft())).toEqual(['start', 'shot', 'hole', 'execution', 'result'])
+    const noShot: Draft = { ...emptyDraft(), start_s: 1, setup: null, shot_type: 'No shot', shot_direction: null }
+    expect(missing(noShot)).toEqual(['end'])
+    expect(isComplete({ ...noShot, shot_s: 4 })).toBe(true)
   })
 
   it('starts at Straight; C flips Straight ⇄ Z; No shot blanks it (ADR-0028)', () => {
@@ -132,7 +163,7 @@ describe('draft state machine', () => {
 
   it('starts with Shot type Pin; S, F, Enter saves a Pin (ADR-0027)', () => {
     expect(emptyDraft().shot_type).toBe('Pin')
-    expect(run([[S, 70], [F, 72], [ENTER, 73]]).saved).toEqual([expect.objectContaining({ shot_type: 'Pin' })])
+    expect(run([[S, 70], [F, 72], ...TAGS, [ENTER, 73]]).saved).toEqual([expect.objectContaining({ shot_type: 'Pin' })])
     // Pressing Q again clears it, like any field.
     expect(run([[{ kind: 'tag', field: 'shot_type', value: 'Pin' }, 70]]).draft.shot_type).toBeNull()
   })
@@ -147,7 +178,7 @@ describe('statusText (TAG-3)', () => {
     expect(statusText(emptyDraft())).toBe('Press R when the ball is set.')
     expect(statusText({ ...emptyDraft(), start_s: 1 })).toMatch(/Press F at the shot, or V/)
     expect(statusText({ ...emptyDraft(), start_s: 1, shot_s: 2, shot_type: 'Pin' })).toBe(
-      'Tag the shot, then press Enter to save. Still blank: hole, execution, result.',
+      'Tag the shot; saving unlocks once nothing is blank. Still blank: hole, execution, result.',
     )
     expect(
       statusText({ start_s: 1, shot_s: 2, setup: 'Middle', shot_type: 'Pin', hole: 'Middle', shot_direction: 'Straight', result: 'Goal', execution: 'Proper' }),
@@ -156,12 +187,17 @@ describe('statusText (TAG-3)', () => {
 })
 
 describe('reduceEdit (ADR-0030)', () => {
-  const saved = { ...emptyDraft(), start_s: 70, shot_s: 75, hole: 'Middle' as const, result: 'Goal' as const }
+  const saved: Draft = { ...emptyDraft(), start_s: 70, shot_s: 75, hole: 'Middle', result: 'Goal', execution: 'Proper' }
 
   it('tags like a draft; Enter returns the edited values, Esc cancels', () => {
     const d = reduceEdit(saved, { kind: 'tag', field: 'result', value: 'No goal' }, ctx(80)).draft
     expect(reduceEdit(d, { kind: 'save' }, ctx(80)).save).toEqual({ ...saved, result: 'No goal' })
     expect(reduceEdit(d, { kind: 'clear' }, ctx(80)).cancel).toBe(true)
+  })
+
+  it('refuses to save while a field is blank (ADR-0037)', () => {
+    const d = reduceEdit(saved, { kind: 'tag', field: 'hole', value: 'Middle' }, ctx(80)).draft
+    expect(reduceEdit(d, { kind: 'save' }, ctx(80))).toMatchObject({ error: 'Can’t save yet. Still blank: hole.' })
   })
 
   it('Ball set and Shot move the start and shot, within the game and in order', () => {
@@ -175,6 +211,14 @@ describe('reduceEdit (ADR-0030)', () => {
   it('No shot blanks the shot fields without saving or moving the times', () => {
     const out = reduceEdit(saved, { kind: 'noShot' }, ctx(90))
     expect(out.save).toBeUndefined()
-    expect(out.draft).toMatchObject({ start_s: 70, shot_s: 75, shot_type: 'No shot', hole: null, result: null, shot_direction: null })
+    expect(out.draft).toEqual({ start_s: 70, shot_s: 75, setup: null, shot_type: 'No shot', hole: null, shot_direction: null, result: null, execution: null })
+    expect(reduceEdit(out.draft, { kind: 'save' }, ctx(90)).save).toEqual(out.draft)
+  })
+
+  it('No shot refuses tag keys; Shot turns it back into a shot at the defaults (ADR-0037)', () => {
+    const noShot = reduceEdit(saved, { kind: 'noShot' }, ctx(90)).draft
+    expect(reduceEdit(noShot, { kind: 'tag', field: 'result', value: 'Goal' }, ctx(90))).toMatchObject({ draft: noShot, error: /No shot has no tags/ })
+    expect(reduceEdit(noShot, { kind: 'toggleShotDirection' }, ctx(90)).error).toMatch(/No shot has no tags/)
+    expect(reduceEdit(noShot, { kind: 'shot' }, ctx(77)).draft).toEqual({ ...emptyDraft(), start_s: 70, shot_s: 77 })
   })
 })

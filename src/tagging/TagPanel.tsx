@@ -2,7 +2,7 @@ import { Fragment, useEffect, useRef } from 'react'
 import type { PlayerController } from '../player/controller'
 import { formatTime } from '../player/time'
 import { movementOf } from '../stats/movement'
-import { statusText, type Draft, type DraftEvent } from './draft'
+import { isComplete, statusText, type Draft, type DraftEvent } from './draft'
 import { tagGroups } from './keymap'
 import type { Side } from '../data/types'
 import { isFoul } from './possessions'
@@ -92,7 +92,7 @@ export function TagPanel({ draft, controller, onEvent, editing, side }: Props) {
                   className="opt nf"
                   data-tone={o.negative ? 'neg' : undefined}
                   aria-pressed={draft[g.field] === o.value}
-                  disabled={noShot && g.field !== 'shot_type' && g.field !== 'setup'}
+                  disabled={noShot}
                   onClick={() => onEvent({ kind: 'tag', field: g.field, value: o.value } as DraftEvent)}
                   title={o.value}
                 >
@@ -110,7 +110,7 @@ export function TagPanel({ draft, controller, onEvent, editing, side }: Props) {
         </Fragment>
       ))}
       <div className="actions">
-        <button className="btn primary nf" type="button" onClick={() => onEvent({ kind: 'save' })}>
+        <button className="btn primary nf" type="button" disabled={!isComplete(draft)} title={isComplete(draft) ? undefined : 'Tag every field first'} onClick={() => onEvent({ kind: 'save' })}>
           {editing ? 'Save changes' : 'Save'} <kbd>{KEY.save}</kbd>
         </button>
         <button className="btn nf" type="button" onClick={() => onEvent({ kind: 'clear' })}>

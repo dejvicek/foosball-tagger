@@ -160,6 +160,9 @@ describe('tagging screen keyboard (TAG-1..5, PRD §8)', () => {
     press('r')
     at(75)
     press('f')
+    press('3')
+    press('z')
+    press('g')
     at(80)
     press('r')
     at(90)
@@ -170,6 +173,23 @@ describe('tagging screen keyboard (TAG-1..5, PRD §8)', () => {
       [70, 75, 'Pin'],
       [80, 90, 'No shot'],
     ])
+  })
+
+  it('Save stays disabled until every field is tagged (ADR-0037)', async () => {
+    await renderPage()
+    const save = () => screen.getByRole('button', { name: /^Save\s*Enter$/ })
+    expect(save()).toBeDisabled()
+    at(70)
+    press('r')
+    at(72)
+    press('f')
+    press('3')
+    press('z')
+    expect(save()).toBeDisabled()
+    press('Enter')
+    expect(screen.getByText('Can’t save yet. Still blank: result.')).toBeInTheDocument()
+    press('g')
+    expect(save()).toBeEnabled()
   })
 
   it('Backspace or Esc clears the draft; Enter on an empty draft explains', async () => {
@@ -275,7 +295,7 @@ describe('possession log (TAG-7, ADR-0030)', () => {
   })
 
   it('clicking a row opens it in the panel and seeks one second before it; Enter saves the changes', async () => {
-    vi.mocked(loadPossessions).mockResolvedValue([possession(70, 75, { result: 'Goal', hole: 'Middle' })])
+    vi.mocked(loadPossessions).mockResolvedValue([possession(70, 75, { result: 'Goal', hole: 'Middle', execution: 'Proper' })])
     await renderPage()
     fireEvent.click(within(log()).getByText('Goal'))
     expect(fake.t).toBe(69)
@@ -313,7 +333,26 @@ describe('possession log (TAG-7, ADR-0030)', () => {
     press('v')
     press('Enter')
     await flush()
-    expect(saved()[0]).toMatchObject({ start_s: 70, shot_s: 75, shot_type: 'No shot', result: null, hole: null, shot_direction: null })
+    expect(saved()[0]).toMatchObject({ start_s: 70, shot_s: 75, setup: null, shot_type: 'No shot', result: null, hole: null, shot_direction: null, execution: null })
+  })
+
+  it('No shot in edit mode disables every tag button; F brings back the defaults (ADR-0037)', async () => {
+    vi.mocked(loadPossessions).mockResolvedValue([possession(70, 75, { result: 'Goal', hole: 'Middle', execution: 'Proper' })])
+    await renderPage()
+    fireEvent.click(within(log()).getByText('Goal'))
+    press('v')
+    const panel = screen.getByRole('complementary', { name: 'Edit possession 1' })
+    const tags = within(panel).getAllByRole('button', { pressed: false }).concat(within(panel).queryAllByRole('button', { pressed: true }))
+    expect(tags.length).toBeGreaterThan(0)
+    for (const b of tags) expect(b).toBeDisabled()
+    for (const name of [/^Start/, /^Shot\s/, /^No shot/]) expect(within(panel).getByRole('button', { name })).toBeEnabled()
+    expect(within(panel).getByRole('button', { name: /^Save changes/ })).toBeEnabled()
+    at(76)
+    press('f')
+    expect(screen.getByRole('button', { name: /^Pin\s*Q$/i })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: /^Middle\s*S$/i })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: /^Goal\s*G$/i })).toHaveAttribute('aria-pressed', 'false')
+    expect(within(panel).getByRole('button', { name: /^Save changes/ })).toBeDisabled()
   })
 
   it('deletes a row after one confirmation', async () => {
@@ -338,9 +377,9 @@ describe('timeline (TAG-6)', () => {
   it('draws one segment per possession, with its tags on hover; a click opens it for editing from 1 s before it', async () => {
     vi.mocked(loadPossessions).mockResolvedValue([possession(70, 75, { result: 'Goal' }), possession(100, 104, { shot_type: 'No shot', shot_direction: null })])
     await renderPage()
-    const seg = screen.getByRole('button', { name: /^#1 Middle · Pin · Straight · Goal\. Goal\./ })
-    expect(seg).toHaveClass('goal')
-    expect(screen.getByRole('button', { name: /^#2 Middle · No shot\./ })).toHaveClass('noshot')
+    const seg = screen.getByRole('button', { name: /^#1 Middle · Pin · Straight · Goal\. Goal, execution not tagged\./ })
+    expect(seg).toHaveClass('goal', 'blank')
+    expect(screen.getByRole('button', { name: /^#2 Middle · No shot\. No shot\./ })).toHaveClass('noshot')
     fireEvent.click(seg)
     expect(fake.t).toBe(69)
     expect(screen.getByText('Editing possession 1')).toBeInTheDocument()

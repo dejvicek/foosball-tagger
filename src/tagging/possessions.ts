@@ -31,24 +31,43 @@ export function isFoul(length: number | null): boolean {
   return length != null && length > FOUL_LIMIT_S
 }
 
-export type Outcome = 'goal' | 'nogoal' | 'noshot' | 'untagged' | 'candidate'
+/** Fill color of a timeline segment (ADR-0037); No shot is hollow instead. */
+export type ResultLook = 'goal' | 'nogoal' | 'noresult' | 'noshot'
+/** Pattern of a timeline segment (ADR-0037): solid, striped, faded. */
+export type ExecutionLook = 'proper' | 'mis' | 'blank'
 
-/** Timeline class (TAG-6). Unreviewed candidates get their own style whatever their tags. */
-export function outcomeOf(p: Pick<Possession, 'shot_type' | 'result' | 'review_status'>): Outcome {
-  if (p.review_status === 'unreviewed') return 'candidate'
-  if (p.shot_type === 'No shot') return 'noshot'
-  if (p.result === 'Goal') return 'goal'
-  if (p.result === 'No goal') return 'nogoal'
-  return 'untagged'
+export interface SegmentLook {
+  result: ResultLook
+  /** Null for No shot, which has no execution. */
+  execution: ExecutionLook | null
+  /** Unreviewed candidate: a dashed outline over the tags' look. */
+  candidate: boolean
+  foul: boolean
 }
 
-export const OUTCOME_LABEL: Record<Outcome | 'draft', string> = {
-  goal: 'Goal',
-  nogoal: 'No goal',
-  noshot: 'No shot',
-  untagged: 'Untagged',
-  candidate: 'Unreviewed candidate',
-  draft: 'Current possession',
+/** How a possession is drawn on the timeline (TAG-6, ADR-0037). */
+export function segmentLook(p: Pick<Possession, 'start_s' | 'shot_s' | 'shot_type' | 'result' | 'execution' | 'review_status'>): SegmentLook {
+  const noShot = p.shot_type === 'No shot'
+  const result: ResultLook = noShot ? 'noshot' : p.result === 'Goal' ? 'goal' : p.result === 'No goal' ? 'nogoal' : 'noresult'
+  const execution: ExecutionLook | null = noShot ? null : p.execution === 'Proper' ? 'proper' : p.execution === 'Misexecuted' ? 'mis' : 'blank'
+  return { result, execution, candidate: p.review_status === 'unreviewed', foul: isFoul(possessionLength(p)) }
+}
+
+/** CSS classes for a segment or legend swatch. */
+export function segmentClass(look: Partial<SegmentLook>): string {
+  return [look.result, look.execution, look.foul && 'foul', look.candidate && 'candidate'].filter(Boolean).join(' ')
+}
+
+export const RESULT_LABEL: Record<ResultLook, string> = { goal: 'Goal', nogoal: 'No goal', noresult: 'No result', noshot: 'No shot' }
+export const EXECUTION_LABEL: Record<ExecutionLook, string> = { proper: 'Proper', mis: 'Misexecuted', blank: 'Execution not tagged' }
+
+/** Spoken form of a segment's look, e.g. "Goal, misexecuted, foul". */
+export function lookLabel(look: SegmentLook): string {
+  const parts = [RESULT_LABEL[look.result]]
+  if (look.execution) parts.push(EXECUTION_LABEL[look.execution].toLowerCase())
+  if (look.foul) parts.push('foul')
+  if (look.candidate) parts.push('unreviewed candidate')
+  return parts.join(', ')
 }
 
 export const FOUL_LABEL = `Foul (over ${FOUL_LIMIT_S} s)`

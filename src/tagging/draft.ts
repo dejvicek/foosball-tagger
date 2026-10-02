@@ -60,6 +60,40 @@ export function hasContent(d: Draft): boolean {
   return d.start_s != null || d.shot_s != null || d.shot_type !== e.shot_type || d.hole != null || d.shot_direction !== e.shot_direction || d.result != null || d.execution != null
 }
 
+/** A No-shot possession: every tag blank except the shot type (ADR-0037). */
+function asNoShot(d: Draft): Draft {
+  return { ...d, setup: null, shot_type: 'No shot', hole: null, shot_direction: null, result: null, execution: null }
+}
+
+/** Back from No shot to a shot: the tags start at a new draft's defaults (ADR-0037). */
+function asShot(d: Draft): Draft {
+  if (d.shot_type !== 'No shot') return d
+  const { setup, shot_type, hole, shot_direction, result, execution } = emptyDraft()
+  return { ...d, setup, shot_type, hole, shot_direction, result, execution }
+}
+
+/**
+ * What still blocks saving (ADR-0037): both times, and for a shot every tag. A No-shot
+ * possession needs only its times.
+ */
+export function missing(d: Draft): string[] {
+  const out: string[] = []
+  if (d.start_s == null) out.push('start')
+  if (d.shot_s == null) out.push(d.shot_type === 'No shot' ? 'end' : 'shot')
+  if (d.shot_type !== 'No shot') out.push(...FIELDS.filter((f) => d[f] == null).map((f) => FIELD_LABEL[f]))
+  return out
+}
+
+export function isComplete(d: Draft): boolean {
+  return missing(d).length === 0
+}
+
+function incomplete(d: Draft): string {
+  return `Can’t save yet. Still blank: ${missing(d).join(', ')}.`
+}
+
+const noShotTags = () => `No shot has no tags. Press ${KEY.shot} to make it a shot.`
+
 function outsideRange(ctx: DraftContext): string | null {
   const { t, range } = ctx
   if (t >= range.start - EDGE && t <= range.end + EDGE) return null
@@ -73,8 +107,10 @@ export function reduce(draft: Draft, event: DraftEvent, ctx: DraftContext): Outc
     case 'ballSet': {
       const out = outsideRange(ctx)
       if (out) return { draft, error: out }
-      // Ball set after a shot: save the tagged possession, then start the next one (TAG-1).
+      // Ball set after a shot: save the tagged possession, then start the next one (TAG-1);
+      // only once it is fully tagged (ADR-0037).
       if (draft.shot_s != null) {
+        if (!isComplete(draft)) return { draft, error: incomplete(draft) }
         return { draft: { ...emptyDraft(), start_s: t }, save: draft, message: 'Saved the possession and started the next one.' }
       }
       // Ball set again before the shot moves the start; tags already set are kept (ADR-0019).
@@ -89,7 +125,7 @@ export function reduce(draft: Draft, event: DraftEvent, ctx: DraftContext): Outc
           error: `The shot (${formatTime(t)}) can’t be before the start (${formatTime(draft.start_s)}). Move forward, or press ${KEY.ballSet} at the new start.`,
         }
       }
-      return { draft: { ...draft, shot_s: t, shot_type: draft.shot_type === 'No shot' ? null : draft.shot_type } }
+      return { draft: { ...asShot(draft), shot_s: t } }
     }
     case 'noShot': {
       const out = outsideRange(ctx)
@@ -97,25 +133,29 @@ export function reduce(draft: Draft, event: DraftEvent, ctx: DraftContext): Outc
       if (draft.start_s != null && t < draft.start_s) {
         return { draft, error: `This time (${formatTime(t)}) is before the start of the possession (${formatTime(draft.start_s)}).` }
       }
-      const saved: Draft = { ...draft, shot_s: t, shot_type: 'No shot', hole: null, shot_direction: null, result: null, execution: null }
+      if (draft.start_s == null) return { draft, error: `Press ${KEY.ballSet} when the ball is set first; a possession without a shot still needs its start.` }
+      const saved = asNoShot({ ...draft, shot_s: t })
       return { draft: emptyDraft(), save: saved, message: 'Saved a possession without a shot.' }
     }
     case 'save': {
       if (!hasContent(draft)) return { draft, error: `Nothing to save yet. Press ${KEY.ballSet} when the ball is set and ${KEY.shot} at the shot.` }
+      if (!isComplete(draft)) return { draft, error: incomplete(draft) }
       return { draft: emptyDraft(), save: draft, message: 'Saved the possession.' }
     }
     case 'clear':
       return { draft: emptyDraft(), ...(hasContent(draft) ? { message: 'Cleared the draft.' } : {}) }
     case 'toggleShotDirection':
     case 'tag':
-      return { draft: applyTag(draft, event) }
+      return applyTag(draft, event)
   }
 }
 
-function applyTag(draft: Draft, event: Extract<DraftEvent, { kind: 'tag' | 'toggleShotDirection' }>): Draft {
-  if (event.kind === 'toggleShotDirection') return { ...draft, shot_direction: draft.shot_direction === 'Z' ? 'Straight' : 'Z' }
+function applyTag(draft: Draft, event: Extract<DraftEvent, { kind: 'tag' | 'toggleShotDirection' }>): { draft: Draft; error?: string } {
+  // No shot keeps every tag blank; F turns it back into a shot (ADR-0037).
+  if (draft.shot_type === 'No shot') return { draft, error: noShotTags() }
+  if (event.kind === 'toggleShotDirection') return { draft: { ...draft, shot_direction: draft.shot_direction === 'Z' ? 'Straight' : 'Z' } }
   // Pressing a tag key a second time clears that field (TAG-1).
-  return { ...draft, [event.field]: draft[event.field] === event.value ? null : event.value }
+  return { draft: { ...draft, [event.field]: draft[event.field] === event.value ? null : event.value } }
 }
 
 export interface EditOutcome {
@@ -146,17 +186,17 @@ export function reduceEdit(draft: Draft, event: DraftEvent, ctx: DraftContext): 
       const out = outsideRange(ctx)
       if (out) return { draft, error: out }
       if (draft.start_s != null && t < draft.start_s) return { draft, error: `The shot (${formatTime(t)}) can’t be before the start (${formatTime(draft.start_s)}).` }
-      return { draft: { ...draft, shot_s: t, shot_type: draft.shot_type === 'No shot' ? null : draft.shot_type } }
+      return { draft: { ...asShot(draft), shot_s: t } }
     }
     case 'noShot':
-      return { draft: { ...draft, shot_type: 'No shot', hole: null, shot_direction: null, result: null, execution: null } }
+      return { draft: asNoShot(draft) }
     case 'save':
-      return { draft, save: draft }
+      return isComplete(draft) ? { draft, save: draft } : { draft, error: incomplete(draft) }
     case 'clear':
       return { draft, cancel: true }
     case 'toggleShotDirection':
     case 'tag':
-      return { draft: applyTag(draft, event) }
+      return applyTag(draft, event)
   }
 }
 
@@ -183,11 +223,14 @@ const FIELDS: TagField[] = ['shot_type', 'setup', 'hole', 'shot_direction', 'exe
 
 /** The next step, as shown under the timer (TAG-3). `editing` names the possession being edited (ADR-0030). */
 export function statusText(d: Draft, editing?: string): string {
-  if (editing) return `Editing ${editing}. ${KEY.ballSet} / ${KEY.shot} set its start / shot to the current time. ${KEY.save} saves the changes, Esc cancels.`
+  const blank = missing(d)
+  if (editing) {
+    const head = `Editing ${editing}. ${KEY.ballSet} / ${KEY.shot} set its start / shot to the current time.`
+    return blank.length > 0 ? `${head} Still blank: ${blank.join(', ')}. Esc cancels.` : `${head} ${KEY.save} saves the changes, Esc cancels.`
+  }
   if (d.start_s == null && d.shot_s == null) return `Press ${KEY.ballSet} when the ball is set.`
   if (d.shot_s == null) return `Possession running. Press ${KEY.shot} at the shot, or ${KEY.noShot} if it ends without one.`
-  const blank = FIELDS.filter((f) => d[f] == null).map((f) => FIELD_LABEL[f])
   return blank.length > 0
-    ? `Tag the shot, then press ${KEY.save} to save. Still blank: ${blank.join(', ')}.`
+    ? `Tag the shot; saving unlocks once nothing is blank. Still blank: ${blank.join(', ')}.`
     : `All tagged. Press ${KEY.save} to save, or ${KEY.ballSet} to save and start the next possession.`
 }

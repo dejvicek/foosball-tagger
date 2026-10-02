@@ -59,7 +59,7 @@ Open a game with "Tag →" on the video screen.
 3. **R after F** saves and starts the next; **V** saves a No shot at once; **Backspace** or **Esc** clears; **⌘Z / Ctrl+Z** deletes the last saved (press twice: the one before); pressing a tag key twice clears it.
 4. **Refusals:** F before the ball-set time (seek back) → message, nothing swapped (TAG-4). Seek outside the game, press R → message suggesting to adjust the game (TAG-5).
 5. **Focus:** clicking any tag button, then Space/Enter still play/save. Clicking the video picture, then R still works. Nothing happens while a text field has focus; Esc leaves it.
-6. **Timeline (TAG-6):** goal, no goal, no shot, untagged look different even in greyscale; hover shows tags; click a segment → 1 s before it, and it opens in the tag panel (ADR-0030); click empty strip → seek there.
+6. **Timeline (TAG-6, ADR-0037):** goal, no goal, no result, no shot look different even in greyscale; hover shows tags; click a segment → 1 s before it, and it opens in the tag panel (ADR-0030); click empty strip → seek there.
 7. **Log (TAG-7, ADR-0030):** read-only, no dropdowns; the row under the playhead is highlighted; × → "Delete?" → click again deletes, without opening the row.
 8. **Help (TAG-8, ADR-0032):** "How to tag" sits right under the timeline, next to the tag panel (hidden in cinema mode); it opens the key table and definitions; it says frame stepping is approximate.
 9. **Reload mid-draft:** press R, tag a field, reload → the running draft is still there.
@@ -116,8 +116,8 @@ Open a game with "Tag →" on the video screen.
 
 ## Timeline colors, fouls, player width (ADR-0029)
 
-1. **Colors:** on the tagging screen the strip is dark grey; goals are solid green, no goals red stripes, no shots grey dots, untagged white stripes. Same in dark mode.
-2. **Foul:** tag a possession longer than 15 s (R, wait, F, G, Enter). While it runs, the timer turns red and reads FOUL after 15.0 s, and the running segment grows orange-black stripes past 15 s. Saved, the segment keeps its outcome color with the striped tail, the hover text says "foul, 17.3 s", and the log's Length cell reads "17.3 s · foul" in red. A possession of exactly 15.0 s is not a foul. The tags are saved as entered.
+1. **Colors:** superseded by ADR-0037 below.
+2. **Foul:** tag a possession longer than 15 s (R, wait, F, G, Enter). While it runs, the timer turns red and reads FOUL after 15.0 s, and the running segment gets the orange foul ring (ADR-0037). Saved, the segment keeps its color and pattern inside the ring, the hover text says "foul, 17.3 s", and the log's Length cell reads "17.3 s · foul" in red. A possession of exactly 15.0 s is not a foul. The tags are saved as entered.
 3. **Width:** on a wide monitor (e.g. 23", 1920×1080), in default and cinema view, the left and right edges of the video, the seek bar / timeline and the player controls line up on both the video and the tagging screen; the tag panel sits right next to the video. Narrow the window below 960 px: the panel stacks under the player and the edges still line up.
 
 ## Editing in the tag panel; Z (ADR-0030)
@@ -125,7 +125,7 @@ Open a game with "Tag →" on the video screen.
 1. **Open:** click a row in the possession log (or its start time) → the video jumps 1 s before it, the row turns blue and the tag panel shows "Editing possession N" with its tags. Clicking the shot time jumps to the shot instead. Clicking a timeline segment does the same as clicking the row.
 2. **Change and save:** press B, C → buttons follow; seek and press R / F → start / shot move to the current time (refused outside the game, or start after shot / shot before start). Enter or Save changes → "Saved the changes to possession N", the log row and segment update, the panel is back on the new-possession draft. Reload → kept.
 3. **Cancel:** open a row, change something, Esc (or Cancel) → nothing changes. A possession you had running (R pressed) before opening the row is still running afterwards. Opening another row with unsaved changes says they were discarded.
-4. **No shot:** open a shot, V → hole, shot direction, execution and result blank, times kept; Enter saves it as No shot.
+4. **No shot:** open a shot, V → every tag blank (setup too) and every tag button disabled, times kept; Enter saves it as No shot (ADR-0037).
 5. **Delete while editing:** deleting the open row closes the edit.
 6. **Z:** after `npx supabase db push`, shots tagged Z/7 show Z in the log, the panel and Statistics → By shot direction.
 7. **Windows + Chrome, dark mode:** every dropdown (statistics filters, game fields) shows readable options when open.
@@ -145,3 +145,10 @@ Open a game with "Tag →" on the video screen.
 4. **Candidates (EXP-3):** with an unreviewed candidate in a game, the count grows by one when "Include unreviewed candidates" is ticked; a rejected one never appears.
 5. **Clipboard blocked (EXP-2):** in Safari, or with clipboard permission denied for the site, Copy CSV shows the CSV in a selected text box; ⌘C copies it.
 6. **Doubles:** a doubles game exports `opponent` as "A & B".
+
+## Timeline look; No shot and complete-only saving (ADR-0037)
+
+1. **Timeline:** on the dark grey strip, Goal is light green, No goal dark red, no result grey. Proper is solid, Misexecuted striped, a blank execution faded. No shot is a hollow red outline. A possession over 15 s has an orange ring around it with a gap and a small orange tick at the 15 s point; its color and pattern stay visible. Candidates have a yellow dashed outline. The legend shows three groups: Result, Execution, Markers. Tick "greyscale" in the browser's accessibility settings (or a screenshot in greyscale): goal and no goal still differ.
+2. **Hover / editing:** hovering a segment shows a yellow ring outside the foul ring; the segment being edited a blue one.
+3. **Save only when complete:** R, F → Save is greyed out and the status line lists what is blank. Enter or R says "Can’t save yet. Still blank: …" and keeps the draft. Tag hole, execution and result → Save turns on, Enter saves.
+4. **No shot:** V without R first says to press R; after R, V saves at once with setup blank too. In edit mode, V blanks every tag and disables all tag buttons; only Start, Shot, No shot, Save changes and Cancel work, and tag keys say "No shot has no tags". Press F → shot type Pin, setup Middle, shot direction Straight, the rest blank, Save disabled until tagged.

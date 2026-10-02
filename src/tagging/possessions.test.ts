@@ -1,6 +1,6 @@
 import type { Possession } from '../data/types'
 import { emptyDraft } from './draft'
-import { describe as describeP, fromDraft, isFoul, outcomeOf, possessionAt, possessionLength, sortPossessions } from './possessions'
+import { describe as describeP, fromDraft, isFoul, lookLabel, segmentClass, segmentLook, possessionAt, possessionLength, sortPossessions } from './possessions'
 
 let seq = 0
 function p(start_s: number | null, shot_s: number | null, extra: Partial<Possession> = {}): Possession {
@@ -32,12 +32,15 @@ describe('possession helpers', () => {
     expect(describeP(p(10, 30, { result: 'Goal' }), 1)).toContain('foul, 20.0 s')
   })
 
-  it('classifies outcomes for the timeline (TAG-6)', () => {
-    expect(outcomeOf(p(1, 2, { result: 'Goal' }))).toBe('goal')
-    expect(outcomeOf(p(1, 2, { result: 'No goal' }))).toBe('nogoal')
-    expect(outcomeOf(p(1, 2, { shot_type: 'No shot' }))).toBe('noshot')
-    expect(outcomeOf(p(1, 2))).toBe('untagged')
-    expect(outcomeOf(p(1, 2, { result: 'Goal', review_status: 'unreviewed' }))).toBe('candidate')
+  it('draws result as color, execution as pattern, No shot hollow, fouls ringed (TAG-6, ADR-0037)', () => {
+    const cls = (x: Possession) => segmentClass(segmentLook(x))
+    expect(cls(p(1, 2, { result: 'Goal', execution: 'Proper' }))).toBe('goal proper')
+    expect(cls(p(1, 2, { result: 'No goal', execution: 'Misexecuted' }))).toBe('nogoal mis')
+    expect(cls(p(1, 2))).toBe('noresult blank')
+    expect(cls(p(1, 2, { shot_type: 'No shot', result: null }))).toBe('noshot')
+    expect(cls(p(1, 20, { shot_type: 'No shot' }))).toBe('noshot foul')
+    expect(cls(p(1, 2, { result: 'Goal', execution: 'Proper', review_status: 'unreviewed' }))).toBe('goal proper candidate')
+    expect(lookLabel(segmentLook(p(1, 20, { result: 'Goal', execution: 'Misexecuted' })))).toBe('Goal, misexecuted, foul')
   })
 
   it('finds the possession under the playhead (TAG-7)', () => {
