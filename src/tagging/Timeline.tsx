@@ -49,12 +49,15 @@ const LEGEND: { title: string; items: LegendItem[] }[] = [
     title: 'Markers',
     items: [
       { label: 'No shot', look: { result: 'noshot' } },
-      { label: FOUL_LABEL, look: { result: 'goal', execution: 'proper', foul: true } },
+      { label: FOUL_LABEL, look: { foul: true } },
       { label: 'Unreviewed candidate', look: { candidate: true }, ifPresent: (l) => l.candidate },
       { label: 'Current possession', look: 'draft' },
     ],
   },
 ]
+
+/** A marker without a result (foul, candidate) is drawn alone, with no fill (ADR-0038). */
+const swatchClass = (look: LegendItem['look']) => (look === 'draft' ? 'draft' : `${segmentClass(look)}${look.result ? '' : ' marker'}`)
 
 /** Where the 15 s tick sits inside a segment of `length` seconds, in percent of it. */
 const tickAt = (length: number) => `${(FOUL_LIMIT_S / length) * 100}%`
@@ -152,7 +155,7 @@ export function Timeline({ range, possessions, draft, controller, onSeek, onSele
             {g.items.filter((it) => !it.ifPresent || looks.some(it.ifPresent)).map((it) => (
               <span key={it.label}>
                 <i className="swatch">
-                  <i className={`seg ${it.look === 'draft' ? 'draft' : segmentClass(it.look)}`} />
+                  <i className={`seg ${swatchClass(it.look)}`} />
                 </i>
                 {it.label}
               </span>

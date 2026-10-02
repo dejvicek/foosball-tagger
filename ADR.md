@@ -384,6 +384,6 @@ _Numbering fix: committed as a second ADR-0033 in 2f7bbc5; renumbered, content u
 - **Decision:**
   - **Current possession:** a 2 px white outline, no fill (orange foul ring outside it past 15 s, as before).
   - **Unreviewed candidate:** a 2 px yellow dashed outline, no fill, whatever its tags (foul ring outside it when over 15 s). Its tags remain in the hover text and the log.
-  - **Legend:** smaller (12 px text, 24 × 16 px swatches); the groups Result · Execution · Markers sit on one line, separated by thin dividers, and wrap as whole groups. "No result", "Not tagged" and "Unreviewed candidate" are listed only when a segment on this game's timeline looks like that; the rest are always listed.
+  - **Legend:** marker swatches (Foul, Unreviewed candidate, Current possession) show the marker alone, with no fill; on the timeline a foul keeps its segment's fill inside the ring (ADR-0037). Smaller (12 px text, 24 × 16 px swatches); the groups Result · Execution · Markers sit on one line, separated by thin dividers, and wrap as whole groups. "No result", "Not tagged" and "Unreviewed candidate" are listed only when a segment on this game's timeline looks like that; the rest are always listed.
 - **Consequences:** On a game tagged only under ADR-0037 the legend is one line; on older games it gains the entries that apply. The faded "not tagged" look stays for old rows.
 
