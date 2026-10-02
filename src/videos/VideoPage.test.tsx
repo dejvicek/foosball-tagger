@@ -208,8 +208,9 @@ describe('games on the video screen (GAM-1..4)', () => {
     press('b')
     expect(await screen.findByRole('heading', { name: 'Game 2' })).toBeInTheDocument()
     expect(screen.getByText(/Ended Match 1 · Game 1 and started Match 1 · Game 2 at 5:00.0/)).toBeInTheDocument()
-    const selects = screen.getAllByLabelText('My side')
-    expect(selects.map((s) => (s as HTMLSelectElement).value)).toEqual(['right', 'right'])
+    // Game 1 is closed now, so only Game 2's fields show (ADR-0042); its summary names the side.
+    expect(screen.getByLabelText('My side')).toHaveValue('right')
+    expect(screen.getByText(/· Right$/)).toBeInTheDocument()
   })
 
   it('refuses overlapping games and explains why (GAM-4)', async () => {
@@ -297,7 +298,9 @@ describe('matches (ADR-0040)', () => {
     fake.t = 20
     press('m')
     expect(await screen.findByText('Started Match 2. Press B where its first game starts.')).toBeInTheDocument()
-    expect(screen.getAllByLabelText('Opponent')[1]).toHaveValue('Tom')
+    // Match 2 is current and open; Match 1 folds to its summary (ADR-0042).
+    expect(screen.getByLabelText('Opponent')).toHaveValue('Tom')
+    expect(screen.getByText('Singles · vs Tom')).toBeInTheDocument()
     press('b')
     expect(await screen.findByText('Started Match 2 · Game 1 at 0:20.0.')).toBeInTheDocument()
   })
@@ -322,6 +325,26 @@ describe('matches (ADR-0040)', () => {
     fireEvent.change(await screen.findByLabelText('Best of'), { target: { value: '4' } })
     await act(() => queue.flush())
     expect(written.at(-1)).toMatch(/^upsert matches .*"best_of":4/)
+  })
+
+  it('opens only the current match and its latest game; titles toggle the rest (ADR-0042)', async () => {
+    vi.mocked(loadMatches).mockResolvedValue([match('m1', { format: 'doubles', teammate: 'Eva', opponent: 'Olaf', opponent2: 'Tom' }), match('m2')])
+    vi.mocked(loadGames).mockResolvedValue([game(0, 10, { my_score: 5, opp_score: 3 }), game(10, 20, { match_id: 'm2' }), game(20, 30, { match_id: 'm2' })])
+    renderPage()
+    const m1 = (await screen.findByText('Match 1')).closest('li') as HTMLElement
+    expect(within(m1).getByText('Doubles · with Eva · vs Olaf & Tom')).toBeInTheDocument()
+    expect(within(m1).queryByLabelText('Teammate')).not.toBeInTheDocument()
+    expect(within(m1).getByText(/· Right · 5:3$/)).toBeInTheDocument()
+    expect(within(m1).getByRole('link', { name: 'Tag →' })).toBeInTheDocument()
+    expect(screen.getAllByLabelText('Best of')).toHaveLength(1) // Match 2's
+    expect(screen.getAllByLabelText('My side')).toHaveLength(1) // Match 2 · Game 2's
+
+    fireEvent.click(within(m1).getByRole('button', { name: 'Match 1' }))
+    expect(within(m1).getByLabelText('Teammate')).toHaveValue('Eva')
+    fireEvent.click(within(m1).getByRole('button', { name: 'Game 1' }))
+    expect(within(m1).getByLabelText('My side')).toBeInTheDocument()
+    fireEvent.click(within(m1).getByRole('button', { name: 'Match 1' }))
+    expect(within(m1).queryByLabelText('Teammate')).not.toBeInTheDocument()
   })
 
   it('confirms deleting a match with its game and possession counts', async () => {

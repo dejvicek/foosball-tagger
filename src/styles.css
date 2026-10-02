@@ -78,6 +78,9 @@ td.title-cell { white-space: normal; min-width: 200px; }
 .video-grid.cinema { --player-w: calc((100vh - var(--below, 120px)) * var(--ar, 1.7778)); }
 .grid.cinema { --player-w: calc((100vh - var(--below, 150px)) * var(--ar, 1.7778)); }
 .player-col { width: 100%; max-width: var(--player-w); margin-inline: auto; }
+/* The player stays in view while the matches column scrolls past it (ADR-0042). Only side
+   by side and when the window is tall enough for the player and its controls. */
+@media (min-width: 961px) and (min-height: 600px) { .video-grid > .player-col { position: sticky; top: 12px; } }
 /* Cinema mode (ADR-0025): only the player and its panel are left, spanning the
    viewport; the video grows to the window height less the controls under it.
    The sync status stays reachable in the corner. */
@@ -122,8 +125,8 @@ kbd { font-family: var(--sans); font-size: 11px; font-weight: 600; min-width: 18
 
 /* Games */
 .games h2 { margin-bottom: 12px; }
-.markrow { display: flex; gap: 6px; margin: 0 0 12px; }
-.markrow .btn { flex: 1; justify-content: center; }
+.markrow { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+.markrow .btn { flex: 1 1 auto; justify-content: center; }
 .seg-ctl { display: flex; gap: 4px; }
 .opt { flex: 1; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 8px 6px; border: 1px solid var(--line); border-radius: 6px; background: transparent; cursor: pointer; font-weight: 500; }
 .opt:hover { border-color: var(--muted); }
@@ -136,12 +139,21 @@ kbd { font-family: var(--sans); font-size: 11px; font-weight: 600; min-width: 18
 .match-head { margin-bottom: 10px; }
 .match-title { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-bottom: 8px; }
 .match-title h3 { margin: 0; }
+.match-title .make-current { margin-left: auto; }
+.match-head .summary { margin: -4px 0 0; font-size: 14px; }
+.match-head .game-actions { margin-top: 8px; }
+/* Match and game titles open and close their fields (ADR-0042). */
+.disclosure { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; padding: 0; font: inherit; color: inherit; cursor: pointer; }
+.disclosure::before { content: '▸'; display: inline-block; width: 0.8em; color: var(--muted); transition: transform 0.1s; }
+.disclosure[aria-expanded="true"]::before { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .disclosure::before { transition: none; } }
 .warn { color: var(--warn, #b45309); margin: 0 0 8px; font-size: 14px; }
-.game-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-.game { border: 1px solid var(--line); border-radius: 6px; padding: 10px; }
-.game-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-bottom: 8px; }
+.game-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.game { border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; }
+.game-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-bottom: 2px; }
 .game-head h3 { margin: 0; }
-.game-range { font-variant-numeric: tabular-nums; }
+.game-range { margin: 0; font-size: 14px; font-variant-numeric: tabular-nums; }
+.game-range + div { margin-top: 8px; }
 .tag-link { margin-left: auto; padding: 4px 10px; text-decoration: none; color: var(--ink); }
 .game-fields { display: grid; grid-template-columns: auto 1fr; gap: 6px 10px; align-items: center; font-size: 14px; }
 .game-fields label, .game-fields .label { margin: 0; font-weight: 500; color: var(--muted); }

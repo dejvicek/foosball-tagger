@@ -179,3 +179,5 @@ Deploy order (ADR-0041):
 10. **Statistics:** scope Match → choose a match → numbers equal the sum of its games' tagging screens; Opponent filter lists the match names.
 11. **CSV:** export a video with two matches → columns `match_index, best_of, game_index`; game numbers restart at 1 in each match.
 12. **Offline:** Wi-Fi off, press M and B, edit an opponent → unsynced counter rises; Wi-Fi on → it clears; reload → all there.
+13. **Folding (ADR-0042):** on a video with three matches only the current match is open, showing its fields and its latest game's fields; the others show one summary line ("Doubles · with … · vs …") and each game as range · length · side · score. Click "Match 1" → its fields open; click again → folded. A game's start time and "Tag →" work while folded. Make Match 1 current → it opens. Press B / E / M → buttons stay inside the panel.
+14. **Sticky player (ADR-0042):** on a wide window scroll down through the matches → the player and its controls stay at the top until the panel ends; "End here" on the last game works without scrolling back. On a narrow window (phone) everything stacks and scrolls normally.

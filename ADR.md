@@ -419,3 +419,14 @@ _Numbering fix: committed as a second ADR-0033 in 2f7bbc5; renumbered, content u
   - **Order:** (1) open the current app and wait until "Unsynced changes" is gone, close other tabs; (2) merge `matches` into `main` (GitHub Pages deploys); (3) run `npx supabase db push` right away; (4) do not tag between 2 and 3, as until the push the new app shows the "apply the migrations" error.
   - **Legacy queue entries:** on load, a stored `games` upsert without `match_id` is marked refused ("Saved by an older version of the app, before matches; it cannot be sent. Discard it and re-enter the change."), is never sent and never shown as a game, and is removed by "Discard refused changes". `PGRST204` is also a permanent error, so a write the server cannot accept never stalls the queue.
 - **Consequences:** Following the order leaves nothing to discard; skipping step 1 shows the entries under "refused" instead of losing the queue behind them. Refused match writes are labelled "match" in that list.
+
+## ADR-0042 · Video screen: matches and games fold to summaries; the player stays in view
+
+- **Status:** Accepted · 2026-10-02 (requested by the user; layout chosen by Claude) · Amends ADR-0040's match list; PRD §6 layout unchanged
+- **Context:** Every match and game showed its full edit form, about 430 px per match. With three matches the panel ran far below the player, left a large gap under it and pushed Details off screen; scrolling down to a match took the player out of view, so Start here / End here could not be used against the video.
+- **Decision:**
+  - **Folding:** the match and game titles are disclosure buttons. Folded, a match shows its result and "Doubles · with … · vs …"; a game shows its time range, length, side and score. Seeking, "Tag →" and "Make current" stay reachable when folded; the fields, Start/End here and the Delete buttons only show when opened.
+  - **Defaults:** the current match is open, others folded; a game is open while it has no end and when it is the latest game of the current match (its scores go in right after E). A row the user opens or closes keeps that state until the page is reloaded (not stored).
+  - **Sticky player:** side by side (wider than 960 px) and at least 600 px tall, the player column is `position: sticky` 12 px from the top. Stacked layouts are unchanged.
+  - **Mark buttons** (B / E / M) wrap instead of overflowing the panel.
+- **Consequences:** Editing an older match or game takes one extra click. Nothing changes in data, keys or the queue.
