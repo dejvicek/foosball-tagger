@@ -15,15 +15,16 @@ async function count(sql: string, params: unknown[] = []): Promise<number> {
   return (await db.query(sql, params)).rows.length
 }
 
-/** Creates a video and a game owned by `user`; returns their ids. */
+/** Creates a video, a match and a game owned by `user`; returns their ids. */
 async function videoWithGame(user: string, youtubeId = 'dQw4w9WgXcQ') {
   await as(db, user)
   const v = await one<{ id: string }>(`insert into videos (youtube_id) values ($1) returning id`, [youtubeId])
+  const m = await one<{ id: string }>(`insert into matches (video_id) values ($1) returning id`, [v.id])
   const g = await one<{ id: string }>(
-    `insert into games (video_id, start_s, my_side) values ($1, 10, 'left') returning id`,
-    [v.id],
+    `insert into games (video_id, match_id, start_s, my_side) values ($1, $2, 10, 'left') returning id`,
+    [v.id, m.id],
   )
-  return { videoId: v.id, gameId: g.id }
+  return { videoId: v.id, matchId: m.id, gameId: g.id }
 }
 
 beforeEach(async () => {
@@ -83,7 +84,7 @@ describe('child rows check the parent owner (ADR-0009)', () => {
     const a = await videoWithGame(USER_A)
     await as(db, USER_B)
     await expect(
-      db.query(`insert into games (video_id, start_s, my_side) values ($1, 0, 'left')`, [a.videoId]),
+      db.query(`insert into games (video_id, match_id, start_s, my_side) values ($1, $2, 0, 'left')`, [a.videoId, a.matchId]),
     ).rejects.toThrow(/row-level security/)
   })
 
@@ -143,17 +144,6 @@ describe('constraints', () => {
     )
   })
 
-  it('keeps a teammate and second opponent for doubles only (ADR-0023)', async () => {
-    const { gameId } = await videoWithGame(USER_A)
-    await expect(db.query(`update games set teammate = 'Eva' where id = $1`, [gameId])).rejects.toThrow(/check constraint/)
-    await expect(db.query(`update games set opponent2 = 'Olaf' where id = $1`, [gameId])).rejects.toThrow(/check constraint/)
-    const g = await one<{ teammate: string; opponent2: string }>(
-      `update games set format = 'doubles', teammate = 'Eva', opponent = 'Tom', opponent2 = 'Olaf' where id = $1 returning teammate, opponent2`,
-      [gameId],
-    )
-    expect(g).toEqual({ teammate: 'Eva', opponent2: 'Olaf' })
-  })
-
   it('refuses a malformed YouTube id', async () => {
     await as(db, USER_A)
     await expect(db.query(`insert into videos (youtube_id) values ('https://youtu.be/x')`)).rejects.toThrow(/check constraint/)
@@ -185,6 +175,7 @@ describe('video_summaries and delete cascade', () => {
     const s = await one<Record<string, unknown>>(`select * from video_summaries where id = $1`, [videoId])
     expect(s).toMatchObject({
       game_count: 1,
+      match_count: 1,
       confirmed_possession_count: 2,
       possession_count: 4,
       calibration_count: 0,
@@ -194,7 +185,7 @@ describe('video_summaries and delete cascade', () => {
 
     await db.query(`delete from videos where id = $1`, [videoId])
     await asAdmin(db)
-    for (const table of ['games', 'possessions', 'analysis_jobs']) {
+    for (const table of ['matches', 'games', 'possessions', 'analysis_jobs']) {
       expect(await count(`select 1 from ${table}`)).toBe(0)
     }
   })

@@ -399,3 +399,14 @@ _Numbering fix: committed as a second ADR-0033 in 2f7bbc5; renumbered, content u
   - **Legend:** Foul and Current possession show their ring around a small neutral segment; Unreviewed candidate stays a dashed outline alone. Swatches 32 × 20 px.
 - **Consequences:** The log row and the tag panel of the edited possession stay blue; only the timeline uses white.
 
+
+## ADR-0040 · Matches between videos and games
+
+- **Status:** Accepted · 2026-10-02 (requested by the user; spec `docs/superpowers/specs/2026-10-02-matches-design.md`) · Supersedes the PRD's games-only hierarchy in §4, §5, GAM-1..4, STA-4 and EXP-1; amends ADR-0017, ADR-0020, ADR-0023, ADR-0036
+- **Context:** A video holds several matches, each of one or more games (mostly BO1, BO3, BO5, but any length). Format and players belong to the match; sides switch between games.
+- **Decision:**
+  - **Schema** (`0006_matches.sql`): `matches (video_id, best_of, format, opponent, teammate, opponent2, notes)`; `best_of` is null or ≥ 1, even values allowed. `games.match_id` is required; the FK `(match_id, video_id)` keeps a game on its match's video. Games keep `my_side`, scores and notes and lose the player columns. Existing games became one BO1 match each. `video_summaries.match_count`.
+  - **Marking:** B starts a game in the current match (the selected one, else the last); on a video without matches B creates one. M or "New match" creates an empty match copying format, players and best-of from the current match, closing an open game first. A match has no times of its own; its games must be consecutive (no interleaving), besides not overlapping (GAM-4).
+  - **Result:** game wins from games with both scores entered (ties count for neither). With `best_of` set, the match is "decided" once a side has more than half of it; a game past `best_of` gets a warning, never a block. No moving or merging; empty matches allowed; deleting a match confirms its game and possession counts.
+  - **Labels / stats / CSV:** "Match 2 · Game 1". Statistics scopes: game, match, video, date range; format and opponent filters read the match. CSV adds `match_index` (within the video) and `best_of` before `game_index`, which now counts within the match.
+- **Consequences:** The pending queue must be empty when the migration is applied (old queued game rows carry dropped columns). Matches go through the queue before games.
