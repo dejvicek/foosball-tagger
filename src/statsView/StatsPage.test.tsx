@@ -147,6 +147,11 @@ describe('StatsPage', () => {
     expect(screen.getByRole('button', { name: 'Match' })).toHaveAttribute('aria-pressed', 'true')
   })
 
+  it('asks for a match in match scope', async () => {
+    renderAt('/stats?scope=match&video=v1')
+    expect(await screen.findByText('Choose a match above.')).toBeInTheDocument()
+  })
+
   it('asks for a game in game scope', async () => {
     renderAt('/stats?scope=game&video=v1')
     expect(await screen.findByText('Choose a game above.')).toBeInTheDocument()

@@ -103,6 +103,7 @@ export function StatsPage() {
   const ms = games.state.kind === 'ready' ? games.state.value.matches : []
   const gs = games.state.kind === 'ready' ? games.state.value.games : []
   const gameList = sortGames(gs)
+  const needsChoice = (params.get('scope') === 'game' && !params.get('game')) || (params.get('scope') === 'match' && !params.get('match'))
   const firstVideo = videoList[0]?.id ?? null
 
   const toggleShot = (s: ShotType) => {
@@ -262,8 +263,8 @@ export function StatsPage() {
         <h2 id="results-heading" className="sr-only">
           Results
         </h2>
-        {params.get('scope') === 'game' && !params.get('game') ? (
-          <p className="muted">Choose a game above.</p>
+        {needsChoice ? (
+          <p className="muted">{params.get('scope') === 'match' ? 'Choose a match above.' : 'Choose a game above.'}</p>
         ) : data.state.kind === 'loading' ? (
           <p className="muted" role="status">
             Loading…
@@ -287,7 +288,7 @@ export function StatsPage() {
         )}
       </section>
 
-      {scopeData && !(params.get('scope') === 'game' && !params.get('game')) && (
+      {scopeData && !needsChoice && (
         <ExportCard data={scopeData} keep={keep} fileName={exportFileName(scope, scopeData)} />
       )}
     </div>

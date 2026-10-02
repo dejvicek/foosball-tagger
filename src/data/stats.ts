@@ -36,6 +36,13 @@ export interface ScopeData {
 
 const EMPTY: ScopeData = { videos: [], matches: [], games: [], possessions: [] }
 
+/** The games whose possessions a scope counts. */
+export function gamesInScope<G extends Pick<Game, 'id' | 'match_id'>>(games: readonly G[], scope: StatScope): G[] {
+  if (scope.kind === 'game') return games.filter((g) => g.id === scope.gameId)
+  if (scope.kind === 'match') return games.filter((g) => g.match_id === scope.matchId)
+  return [...games]
+}
+
 /**
  * Loads a scope for statistics and export. Pending writes are replayed first and
  * laid over the fetched rows, so unsynced tags count too.
@@ -70,9 +77,7 @@ export async function loadScope(queue: WriteQueue, scope: StatScope): Promise<Sc
     return data
   })
   games = queue.overlay('games', games, (row) => videoIds.has(row.video_id as string))
-  const inScope =
-    scope.kind === 'game' ? games.filter((g) => g.id === scope.gameId) : scope.kind === 'match' ? games.filter((g) => g.match_id === scope.matchId) : games
-  const gameIds = new Set(inScope.map((g) => g.id))
+  const gameIds = new Set(gamesInScope(games, scope).map((g) => g.id))
   if (gameIds.size === 0) return { videos, matches, games, possessions: [] }
 
   let possessions = await inChunks([...gameIds], async (chunk) => {
