@@ -7,9 +7,15 @@ export function anchor(p: Pick<Possession, 'start_s' | 'shot_s'>): number | null
   return p.start_s ?? p.shot_s
 }
 
-export function sortPossessions(list: readonly Possession[]): Possession[] {
-  const key = (p: Possession) => anchor(p) ?? Number.POSITIVE_INFINITY
+export function sortPossessions<P extends Possession>(list: readonly P[]): P[] {
+  const key = (p: P) => anchor(p) ?? Number.POSITIVE_INFINITY
   return [...list].sort((a, b) => key(a) - key(b) || a.created_at.localeCompare(b.created_at))
+}
+
+/** Time order with the log's numbers: rejected rows are skipped and get null (TAG-7, exported as `n`). */
+export function numberPossessions<P extends Possession>(list: readonly P[]): { p: P; n: number | null }[] {
+  let n = 0
+  return sortPossessions(list).map((p) => ({ p, n: p.review_status === 'rejected' ? null : ++n }))
 }
 
 /** Derived, never stored (PRD §5). */

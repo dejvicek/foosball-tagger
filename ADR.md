@@ -345,10 +345,25 @@ Format: context → decision → consequences. Keep each record short.
 - **Decision:** The shortcut goes too. The tagging screen leaves ⌘ / Ctrl chords to the browser; inside a text field ⌘Z still undoes typing. A possession is deleted from the log, with its confirmation.
 - **Consequences:** There is no single-step undo (the PRD's U key); a stray save is removed from the log.
 
-## ADR-0033 · Setup keys also follow the side
+## ADR-0035 · Setup keys also follow the side
+
+_Numbering fix: committed as a second ADR-0033 in 2f7bbc5; renumbered, content unchanged._
 
 - **Status:** Accepted · 2026-10-02 (requested by the user) · Amends ADR-0031
 - **Context:** ADR-0031 mirrored only the hole keys. Where the ball sits on the 3-bar is upside down in the video too when I stand on the right.
 - **Decision:** On the right, Setup is mirrored the same way: A Push side, S Middle, D Pull side, and the panel buttons and keyboard map follow that order. On the left it is unchanged (A Pull side, S Middle, D Push side). Stored values are unchanged. The other fields keep their keys.
 - **Consequences:** For right-side games A and D swap meaning compared with left-side games.
+
+## ADR-0036 · CSV export on the statistics page
+
+- **Status:** Accepted · 2026-10-02 (assumptions for EXP-1..3 made by Claude) · Implements EXP-1..3, follows ADR-0028
+- **Context:** EXP-1 lists the columns before shot direction existed and before doubles had two opponents; it does not say where export lives or whether the statistics filters apply.
+- **Decision:**
+  - **Place:** an "Export CSV" card under the statistics, using the page's scope (game, video, date range) **and its filters** (shot type, format, opponent), so the file holds what the numbers above describe. "Include unreviewed candidates" (EXP-3, off by default) adds unreviewed rows, filtered the same way; rejected rows are never exported.
+  - **Columns:** EXP-1's list with `direction` replaced by `movement` (derived from setup + hole) and `shot_direction` added after `hole` (ADR-0028). In doubles `opponent` joins both names with " & "; the teammate is not exported. `video_title` and `recorded_on` are the stored values, blank when unset.
+  - **Numbers:** `game_index` is the game's number in time order on its video; `n` is the possession's number in its game exactly as the tagging log shows it (time order, rejected rows skipped), so a row can be found in the log. Rows run by video date and title, game, `n`.
+  - **Format:** RFC 4180 with CRLF line ends, header row always present; times and `length_s` with two decimals; empty string for null. The downloaded file starts with a UTF-8 BOM so Excel reads accented names; the clipboard text has none.
+  - **Clipboard fallback (EXP-2):** if the clipboard API is missing or refuses, the CSV appears in a read-only text box, selected, with a note to press ⌘C / Ctrl+C.
+  - **File name:** `foosball-<youtube_id>.csv`, `foosball-<youtube_id>-game-<n>.csv`, `foosball-all.csv` or `foosball-<from|start>-to-<to|today>.csv`.
+- **Consequences:** Exporting everything means clearing the filters first. The loader now returns the scope's videos, games and possessions (`loadScope`), which statistics and export share.
 

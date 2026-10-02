@@ -40,7 +40,7 @@ describe('tagAction (ADR-0026)', () => {
     expect(tagAction({ key: 'ř', code: 'Digit5' })).toEqual({ kind: 'tag', field: 'hole', value: 'Push long' })
   })
 
-  it('reverses the hole and setup keys and buttons when I stand on the right (ADR-0031, ADR-0033)', () => {
+  it('reverses the hole and setup keys and buttons when I stand on the right (ADR-0031, ADR-0035)', () => {
     expect(tagAction('1', 'right')).toEqual({ kind: 'tag', field: 'hole', value: 'Push long' })
     expect(tagAction('2', 'right')).toEqual({ kind: 'tag', field: 'hole', value: 'Push short' })
     expect(tagAction('3', 'right')).toEqual({ kind: 'tag', field: 'hole', value: 'Middle' })
@@ -59,7 +59,7 @@ describe('tagAction (ADR-0026)', () => {
     ])
   })
 
-  it('ignores ⌘ / Ctrl chords, including ⌘Z (ADR-0033)', () => {
+  it('ignores ⌘ / Ctrl chords, including ⌘Z (ADR-0034)', () => {
     expect(tagAction({ key: 'z', metaKey: true })).toBeNull()
     expect(tagAction({ key: 'z', ctrlKey: true })).toBeNull()
     expect(tagAction({ key: 'r', metaKey: true })).toBeNull()

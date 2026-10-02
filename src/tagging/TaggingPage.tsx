@@ -18,7 +18,7 @@ import { playersLabel, videoTitle } from '../videos/format'
 import { reduce, reduceEdit, sameDraft, toDraft, type Draft, type DraftEvent } from './draft'
 import { loadDraft, storeDraft } from './draftStore'
 import { tagAction } from './keymap'
-import { fromDraft, sortPossessions } from './possessions'
+import { fromDraft, numberPossessions } from './possessions'
 import { PossessionLog } from './PossessionLog'
 import { TagPanel } from './TagPanel'
 import { Timeline } from './Timeline'
@@ -108,11 +108,7 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
     [game.id],
   )
 
-  const sorted = useMemo(() => sortPossessions(possessions), [possessions])
-  const rows = useMemo(() => {
-    let n = 0
-    return sorted.map((p) => ({ p, n: p.review_status === 'rejected' ? null : ++n }))
-  }, [sorted])
+  const rows = useMemo(() => numberPossessions(possessions), [possessions])
   // Live game statistics from what is tagged here, synced or not (STA-4 game scope).
   const statItems = useMemo(() => confirmedOnly(possessions.map((p) => toStatItem(p, game, video))), [possessions, game, video])
   const numbered = useMemo(() => rows.filter((r): r is { p: Possession; n: number } => r.n != null), [rows])

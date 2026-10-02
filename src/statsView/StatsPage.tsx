@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router'
-import { loadStatItems, type StatScope } from '../data/stats'
+import { loadScope, scopeItems, type ScopeData, type StatScope } from '../data/stats'
 import { listVideos } from '../data/videos'
 import { loadGames } from '../data/games'
 import { FORMATS, SHOT_TYPES, type Format, type ShotType } from '../data/types'
@@ -8,9 +8,10 @@ import { applyFilters, confirmedOnly, opponentsOf, type StatFilters } from '../s
 import { useQueue } from '../app/QueueProvider'
 import { useResource } from '../app/useResource'
 import { formatDate, playersLabel, plural, videoTitle } from '../videos/format'
-import { sortGames } from '../videos/games'
+import { gameNumber, sortGames } from '../videos/games'
 import { formatTime } from '../player/time'
 import { StatsView } from './StatsView'
+import { ExportCard } from './ExportCard'
 
 // URL: #/stats?scope=game|video|range&video=…&game=…&from=…&to=…&shot=Pin,Pull&format=…&opp=…
 const NO_OPPONENT = '__none'
@@ -33,6 +34,16 @@ export function filtersFromParams(p: URLSearchParams): StatFilters {
     format: format && (FORMATS as readonly string[]).includes(format) ? (format as Format) : null,
     opponent: opp == null ? null : opp === NO_OPPONENT ? '' : opp,
   }
+}
+
+/** e.g. foosball-dQw4w9WgXcQ-game-2.csv, foosball-2026-09-01-to-2026-09-30.csv */
+export function exportFileName(scope: StatScope, data: ScopeData): string {
+  if (scope.kind === 'range') {
+    return scope.from == null && scope.to == null ? 'foosball-all.csv' : `foosball-${scope.from ?? 'start'}-to-${scope.to ?? today()}.csv`
+  }
+  const yt = data.videos[0]?.youtube_id ?? 'video'
+  if (scope.kind === 'video') return `foosball-${yt}.csv`
+  return `foosball-${yt}-game-${gameNumber(data.games, scope.gameId)}.csv`
 }
 
 const today = () => new Date().toISOString().slice(0, 10)
@@ -60,11 +71,19 @@ export function StatsPage() {
   const games = useResource(loadVideoGames)
 
   // eslint-disable-next-line react/exhaustive-deps -- scopeKey stands for scope
-  const load = useCallback(() => loadStatItems(queue, scope), [queue, scopeKey])
+  const load = useCallback(() => loadScope(queue, scope), [queue, scopeKey])
   const data = useResource(load)
 
-  const confirmed = useMemo(() => (data.state.kind === 'ready' ? confirmedOnly(data.state.value) : []), [data.state])
-  const filtered = useMemo(() => applyFilters(confirmed, filters), [confirmed, filters])
+  const scopeData = data.state.kind === 'ready' ? data.state.value : null
+  const all = useMemo(() => (scopeData ? scopeItems(scopeData) : []), [scopeData])
+  const confirmed = useMemo(() => confirmedOnly(all), [all])
+  const filtersKey = JSON.stringify(filters)
+  // eslint-disable-next-line react/exhaustive-deps -- filtersKey stands for filters
+  const filtered = useMemo(() => applyFilters(confirmed, filters), [confirmed, filtersKey])
+  // Export follows the filters too; candidates are filtered the same way (ADR-0035).
+  // eslint-disable-next-line react/exhaustive-deps -- filtersKey stands for filters
+  const keepIds = useMemo(() => new Set(applyFilters(all, filters).map((p) => p.id)), [all, filtersKey])
+  const keep = useCallback((id: string) => keepIds.has(id), [keepIds])
   const opponents = opponentsOf(confirmed)
   const videoList = videos.state.kind === 'ready' ? videos.state.value : []
   const gameList = games.state.kind === 'ready' ? sortGames(games.state.value) : []
@@ -223,6 +242,10 @@ export function StatsPage() {
           </>
         )}
       </section>
+
+      {scopeData && !(params.get('scope') === 'game' && !params.get('game')) && (
+        <ExportCard data={scopeData} keep={keep} fileName={exportFileName(scope, scopeData)} />
+      )}
     </div>
   )
 }

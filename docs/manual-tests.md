@@ -83,7 +83,7 @@ Open a game with "Tag →" on the video screen.
 1. **Mouse + left hand:** tag a whole possession with the left hand on 1–5 / Q–R / A–G / Z–B, seeking with the mouse on the timeline; save with R (next possession) or Enter.
 2. **Keyboard only, two hands:** K plays/pauses, J / L step 1 s (Shift 5 s), U / O step frames, Enter saves, Backspace clears the draft, while the left hand tags.
 3. **Panel order:** Ball set / Shot / No shot, then Shot type (Q W E), Setup (A S D), Hole (1–5, pull long → push long), Execution (Z X), Result (G B). T and C do nothing.
-4. **No undo:** the tag panel has no Undo button and ⌘Z / Ctrl+Z deletes nothing (ADR-0033); delete a possession from the log instead. Inside a text field ⌘Z still undoes typing.
+4. **No undo:** the tag panel has no Undo button and ⌘Z / Ctrl+Z deletes nothing (ADR-0034); delete a possession from the log instead. Inside a text field ⌘Z still undoes typing.
 5. **Help:** "How to tag" shows the keyboard map; the buttons show the same keys.
 6. On the video screen, J / K / L / U / O work too; B / E still mark games.
 
@@ -133,6 +133,15 @@ Open a game with "Tag →" on the video screen.
 ## Hole keys follow the side (ADR-0031)
 
 1. In a game where you stand on the **left**: Hole buttons read Pull long … Push long with keys 1–5; 1 selects Pull long.
-2. Switch the game to **right** on the video screen, open its tagging screen: Hole buttons read Push long, Push short, Middle, Pull short, Pull long with keys 1–5; 1 selects Push long, 5 Pull long. Setup buttons read Push side, Middle, Pull side with A S D; A selects Push side (ADR-0033). The help's keyboard map shows the same order.
+2. Switch the game to **right** on the video screen, open its tagging screen: Hole buttons read Push long, Push short, Middle, Pull short, Pull long with keys 1–5; 1 selects Push long, 5 Pull long. Setup buttons read Push side, Middle, Pull side with A S D; A selects Push side (ADR-0035). The help's keyboard map shows the same order.
 3. Save a shot tagged with 1 on the right → log and statistics say Push long.
 
+
+## Step 6 · Export (EXP-1..3, ADR-0036)
+
+1. **Copy:** Statistics → Video scope → Copy CSV → "Copied N possessions". Paste into a spreadsheet: one header row, then one row per confirmed possession; `game_index` and `n` match the game number and the log's #; times have two decimals; blank tags are empty cells.
+2. **Download:** Download CSV → a file named like `foosball-<youtube id>.csv`; open it in Excel or Numbers: accented names (Tomáš) read correctly; a video title with a comma stays in one cell.
+3. **Scopes and filters:** Game scope exports only that game; a date range only its videos; ticking Pin drops the count to the Pin shots.
+4. **Candidates (EXP-3):** with an unreviewed candidate in a game, the count grows by one when "Include unreviewed candidates" is ticked; a rejected one never appears.
+5. **Clipboard blocked (EXP-2):** in Safari, or with clipboard permission denied for the site, Copy CSV shows the CSV in a selected text box; ⌘C copies it.
+6. **Doubles:** a doubles game exports `opponent` as "A & B".

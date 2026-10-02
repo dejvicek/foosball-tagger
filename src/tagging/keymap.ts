@@ -3,7 +3,7 @@
 //
 //   1 2 3 4 5  Hole       pull long · pull short · middle · push short · push long
 //                         (holes and setup reversed when I stand on the right, so the
-//                         keys match the table as it appears in the video, ADR-0031, ADR-0033)
+//                         keys match the table as it appears in the video, ADR-0031, ADR-0035)
 //   Q W E      Shot type  Pin · Pull · Other          │ R Ball set │
 //   A S D      Setup      pull side · middle · push   │ F Shot     │ G Goal
 //   Z X        Execution  Proper · Misexecuted        │ V No shot  │ B No goal
@@ -99,7 +99,7 @@ const MIRRORED: TagField[] = ['hole', 'setup']
 /**
  * The groups for the side I stand on. On the right the table is upside down in the
  * video, so holes (1–5) and setup (A S D) run push → pull, on the keys and in the
- * panel (ADR-0031, ADR-0033).
+ * panel (ADR-0031, ADR-0035).
  */
 export function tagGroups(side: Side): TagGroup[] {
   if (side === 'left') return LEFT_GROUPS
@@ -139,7 +139,7 @@ export interface KeyPress {
 
 /**
  * The tagging action for a key press, or null. Plain keys match by position;
- * ⌘ / Ctrl chords are left to the browser (ADR-0033). `side` is the side of
+ * ⌘ / Ctrl chords are left to the browser (ADR-0034). `side` is the side of
  * the frame I stand on in this game (ADR-0031).
  */
 export function tagAction(e: KeyPress | string, side: Side = 'left'): TagAction | null {

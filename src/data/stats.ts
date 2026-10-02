@@ -25,12 +25,20 @@ async function inChunks<T>(ids: string[], fetch: (chunk: string[]) => Promise<T[
   return out
 }
 
+/** Everything in a scope: its videos, their games (one in game scope) and those games' possessions, all review states. */
+export interface ScopeData {
+  videos: VideoSummary[]
+  games: Game[]
+  possessions: Possession[]
+}
+
+const EMPTY: ScopeData = { videos: [], games: [], possessions: [] }
+
 /**
- * Possessions in a scope with their game and video context. Pending writes are
- * replayed first and laid over the fetched rows, so unsynced tags count too.
- * Returns all review states; the caller keeps the confirmed ones.
+ * Loads a scope for statistics and export. Pending writes are replayed first and
+ * laid over the fetched rows, so unsynced tags count too.
  */
-export async function loadStatItems(queue: WriteQueue, scope: StatScope): Promise<StatItem[]> {
+export async function loadScope(queue: WriteQueue, scope: StatScope): Promise<ScopeData> {
   await queue.flush()
   const db = getSupabase()
 
@@ -44,27 +52,33 @@ export async function loadStatItems(queue: WriteQueue, scope: StatScope): Promis
     const v = await getVideo(scope.videoId)
     videos = v ? [v] : []
   }
-  if (videos.length === 0) return []
-  const videoById = new Map(videos.map((v) => [v.id, v]))
+  if (videos.length === 0) return EMPTY
+  const videoIds = new Set(videos.map((v) => v.id))
 
-  let games = await inChunks([...videoById.keys()], async (chunk) => {
+  let games = await inChunks([...videoIds], async (chunk) => {
     const { data, error } = await db.from('games').select('*').in('video_id', chunk)
     if (error) throw toDataError(error, 'load the games')
     return data
   })
-  games = queue.overlay('games', games, (row) => videoById.has(row.video_id as string))
-  if (scope.kind === 'game') games = games.filter((g) => g.id === scope.gameId)
-  const gameById = new Map<string, Game>(games.map((g) => [g.id, g]))
-  if (gameById.size === 0) return []
+  games = queue.overlay('games', games, (row) => videoIds.has(row.video_id as string))
+  const gameIds = new Set((scope.kind === 'game' ? games.filter((g) => g.id === scope.gameId) : games).map((g) => g.id))
+  if (gameIds.size === 0) return { videos, games, possessions: [] }
 
-  let possessions = await inChunks([...gameById.keys()], async (chunk) => {
+  let possessions = await inChunks([...gameIds], async (chunk) => {
     const { data, error } = await db.from('possessions').select('*').in('game_id', chunk)
     if (error) throw toDataError(error, 'load the possessions')
     return data
   })
-  possessions = queue.overlay('possessions', possessions, (row) => gameById.has(row.game_id as string))
+  possessions = queue.overlay('possessions', possessions, (row) => gameIds.has(row.game_id as string))
+  // All of a video's games are kept so game numbers stay right; possessions are the scope's only.
+  return { videos, games, possessions }
+}
 
-  return possessions.flatMap((p: Possession) => {
+/** The scope's possessions with their game and video context; the caller keeps the confirmed ones. */
+export function scopeItems(data: ScopeData): StatItem[] {
+  const gameById = new Map(data.games.map((g) => [g.id, g]))
+  const videoById = new Map(data.videos.map((v) => [v.id, v]))
+  return data.possessions.flatMap((p) => {
     const game = gameById.get(p.game_id)
     const video = game && videoById.get(game.video_id)
     if (!game || !video) return []

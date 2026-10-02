@@ -273,6 +273,8 @@ table.log td, table.log th { padding: 5px 6px; }
 .control .seg-ctl { flex: 0 1 360px; }
 .control.range label { display: inline-flex; gap: 6px; align-items: center; }
 .control .hint { flex-basis: 100%; margin: 0; }
+.export-card h3 { margin: 0 0 10px; font-size: 16px; }
+.export-text { display: block; width: 100%; margin-top: 10px; padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: inherit; font: 12px/1.4 ui-monospace, monospace; white-space: pre; overflow: auto; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; font-size: 14px; cursor: pointer; }
 .scope-summary { margin: 0 0 10px; }

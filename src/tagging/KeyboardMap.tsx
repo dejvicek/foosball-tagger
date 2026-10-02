@@ -18,7 +18,7 @@ const v = (k: string, label: string): Cap => ({ k, label, kind: 'verdict' })
 
 const options = (side: Side, field: 'hole' | 'setup') => tagGroups(side).find((g) => g.field === field)?.options ?? []
 
-/** The left-hand grid, as on the keyboard (ADR-0026); the hole and setup rows follow my side (ADR-0031, ADR-0033). */
+/** The left-hand grid, as on the keyboard (ADR-0026); the hole and setup rows follow my side (ADR-0031, ADR-0035). */
 const rows = (side: Side): { name: string; caps: Cap[] }[] => [
   { name: 'Hole', caps: options(side, 'hole').map((o) => f(o.code, o.value)) },
   { name: 'Shot type', caps: [f('KeyQ', 'Pin'), f('KeyW', 'Pull'), f('KeyE', 'Other'), m('KeyR', 'Ball set')] },

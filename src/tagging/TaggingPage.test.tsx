@@ -185,7 +185,7 @@ describe('tagging screen keyboard (TAG-1..5, PRD §8)', () => {
     expect(screen.getByText(/Nothing to save yet/)).toBeInTheDocument()
   })
 
-  it('⌘Z and Ctrl+Z do not delete anything (ADR-0033)', async () => {
+  it('⌘Z and Ctrl+Z do not delete anything (ADR-0034)', async () => {
     vi.mocked(loadPossessions).mockResolvedValue([])
     await renderPage()
     at(70)
@@ -228,7 +228,7 @@ describe('tagging screen keyboard (TAG-1..5, PRD §8)', () => {
     input.remove()
   })
 
-  it('reverses the hole and setup keys and buttons when I stand on the right (ADR-0031, ADR-0033)', async () => {
+  it('reverses the hole and setup keys and buttons when I stand on the right (ADR-0031, ADR-0035)', async () => {
     vi.mocked(loadGames).mockResolvedValue([{ ...game, my_side: 'right' }])
     await renderPage()
     at(70)
