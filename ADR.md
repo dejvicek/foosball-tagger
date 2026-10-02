@@ -377,3 +377,13 @@ _Numbering fix: committed as a second ADR-0033 in 2f7bbc5; renumbered, content u
   - **Save only when complete:** a shot can be saved (Enter, the Save button, or R after F) only when start, shot and every tag (shot type, setup, hole, shot direction, execution, result) are set; a No shot needs its start and end. Otherwise Save is disabled, Enter and R say "Can’t save yet. Still blank: …" and keep the draft, and the status line lists what is blank. The same applies to Save changes in edit mode.
 - **Consequences:** Blank fields can no longer be saved from the panel, so STA-1's "blank is not failure" now matters mostly for old rows and for candidates; the faded pattern marks those. ADR-0027's "R then Enter saves a Pin without a shot time" no longer works. Existing No-shot rows keep their stored setup until edited (no migration; the database already allows a blank setup). A possession that is open for editing and still has a blank field must be completed or cancelled.
 
+## ADR-0038 · Outline-only current possession and candidates; legend lists only what is drawn
+
+- **Status:** Accepted · 2026-10-02 (requested by the user; white outline for the current possession and the conditional legend chosen by Claude) · Amends ADR-0037
+- **Context:** The unreviewed candidate was drawn with its tags' fill under the dashed outline, and the current possession with a wood fill, though both should read as markers rather than results. Since ADR-0037 a possession can only be saved fully tagged, so "No result" and "Not tagged" appear only on rows saved before it (and later on worker candidates), yet the legend always listed them, which made it wrap into a jumble.
+- **Decision:**
+  - **Current possession:** a 2 px white outline, no fill (orange foul ring outside it past 15 s, as before).
+  - **Unreviewed candidate:** a 2 px yellow dashed outline, no fill, whatever its tags (foul ring outside it when over 15 s). Its tags remain in the hover text and the log.
+  - **Legend:** smaller (12 px text, 24 × 16 px swatches); the groups Result · Execution · Markers sit on one line, separated by thin dividers, and wrap as whole groups. "No result", "Not tagged" and "Unreviewed candidate" are listed only when a segment on this game's timeline looks like that; the rest are always listed.
+- **Consequences:** On a game tagged only under ADR-0037 the legend is one line; on older games it gains the entries that apply. The faded "not tagged" look stays for old rows.
+

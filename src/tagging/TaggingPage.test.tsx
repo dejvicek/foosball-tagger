@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { useEffect } from 'react'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { getVideo } from '../data/videos'
@@ -384,5 +384,18 @@ describe('timeline (TAG-6)', () => {
     expect(fake.t).toBe(69)
     expect(screen.getByText('Editing possession 1')).toBeInTheDocument()
     expect(seg).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('lists No result, Not tagged and Unreviewed candidate in the legend only when such a segment is drawn (ADR-0038)', async () => {
+    const legend = () => document.querySelector('.legend') as HTMLElement
+    vi.mocked(loadPossessions).mockResolvedValue([possession(70, 75, { result: 'Goal', execution: 'Proper' })])
+    await renderPage()
+    expect(legend()).toHaveTextContent('Goal')
+    expect(legend()).toHaveTextContent('Current possession')
+    for (const t of ['No result', 'Not tagged', 'Unreviewed candidate']) expect(legend()).not.toHaveTextContent(t)
+    cleanup()
+    vi.mocked(loadPossessions).mockResolvedValue([possession(70, 75, { review_status: 'unreviewed' })])
+    await renderPage()
+    for (const t of ['No result', 'Not tagged', 'Unreviewed candidate']) expect(legend()).toHaveTextContent(t)
   })
 })

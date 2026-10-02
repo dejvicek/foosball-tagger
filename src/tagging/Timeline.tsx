@@ -21,13 +21,20 @@ interface Props {
 }
 
 /** Legend groups (ADR-0037): color is the result, pattern the execution, then the markers. */
-const LEGEND: { title: string; items: { label: string; look: Partial<SegmentLook> | 'draft' }[] }[] = [
+interface LegendItem {
+  label: string
+  look: Partial<SegmentLook> | 'draft'
+  /** Listed only when a segment on this timeline looks like it (ADR-0038). */
+  ifPresent?: (look: SegmentLook) => boolean
+}
+
+const LEGEND: { title: string; items: LegendItem[] }[] = [
   {
     title: 'Result',
     items: [
       { label: 'Goal', look: { result: 'goal', execution: 'proper' } },
       { label: 'No goal', look: { result: 'nogoal', execution: 'proper' } },
-      { label: 'No result', look: { result: 'noresult', execution: 'proper' } },
+      { label: 'No result', look: { result: 'noresult', execution: 'proper' }, ifPresent: (l) => l.result === 'noresult' },
     ],
   },
   {
@@ -35,7 +42,7 @@ const LEGEND: { title: string; items: { label: string; look: Partial<SegmentLook
     items: [
       { label: 'Proper', look: { result: 'goal', execution: 'proper' } },
       { label: 'Misexecuted', look: { result: 'goal', execution: 'mis' } },
-      { label: 'Not tagged', look: { result: 'goal', execution: 'blank' } },
+      { label: 'Not tagged', look: { result: 'goal', execution: 'blank' }, ifPresent: (l) => l.execution === 'blank' },
     ],
   },
   {
@@ -43,7 +50,7 @@ const LEGEND: { title: string; items: { label: string; look: Partial<SegmentLook
     items: [
       { label: 'No shot', look: { result: 'noshot' } },
       { label: FOUL_LABEL, look: { result: 'goal', execution: 'proper', foul: true } },
-      { label: 'Unreviewed candidate', look: { result: 'goal', execution: 'proper', candidate: true } },
+      { label: 'Unreviewed candidate', look: { candidate: true }, ifPresent: (l) => l.candidate },
       { label: 'Current possession', look: 'draft' },
     ],
   },
@@ -84,6 +91,8 @@ export function Timeline({ range, possessions, draft, controller, onSeek, onSele
     frame = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(frame)
   })
+
+  const looks = possessions.map(({ p }) => segmentLook(p))
 
   const onStripClick = (e: MouseEvent<HTMLDivElement>) => {
     if (e.target !== e.currentTarget && !(e.target as Element).classList.contains('strip-bg')) return
@@ -140,7 +149,7 @@ export function Timeline({ range, possessions, draft, controller, onSeek, onSele
         {LEGEND.map((g) => (
           <div key={g.title} className="legend-group">
             <b>{g.title}</b>
-            {g.items.map((it) => (
+            {g.items.filter((it) => !it.ifPresent || looks.some(it.ifPresent)).map((it) => (
               <span key={it.label}>
                 <i className="swatch">
                   <i className={`seg ${it.look === 'draft' ? 'draft' : segmentClass(it.look)}`} />
