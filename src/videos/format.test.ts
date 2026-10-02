@@ -14,8 +14,13 @@ describe('deleteSummary', () => {
     expect(deleteSummary({ ...base, game_count: 1 })).toBe('This also removes 1 game. It cannot be undone.')
   })
 
+  it('names matches first in the delete summary (ADR-0040)', () => {
+    expect(deleteSummary(summary({ match_count: 2, game_count: 3, possession_count: 0 }))).toBe('This also removes 2 matches and 3 games. It cannot be undone.')
+    expect(deleteSummary(summary({ match_count: 1 }))).toBe('This also removes 1 match. It cannot be undone.')
+  })
+
   it('says when nothing else is removed', () => {
-    expect(deleteSummary(base)).toMatch(/no games or possessions yet/)
+    expect(deleteSummary(base)).toMatch(/no matches, games or possessions yet/)
   })
 })
 

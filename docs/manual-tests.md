@@ -41,20 +41,20 @@ Use a real practice video. Repeat 1–4 in Chrome, Firefox and Safari.
 4. **Seek before first play:** reload, click a game's start time before pressing Play: the video jumps there and stays paused.
 5. **Frame rate:** set 60 fps under Details; frame steps get about half as big (both 30 and 60 fps).
 6. **First game:** press B without choosing a side → message asks for the side. Choose Left, press B → Game 1 "open"; press E later → Game 1 has an end time.
-7. **Next game (GAM-1/2):** with Game 1 open, press B → Game 1 ends and Game 2 starts at the same time, with the same side and format.
+7. **Next game (GAM-1/2):** with Game 1 open, press B → Game 1 ends and Game 2 starts at the same time, with the same side.
 8. **Overlap (GAM-4):** seek inside Game 1 and press B → refused with an explanation. Seek before Game 2's start and use "End here" on Game 1 past Game 2's start → refused. Touching games (end of 1 = start of 2) are fine.
-9. **Inline edits (GAM-2):** change side, format, opponent, scores, notes; reload → all kept. Doubles shows Teammate, Opponent 1 and Opponent 2; Singles hides them and clears them (ADR-0023).
+9. **Inline edits (GAM-2):** game rows edit side, scores and notes; the match header edits format, players, Best of and match notes. Reload → all kept. On the match header Doubles shows Teammate, Opponent 1 and Opponent 2; Singles hides them and clears them (ADR-0023, ADR-0040).
 10. **GAM-3:** click a game's start time → the player seeks there; "Tag →" opens the tagging placeholder.
 11. **Delete a game:** Delete… → confirmation; Esc cancels; confirm removes it.
-12. **Matches (ADR-0040):** press M → "Started Match 2…", a new empty match copying format and players. B adds Game 1 to it. "Make current" on Match 1 sends B there; B after Match 2's games is refused as interleaving. Set Best of 3 and scores: header shows the result. "Delete match…" shows game and possession counts.
-12. **Offline (SYN-2):** turn Wi-Fi off, press B and E, edit a name → header shows "Unsynced changes: n"; reload while still offline → the games are still there (games list may show a load error: Try again once online); turn Wi-Fi on → the counter disappears within a minute; reload → everything is on the server.
-13. **Seek bar (ADR-0018):** on a long video, drag the bar → the video follows while dragging and lands where released; hovering shows the time; games appear as green marks. Right after using the bar, Space and B still work. Tab to the bar: Page Up/Down jump a minute, Home/End go to the ends.
+12. **Matches:** see the "Matches (ADR-0040)" section below.
+13. **Offline (SYN-2):** turn Wi-Fi off, press B and E, edit a name → header shows "Unsynced changes: n"; reload while still offline → the games are still there (games list may show a load error: Try again once online); turn Wi-Fi on → the counter disappears within a minute; reload → everything is on the server.
+14. **Seek bar (ADR-0018):** on a long video, drag the bar → the video follows while dragging and lands where released; hovering shows the time; games appear as green marks. Right after using the bar, Space and B still work. Tab to the bar: Page Up/Down jump a minute, Home/End go to the ends.
 
 ## Step 4 · Tagging (TAG-1..8, SYN-1..4)
 
 Open a game with "Tag →" on the video screen.
 
-1. **Opens at the game (GAM-3):** the player jumps to the game start; the header shows game number, range, side, opponent.
+1. **Opens at the game (GAM-3):** the player jumps to the game start; the header shows match and game number, range, side, opponent.
    Also on a video uploaded the same day (still processing on YouTube): reload the tagging page a few times → it opens paused at the game start every time, never at 0:00 (ADR-0024).
 2. **Keyboard-only possession (ADR-0026 keys):** Shot type shows Pin before anything is pressed (ADR-0027). R → timer runs and status says "Press F…"; A, W; F → timer freezes, status lists what is blank (hole, execution, result); 2, G, Z → "All tagged"; Enter → row appears in the log with the right length and hole Pull short; Setup is back on Middle and Shot type on Pin (TAG-2, TAG-3). R, F, Enter without touching Shot type → the row says Pin.
 3. **R after F** saves and starts the next; **V** saves a No shot at once; **Backspace** or **Esc** clears; **⌘Z / Ctrl+Z** deletes the last saved (press twice: the one before); pressing a tag key twice clears it.
@@ -113,7 +113,7 @@ Open a game with "Tag →" on the video screen.
 1. **Cinema (ADR-0025):** on the video screen click Cinema → only the player and the games panel are left (no app header, title, details or delete); the video gets as large as the window allows with seek bar and controls still visible. Open a game's tagging screen → still in cinema mode: player, timeline and tag panel only (no game numbers or possession log); keys work as before. A refused or pending change still shows in the top-right corner. Default view brings everything back; reload keeps the choice; the video list is never affected.
 2. **Window sizes:** in cinema mode, narrow the window and make it short → no sideways scroll, the video shrinks to fit.
 3. **Side:** a new video asks "Which side of the frame do you stand on?"; the game rows say "My side". Check existing games show the side you stand on.
-4. **Doubles:** switch a game to Doubles, enter teammate and both opponents → the tagging header shows "with … · vs … & …"; the statistics Opponent filter lists both opponents and either one selects the game.
+4. **Doubles:** switch a match to Doubles, enter teammate and both opponents → the tagging header shows "with … · vs … & …"; the statistics Opponent filter lists both opponents and either one selects the match's games.
 
 ## Timeline colors, fouls, player width (ADR-0029)
 
@@ -140,12 +140,12 @@ Open a game with "Tag →" on the video screen.
 
 ## Step 6 · Export (EXP-1..3, ADR-0036)
 
-1. **Copy:** Statistics → Video scope → Copy CSV → "Copied N possessions". Paste into a spreadsheet: one header row, then one row per confirmed possession; `game_index` and `n` match the game number and the log's #; times have two decimals; blank tags are empty cells.
+1. **Copy:** Statistics → Video scope → Copy CSV → "Copied N possessions". Paste into a spreadsheet: one header row, then one row per confirmed possession; `match_index` matches the match number, `game_index` the game number within its match, and `n` the log's #; times have two decimals; blank tags are empty cells.
 2. **Download:** Download CSV → a file named like `foosball-<youtube id>.csv`; open it in Excel or Numbers: accented names (Tomáš) read correctly; a video title with a comma stays in one cell.
 3. **Scopes and filters:** Game scope exports only that game; a date range only its videos; ticking Pin drops the count to the Pin shots.
 4. **Candidates (EXP-3):** with an unreviewed candidate in a game, the count grows by one when "Include unreviewed candidates" is ticked; a rejected one never appears.
 5. **Clipboard blocked (EXP-2):** in Safari, or with clipboard permission denied for the site, Copy CSV shows the CSV in a selected text box; ⌘C copies it.
-6. **Doubles:** a doubles game exports `opponent` as "A & B".
+6. **Doubles:** a doubles match exports `opponent` as "A & B".
 
 ## Timeline look; No shot and complete-only saving (ADR-0037)
 
@@ -155,3 +155,21 @@ Open a game with "Tag →" on the video screen.
 4. **No shot:** V without R first says to press R; after R, V saves at once with setup blank too. In edit mode, V blanks every tag and disables all tag buttons; only Start, Shot, No shot, Save changes and Cancel work, and tag keys say "No shot has no tags". Press F → shot type Pin, setup Middle, shot direction Straight, the rest blank, Save disabled until tagged.
 5. **Outlines and legend (ADR-0038):** the running possession is a white outline with no fill; an unreviewed candidate a yellow dashed outline with no fill. On a game with only fully tagged possessions the legend is one line (Result · Execution · Markers) without No result, Not tagged or Unreviewed candidate; open an older game with blank fields and those entries appear.
 6. **Current possession (ADR-0039):** press R → the running possession is a white ring outside its span, the playhead above it; past 15 s an orange ring appears inside the white one. Click a saved segment → it gets the same white ring around its fill (no blue). Hovering a segment brightens it. No shot is a red outline with a faint red tint, the same height as the other segments. The legend's Foul and Current possession swatches show the ring around a small grey segment.
+
+## Matches (ADR-0040)
+
+Before applying the migration: open the app, wait until the header shows no unsynced changes.
+
+1. **Migrated data:** every video that had games shows each game as its own match, "BO1", with the old opponent and format on the match header. Video list shows the match count.
+   Migrated videos: each old game is its own BO1 match, so to add a game before the existing games press M first (B goes to the current match and would interleave).
+2. **First match:** on a new video choose a side, press B -> "Started Match 1 · Game 1"; the match header shows Singles and no names.
+3. **Next game, same match:** press B later -> "Match 1 · Game 2", same side as Game 1; enter scores 5:3 and 3:5 -> header shows "1–1".
+4. **Best of:** type 3 in Best of -> "1–1 · BO3"; add a third game won 5:2 -> "2–1 · BO3 · decided"; add a fourth -> toast says "BO3 already had 3 games" and the header warns "4 games in a BO3". Clear Best of -> no BO shown. Even values (2) are accepted.
+5. **New match (M):** with a game open press M -> the game ends, "Started Match 2…"; Match 2 copies format, names and best-of, notes empty, and is marked Current. Press B -> "Match 2 · Game 1".
+6. **No interleaving:** make Match 1 current, seek after Match 2's games, press B -> refused, naming both matches; nothing is added.
+7. **Empty match:** press M twice -> an empty match stays in the list with "No games yet".
+8. **Delete match:** Delete match… -> dialog states its games and possessions; confirm -> match and games gone; reload -> still gone.
+9. **Tagging header:** "Tag →" on a game -> heading "Match 2 · Game 1 · … · vs <names>".
+10. **Statistics:** scope Match -> choose a match -> numbers equal the sum of its games' tagging screens; Opponent filter lists the match names.
+11. **CSV:** export a video with two matches -> columns `match_index, best_of, game_index`; game numbers restart at 1 in each match.
+12. **Offline:** Wi-Fi off, press M and B, edit an opponent -> unsynced counter rises; Wi-Fi on -> it clears; reload -> all there.

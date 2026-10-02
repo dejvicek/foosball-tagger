@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import { addVideo, listVideos, sortNewestFirst } from '../data/videos'
 import { VideosPage } from './VideosPage'
@@ -42,12 +42,15 @@ beforeEach(() => {
 describe('VideosPage list (VID-2)', () => {
   it('lists videos with date, counts and a running job', async () => {
     vi.mocked(listVideos).mockResolvedValue([
-      summary({ title: 'Tuesday', recorded_on: '2026-09-22', game_count: 3, confirmed_possession_count: 41, job_running: true }),
+      summary({ title: 'Tuesday', recorded_on: '2026-09-22', match_count: 2, game_count: 5, confirmed_possession_count: 41, job_running: true }),
     ])
     renderPage()
     const link = await screen.findByRole('link', { name: 'Tuesday' })
     const row = link.closest('tr')
-    expect(row).toHaveTextContent('3')
+    expect(screen.getByRole('columnheader', { name: 'Matches' })).toBeInTheDocument()
+    const cells = within(row as HTMLElement).getAllByRole('cell').map((c) => c.textContent)
+    expect(cells).toContain('2')
+    expect(cells).toContain('5')
     expect(row).toHaveTextContent('41')
     expect(row).toHaveTextContent('Running')
   })

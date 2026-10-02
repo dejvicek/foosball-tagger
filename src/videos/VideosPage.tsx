@@ -117,6 +117,7 @@ function VideoList({ videos }: { videos: VideoSummary[] }) {
           <tr>
             <th>Title</th>
             <th>Recorded</th>
+            <th className="num">Matches</th>
             <th className="num">Games</th>
             <th className="num">Possessions</th>
             <th>Analysis</th>
@@ -130,6 +131,7 @@ function VideoList({ videos }: { videos: VideoSummary[] }) {
                 {v.duration_s != null && <span className="muted"> · {formatDuration(v.duration_s)}</span>}
               </td>
               <td>{v.recorded_on ? formatDate(v.recorded_on) : <span className="muted">No date</span>}</td>
+              <td className="num">{v.match_count}</td>
               <td className="num">{v.game_count}</td>
               <td className="num" title={plural(v.confirmed_possession_count, 'confirmed possession')}>
                 {v.confirmed_possession_count}

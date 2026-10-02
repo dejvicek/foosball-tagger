@@ -40,6 +40,7 @@ export function videoTitle(v: Pick<VideoSummary, 'title' | 'youtube_id'>): strin
 export function deleteSummary(v: VideoSummary): string {
   const unreviewed = v.possession_count - v.confirmed_possession_count
   const parts = [
+    v.match_count > 0 ? plural(v.match_count, 'match', 'matches') : null,
     v.game_count > 0 ? plural(v.game_count, 'game') : null,
     v.possession_count > 0
       ? plural(v.possession_count, 'possession') + (unreviewed > 0 ? ` (${unreviewed} not confirmed)` : '')
@@ -47,7 +48,7 @@ export function deleteSummary(v: VideoSummary): string {
     v.calibration_count > 0 ? plural(v.calibration_count, 'playfield calibration') : null,
     v.job_count > 0 ? plural(v.job_count, 'analysis job') : null,
   ].filter((p): p is string => p !== null)
-  if (parts.length === 0) return 'This video has no games or possessions yet. Nothing else is removed.'
+  if (parts.length === 0) return 'This video has no matches, games or possessions yet. Nothing else is removed.'
   const list = parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}`
   return `This also removes ${list}. It cannot be undone.`
 }
