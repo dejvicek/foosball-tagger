@@ -70,6 +70,7 @@ function setup(initial: QueueEntry[] = []) {
 
 const game = (id: string, extra: Record<string, unknown> = {}): QueueRow => ({ id, video_id: 'v1', start_s: 10, ...extra })
 const poss = (id: string, gameId: string): QueueRow => ({ id, game_id: gameId, start_s: 12 })
+const match = (id: string): QueueRow => ({ id, video_id: 'v1' })
 
 describe('WriteQueue', () => {
   it('stores a write before sending it, and clears it once sent', async () => {
@@ -248,5 +249,33 @@ describe('WriteQueue', () => {
     await queue.flush()
     expect(seen).toContain(1)
     expect(seen.at(-1)).toBe(0)
+  })
+
+  it('sends matches before games and possessions, and deletes them last', async () => {
+    const { queue, writer } = setup()
+    queue.upsert('possessions', poss('p1', 'g1'))
+    queue.upsert('games', game('g1', { match_id: 'm1' }))
+    queue.upsert('matches', match('m1'))
+    await queue.flush()
+    expect(writer.calls).toEqual(['upsert matches m1', 'upsert games g1', 'upsert possessions p1'])
+
+    writer.calls = []
+    queue.remove('matches', 'm1')
+    queue.remove('games', 'g1')
+    queue.remove('possessions', 'p1')
+    await queue.flush()
+    expect(writer.calls).toEqual(['delete possessions p1', 'delete games g1', 'delete matches m1'])
+  })
+
+  it('drops queued games and their possessions when a never-sent match is deleted', async () => {
+    const { queue, writer } = setup()
+    queue.upsert('matches', match('m1'))
+    queue.upsert('games', game('g1', { match_id: 'm1' }))
+    queue.upsert('possessions', poss('p1', 'g1'))
+    queue.upsert('games', game('g2', { match_id: 'm2' }))
+    queue.remove('matches', 'm1', [{ table: 'games', fk: 'match_id', cascade: [{ table: 'possessions', fk: 'game_id' }] }])
+    await queue.flush()
+    expect(writer.calls).toEqual(['upsert games g2'])
+    expect(queue.getStatus()).toMatchObject({ pending: 0, rejected: [] })
   })
 })

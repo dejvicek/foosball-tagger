@@ -75,6 +75,21 @@ export type VideoSummary = Video & {
   calibration_count: number
   job_count: number
   job_running: boolean
+  match_count: number
+}
+
+export type Match = {
+  id: string
+  user_id: string
+  video_id: string
+  best_of: number | null
+  format: Format
+  opponent: string | null
+  teammate: string | null
+  opponent2: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
 }
 
 export type Game = {
@@ -160,6 +175,7 @@ export type VideoUpdate = Updatable<Video>
 export interface Database {
   public: {
     Tables: {
+      matches: Table<Match, Insertable<Match, 'video_id' | 'format'>, Updatable<Match>>
       videos: Table<Video, VideoInsert, VideoUpdate>
       games: Table<Game, Insertable<Game, 'video_id' | 'start_s' | 'my_side'>, Updatable<Game>>
       calibrations: Table<Calibration, Insertable<Calibration, 'video_id' | 'points'>, Updatable<Calibration>>

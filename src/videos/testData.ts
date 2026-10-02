@@ -19,6 +19,7 @@ export function summary(overrides: Partial<VideoSummary> = {}): VideoSummary {
     calibration_count: 0,
     job_count: 0,
     job_running: false,
+    match_count: 0,
     ...overrides,
   }
 }

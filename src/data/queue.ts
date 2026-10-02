@@ -4,14 +4,21 @@
 // updates optimistically; the queue retries with backoff and on the browser's
 // `online` event, so no write is lost when the network drops.
 
-export type QueueTable = 'games' | 'possessions'
+export type QueueTable = 'matches' | 'games' | 'possessions'
 
 /** Parents before children when inserting; the reverse when deleting. */
-const RANK: Record<QueueTable, number> = { games: 0, possessions: 1 }
+const RANK: Record<QueueTable, number> = { matches: 0, games: 1, possessions: 2 }
 
 export type QueueRow = { id: string } & Record<string, unknown>
 
 export type QueueOp = { kind: 'upsert'; row: QueueRow } | { kind: 'delete' }
+
+/** Child rows whose queued writes go with a deleted parent; `cascade` continues to their children. */
+export interface Cascade {
+  table: QueueTable
+  fk: string
+  cascade?: Cascade[]
+}
 
 export interface QueueEntry {
   table: QueueTable
@@ -108,14 +115,10 @@ export class WriteQueue {
    * Records a delete. Queued writes of child rows (`cascade`) are dropped, as the
    * database cascade removes them. A new row that was never sent is simply forgotten.
    */
-  remove(table: QueueTable, id: string, cascade: { table: QueueTable; fk: string }[] = []): void {
+  remove(table: QueueTable, id: string, cascade: Cascade[] = []): void {
     const k = key(table, id)
     const prev = this.entries.get(k)
-    for (const c of cascade) {
-      for (const [ck, e] of this.entries) {
-        if (e.table === c.table && e.op.kind === 'upsert' && e.op.row[c.fk] === id) this.entries.delete(ck)
-      }
-    }
+    this.dropChildren(id, cascade)
     if (prev && prev.op.kind === 'upsert' && !prev.attempted) {
       this.entries.delete(k)
     } else {
@@ -205,6 +208,16 @@ export class WriteQueue {
     this.persist()
     // Changes made while flushing are sent right away.
     if ([...this.entries.values()].some((e) => !e.rejected && this.timer === null)) this.schedule(0)
+  }
+
+  private dropChildren(parentId: string, cascade: Cascade[]): void {
+    for (const c of cascade) {
+      for (const [ck, e] of this.entries) {
+        if (e.table !== c.table || e.op.kind !== 'upsert' || e.op.row[c.fk] !== parentId) continue
+        this.entries.delete(ck)
+        if (c.cascade) this.dropChildren(e.id, c.cascade)
+      }
+    }
   }
 
   private changed(flushDelayMs: number | null): void {
