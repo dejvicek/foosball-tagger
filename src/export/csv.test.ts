@@ -19,6 +19,9 @@ const game = (o: Partial<Game>): Game => ({
   ...o,
 })
 
+const gameRow = (id: string, matchId: string, startS: number): Game =>
+  game({ id, match_id: matchId, video_id: 'v1', start_s: startS, created_at: '2026-09-20T10:00:00Z' })
+
 const match = (o: Partial<Match>): Match => ({
   id: 'm1',
   user_id: 'u1',
@@ -33,6 +36,8 @@ const match = (o: Partial<Match>): Match => ({
   updated_at: '2026-09-20T10:00:00Z',
   ...o,
 })
+
+const matchRow = (id: string, o?: Partial<Match>): Match => match({ id, video_id: 'v1', created_at: '2026-09-20T10:00:00Z', ...o })
 
 const pos = (o: Partial<Possession>): Possession => ({
   id: 'p',
@@ -53,6 +58,9 @@ const pos = (o: Partial<Possession>): Possession => ({
   updated_at: '2026-09-20T10:00:00Z',
   ...o,
 })
+
+const possRow = (id: string, gameId: string, startS: number): Possession =>
+  pos({ id, game_id: gameId, start_s: startS, created_at: '2026-09-20T10:00:00Z' })
 
 const data: ScopeData = {
   videos: [summary({ id: 'v1', youtube_id: 'abcdefghijk', title: 'Club night, "finals"', recorded_on: '2026-09-20' })],
@@ -76,12 +84,14 @@ describe('exportRows (EXP-1, EXP-3)', () => {
     expect(rows.map((r) => [r.game_index, r.n])).toEqual([
       ['1', '1'],
       ['1', '2'],
-      ['2', '1'],
+      ['1', '1'],
     ])
     expect(rows[0]).toEqual({
       video_title: 'Club night, "finals"',
       recorded_on: '2026-09-20',
       youtube_id: 'abcdefghijk',
+      match_index: '1',
+      best_of: '',
       game_index: '1',
       opponent: 'Tomáš',
       format: 'singles',
@@ -116,6 +126,24 @@ describe('exportRows (EXP-1, EXP-3)', () => {
   it('keeps only the possessions the filter passes', () => {
     expect(exportRows(data, { includeUnreviewed: false, keep: (id) => id === 'b' }).map((r) => r.n)).toEqual(['2'])
   })
+
+  it('numbers matches within the video and games within the match (EXP-1, ADR-0040)', () => {
+    const scopeData: ScopeData = {
+      videos: [summary({ id: 'v1', youtube_id: 'abcdefghijk', title: 'Test video', recorded_on: '2026-09-20' })],
+      matches: [matchRow('m1', { best_of: 3 }), matchRow('m2', { best_of: null, opponent: 'Ida' })],
+      games: [gameRow('g1', 'm1', 0), gameRow('g2', 'm1', 100), gameRow('g3', 'm2', 200)],
+      possessions: [possRow('p1', 'g1', 1), possRow('p2', 'g2', 101), possRow('p3', 'g3', 201)],
+    }
+    const rows = exportRows(scopeData, { includeUnreviewed: false })
+    expect(rows.map((r) => [r.match_index, r.best_of, r.game_index, r.opponent])).toEqual([
+      ['1', '3', '1', ''],
+      ['1', '3', '2', ''],
+      ['2', '', '1', 'Ida'],
+    ])
+    expect(exportCsv(rows).split('\r\n')[0]).toBe(
+      'video_title,recorded_on,youtube_id,match_index,best_of,game_index,opponent,format,my_side,n,start_s,shot_s,length_s,setup,shot_type,movement,hole,shot_direction,result,execution,source',
+    )
+  })
 })
 
 describe('CSV text (EXP-1)', () => {
@@ -132,9 +160,9 @@ describe('CSV text (EXP-1)', () => {
     const lines = csv.split('\r\n')
     expect(lines[0]).toBe(EXPORT_COLUMNS.join(','))
     expect(lines[0]).toBe(
-      'video_title,recorded_on,youtube_id,game_index,opponent,format,my_side,n,start_s,shot_s,length_s,setup,shot_type,movement,hole,shot_direction,result,execution,source',
+      'video_title,recorded_on,youtube_id,match_index,best_of,game_index,opponent,format,my_side,n,start_s,shot_s,length_s,setup,shot_type,movement,hole,shot_direction,result,execution,source',
     )
-    expect(lines[1]).toBe('"Club night, ""finals""",2026-09-20,abcdefghijk,1,Tomáš,singles,left,1,12.00,16.50,4.50,Middle,Pull,Pull,Pull long,Straight,Goal,Misexecuted,manual')
+    expect(lines[1]).toBe('"Club night, ""finals""",2026-09-20,abcdefghijk,1,,1,Tomáš,singles,left,1,12.00,16.50,4.50,Middle,Pull,Pull,Pull long,Straight,Goal,Misexecuted,manual')
     expect(lines).toHaveLength(5) // header, 3 rows, trailing ''
     expect(lines[4]).toBe('')
   })

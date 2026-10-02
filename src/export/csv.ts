@@ -2,15 +2,16 @@
 import type { ScopeData } from '../data/stats'
 import { videoDate } from '../data/stats'
 import { movementOf } from '../stats/movement'
-import { matchOpponents } from '../stats/filters'
 import { numberPossessions, possessionLength } from '../tagging/possessions'
-import { sortGames } from '../videos/games'
+import { sortMatches, matchGames, matchOpponents } from '../videos/matches'
 
-/** EXP-1 columns; `direction` is `movement` plus `shot_direction` since ADR-0028. */
+/** EXP-1 columns (ADR-0028, ADR-0040); `direction` is `movement` plus `shot_direction` since ADR-0028. */
 export const EXPORT_COLUMNS = [
   'video_title',
   'recorded_on',
   'youtube_id',
+  'match_index',
+  'best_of',
   'game_index',
   'opponent',
   'format',
@@ -41,44 +42,46 @@ export interface ExportOptions {
 const time = (s: number | null) => (s == null ? '' : s.toFixed(2))
 const text = (v: string | null | undefined) => v ?? ''
 
-/** Rows ordered by video (date, title), game number and possession number. */
+/** Rows ordered by video (date, title), match, game within the match, and possession number. */
 export function exportRows(data: ScopeData, opts: ExportOptions): ExportRow[] {
   const videos = [...data.videos].sort(
     (a, b) => videoDate(a).localeCompare(videoDate(b)) || text(a.title).localeCompare(text(b.title)) || a.created_at.localeCompare(b.created_at),
   )
-  const matchById = new Map(data.matches.map((m) => [m.id, m]))
   const rows: ExportRow[] = []
   for (const v of videos) {
-    sortGames(data.games.filter((g) => g.video_id === v.id)).forEach((g, i) => {
-      const match = matchById.get(g.match_id)
-      if (!match) return
-      const numbered = numberPossessions(data.possessions.filter((p) => p.game_id === g.id))
-      for (const { p, n } of numbered) {
-        if (n == null) continue
-        if (p.review_status === 'unreviewed' && !opts.includeUnreviewed) continue
-        if (opts.keep && !opts.keep(p.id)) continue
-        rows.push({
-          video_title: text(v.title),
-          recorded_on: text(v.recorded_on),
-          youtube_id: v.youtube_id,
-          game_index: String(i + 1),
-          opponent: matchOpponents(match).join(' & '),
-          format: match.format,
-          my_side: g.my_side,
-          n: String(n),
-          start_s: time(p.start_s),
-          shot_s: time(p.shot_s),
-          length_s: time(possessionLength(p)),
-          setup: text(p.setup),
-          shot_type: text(p.shot_type),
-          movement: text(movementOf(p.setup, p.hole)),
-          hole: text(p.hole),
-          shot_direction: text(p.shot_direction),
-          result: text(p.result),
-          execution: text(p.execution),
-          source: p.source,
-        })
-      }
+    const vGames = data.games.filter((g) => g.video_id === v.id)
+    sortMatches(data.matches.filter((m) => m.video_id === v.id), vGames).forEach((match, mi) => {
+      matchGames(vGames, match.id).forEach((g, gi) => {
+        const numbered = numberPossessions(data.possessions.filter((p) => p.game_id === g.id))
+        for (const { p, n } of numbered) {
+          if (n == null) continue
+          if (p.review_status === 'unreviewed' && !opts.includeUnreviewed) continue
+          if (opts.keep && !opts.keep(p.id)) continue
+          rows.push({
+            video_title: text(v.title),
+            recorded_on: text(v.recorded_on),
+            youtube_id: v.youtube_id,
+            match_index: String(mi + 1),
+            best_of: match.best_of == null ? '' : String(match.best_of),
+            game_index: String(gi + 1),
+            opponent: matchOpponents(match).join(' & '),
+            format: match.format,
+            my_side: g.my_side,
+            n: String(n),
+            start_s: time(p.start_s),
+            shot_s: time(p.shot_s),
+            length_s: time(possessionLength(p)),
+            setup: text(p.setup),
+            shot_type: text(p.shot_type),
+            movement: text(movementOf(p.setup, p.hole)),
+            hole: text(p.hole),
+            shot_direction: text(p.shot_direction),
+            result: text(p.result),
+            execution: text(p.execution),
+            source: p.source,
+          })
+        }
+      })
     })
   }
   return rows
