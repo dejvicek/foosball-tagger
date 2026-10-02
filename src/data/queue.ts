@@ -73,6 +73,12 @@ const defaultTimers: Timers = {
 
 const MAX_BACKOFF_MS = 60_000
 
+const LEGACY_MESSAGE =
+  'Saved by an older version of the app, before matches; it cannot be sent. Discard it and re-enter the change.'
+
+/** A games upsert saved before matches existed: it has no match_id and carries dropped columns (ADR-0041). */
+const isLegacyGame = (e: QueueEntry) => e.table === 'games' && e.op.kind === 'upsert' && !e.op.row.match_id
+
 const key = (table: QueueTable, id: string) => `${table}:${id}`
 
 export class WriteQueue {
@@ -90,6 +96,7 @@ export class WriteQueue {
     private readonly timers: Timers = defaultTimers,
   ) {
     for (const e of storage.load()) {
+      if (isLegacyGame(e) && !e.rejected) e.rejected = LEGACY_MESSAGE
       this.entries.set(key(e.table, e.id), e)
       this.seq = Math.max(this.seq, e.seq)
     }
@@ -141,7 +148,7 @@ export class WriteQueue {
   overlay<T extends { id: string }>(table: QueueTable, rows: T[], belongs: (row: QueueRow) => boolean): T[] {
     const byId = new Map(rows.map((r) => [r.id, r]))
     for (const e of this.entries.values()) {
-      if (e.table !== table) continue
+      if (e.table !== table || isLegacyGame(e)) continue
       if (e.op.kind === 'delete') byId.delete(e.id)
       else if (belongs(e.op.row)) byId.set(e.id, e.op.row as unknown as T)
     }

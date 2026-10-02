@@ -6,10 +6,11 @@ const SERVER_FILLED = ['user_id', 'created_at', 'updated_at'] as const
 
 /**
  * Postgres errors retrying cannot fix: data exceptions (22), integrity violations (23),
- * insufficient privilege / RLS (42501) and other syntax/access errors (42).
+ * insufficient privilege / RLS (42501) and other syntax/access errors (42), plus
+ * PostgREST PGRST204 (column not found, e.g. a row saved before a migration dropped it).
  */
 export function isPermanent(code: string | undefined): boolean {
-  return !!code && /^(22|23|42)/.test(code)
+  return !!code && /^(22|23|42)/.test(code) || code === 'PGRST204'
 }
 
 function toWriteError(error: { message: string; code?: string }): WriteError {

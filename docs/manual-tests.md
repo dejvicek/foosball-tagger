@@ -25,7 +25,7 @@ Each section names the build step or requirement it covers.
 3. Paste `https://vimeo.com/1` and a channel link → a clear message, nothing added.
 4. **Private video (VID-4):** set a test video to Private on YouTube, try to add it → refused with "Public or Unlisted … Allow embedding". Add it while unlisted, then switch it to Private and reload its video screen → the player shows the reason and the fix.
 5. A live-stream archive (`/live/…`) and a Short both add and play.
-6. **List (VID-2):** the list shows title, duration, recorded date ("No date" if blank), 0 games, 0 possessions, newest first.
+6. **List (VID-2):** the list shows title, duration, recorded date ("No date" if blank), 0 matches, 0 games, 0 possessions, newest first.
 7. **Edit (VID-3):** change title, recorded date, fps to 60, notes → Save → reload: the values persist; the list shows the new date and order.
 8. **Delete (VID-3):** Delete video… → the dialog says what goes (nothing yet besides the video); Cancel and Esc close it; Delete returns to the list with "Deleted …".
 9. **Isolation:** in Supabase → Table Editor, the rows have your `user_id`. (RLS is covered by automated tests in `supabase/tests/`.)
@@ -74,7 +74,7 @@ Open a game with "Tag →" on the video screen.
 2. **Blank is not a miss (STA-1):** tag a shot with no result → conversion's denominator does not grow; add the result → it does.
 3. **Samples (STA-2, STA-3):** every percentage shows (n/d); all carry † until 30 attempts; the footnote explains it.
 4. **Hand check:** for one game, count goals and shots-with-result in the log yourself → same as the conversion shown. Same for one "By shot" row.
-5. **Scopes (STA-4):** Statistics → Date range "All time" includes every video; "Last 30 days" drops older ones; a video without a recorded date counts on the day it was added. Video scope matches the sum of its games. Game scope matches the tagging screen.
+5. **Scopes (STA-4):** Statistics → Date range "All time" includes every video; "Last 30 days" drops older ones; a video without a recorded date counts on the day it was added. Match scope equals the sum of its games. Video scope matches the sum of its games. Game scope matches the tagging screen.
 6. **Filters:** tick Pin → only Pin shots count, "n of m … match the filters"; Format and Opponent narrow further; reload keeps scope and filters (they are in the URL).
 7. **Candidates:** unreviewed or rejected possessions never count; confirming one in the log makes it count.
 8. Phone width: the statistics page has no sideways scroll; wide tables scroll inside their card.
@@ -158,18 +158,24 @@ Open a game with "Tag →" on the video screen.
 
 ## Matches (ADR-0040)
 
-Before applying the migration: open the app, wait until the header shows no unsynced changes.
+Deploy order (ADR-0041):
+
+1. Open the current app and wait until "Unsynced changes" is gone; close other tabs.
+2. Merge `matches` into `main` (GitHub Pages deploys).
+3. Run `npx supabase db push` right away.
+4. Do not tag between steps 2 and 3: until the push, the new app shows the "apply the migrations" error.
+5. If an old unsent game change was still queued, it shows under "1 change refused" with "Saved by an older version…"; Discard refused changes and re-enter it.
 
 1. **Migrated data:** every video that had games shows each game as its own match, "BO1", with the old opponent and format on the match header. Video list shows the match count.
-   Migrated videos: each old game is its own BO1 match, so to add a game before the existing games press M first (B goes to the current match and would interleave).
-2. **First match:** on a new video choose a side, press B -> "Started Match 1 · Game 1"; the match header shows Singles and no names.
-3. **Next game, same match:** press B later -> "Match 1 · Game 2", same side as Game 1; enter scores 5:3 and 3:5 -> header shows "1–1".
-4. **Best of:** type 3 in Best of -> "1–1 · BO3"; add a third game won 5:2 -> "2–1 · BO3 · decided"; add a fourth -> toast says "BO3 already had 3 games" and the header warns "4 games in a BO3". Clear Best of -> no BO shown. Even values (2) are accepted.
-5. **New match (M):** with a game open press M -> the game ends, "Started Match 2…"; Match 2 copies format, names and best-of, notes empty, and is marked Current. Press B -> "Match 2 · Game 1".
-6. **No interleaving:** make Match 1 current, seek after Match 2's games, press B -> refused, naming both matches; nothing is added.
-7. **Empty match:** press M twice -> an empty match stays in the list with "No games yet".
-8. **Delete match:** Delete match… -> dialog states its games and possessions; confirm -> match and games gone; reload -> still gone.
-9. **Tagging header:** "Tag →" on a game -> heading "Match 2 · Game 1 · … · vs <names>".
-10. **Statistics:** scope Match -> choose a match -> numbers equal the sum of its games' tagging screens; Opponent filter lists the match names.
-11. **CSV:** export a video with two matches -> columns `match_index, best_of, game_index`; game numbers restart at 1 in each match.
-12. **Offline:** Wi-Fi off, press M and B, edit an opponent -> unsynced counter rises; Wi-Fi on -> it clears; reload -> all there.
+   On migrated videos each old game is its own BO1 match, so to add a game before the existing games press M first (B goes to the current match and would interleave).
+2. **First match:** on a new video choose a side, press B → "Started Match 1 · Game 1"; the match header shows Singles and no names.
+3. **Next game, same match:** press B later → "Match 1 · Game 2", same side as Game 1; enter scores 5:3 and 3:5 → header shows "1–1".
+4. **Best of:** type 3 in Best of → "1–1 · BO3"; add a third game won 5:2 → "2–1 · BO3 · decided"; add a fourth → toast says "BO3 already had 3 games" and the header warns "4 games in a BO3". Clear Best of → no BO shown. Even values (2) are accepted.
+5. **New match (M):** with a game open press M → the game ends, "Started Match 2…"; Match 2 copies format, names and best-of, notes empty, and is marked Current. Press B → "Match 2 · Game 1".
+6. **No interleaving:** make Match 1 current, seek after Match 2's games, press B → refused, naming both matches; nothing is added.
+7. **Empty match:** press M twice → an empty match stays in the list with "No games yet".
+8. **Delete match:** Delete match… → dialog states its games and possessions; confirm → match and games gone; reload → still gone.
+9. **Tagging header:** "Tag →" on a game → heading "Match 2 · Game 1 · … · vs <names>".
+10. **Statistics:** scope Match → choose a match → numbers equal the sum of its games' tagging screens; Opponent filter lists the match names.
+11. **CSV:** export a video with two matches → columns `match_index, best_of, game_index`; game numbers restart at 1 in each match.
+12. **Offline:** Wi-Fi off, press M and B, edit an opponent → unsynced counter rises; Wi-Fi on → it clears; reload → all there.

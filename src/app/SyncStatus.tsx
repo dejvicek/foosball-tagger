@@ -1,5 +1,8 @@
 import { useState } from 'react'
+import type { QueueTable } from '../data/queue'
 import { useQueue, useQueueStatus } from './QueueProvider'
+
+const TABLE_LABEL: Record<QueueTable, string> = { matches: 'match', games: 'game', possessions: 'possession' }
 
 /** "Unsynced changes: n" (SYN-2), plus writes the server refused, which are never dropped silently. */
 export function SyncStatus() {
@@ -25,7 +28,7 @@ export function SyncStatus() {
               <ul>
                 {rejected.map((e) => (
                   <li key={`${e.table}:${e.id}`}>
-                    {e.op.kind === 'delete' ? 'Delete' : 'Save'} {e.table === 'games' ? 'game' : 'possession'}: {e.rejected}
+                    {e.op.kind === 'delete' ? 'Delete' : 'Save'} {TABLE_LABEL[e.table]}: {e.rejected}
                   </li>
                 ))}
               </ul>

@@ -1,7 +1,7 @@
 import { isPermanent } from './supabaseWriter'
 
 describe('isPermanent', () => {
-  it.each(['23514', '23505', '23503', '22P02', '42501'])('gives up on %s', (code) => {
+  it.each(['23514', '23505', '23503', '22P02', '42501', 'PGRST204'])('gives up on %s', (code) => {
     expect(isPermanent(code)).toBe(true)
   })
 

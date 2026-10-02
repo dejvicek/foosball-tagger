@@ -410,3 +410,12 @@ _Numbering fix: committed as a second ADR-0033 in 2f7bbc5; renumbered, content u
   - **Result:** game wins from games with both scores entered (ties count for neither). With `best_of` set, the match is "decided" once a side has more than half of it; a game past `best_of` gets a warning, never a block. No moving or merging; empty matches allowed; deleting a match confirms its game and possession counts.
   - **Labels / stats / CSV:** "Match 2 · Game 1". Statistics scopes: game, match, video, date range; format and opponent filters read the match. CSV adds `match_index` (within the video) and `best_of` before `game_index`, which now counts within the match.
 - **Consequences:** The pending queue must be empty when the migration is applied (old queued game rows carry dropped columns). Matches go through the queue before games.
+
+## ADR-0041 · Deploy order for matches; old queued game writes are refused
+
+- **Status:** Accepted · 2026-10-02 (requested by the user's final review; order and handling chosen by Claude) · Amends ADR-0040
+- **Context:** ADR-0040 said the pending queue must be empty when the migration is applied, but the plan said to migrate first and the spec said to push after merging, and merging to `main` deploys the app. A `games` write queued by the old app carries the dropped player columns and no `match_id`; PostgREST answers `PGRST204` (column not found), which was treated as temporary, so it was retried forever and blocked every later write.
+- **Decision:**
+  - **Order:** (1) open the current app and wait until "Unsynced changes" is gone, close other tabs; (2) merge `matches` into `main` (GitHub Pages deploys); (3) run `npx supabase db push` right away; (4) do not tag between 2 and 3, as until the push the new app shows the "apply the migrations" error.
+  - **Legacy queue entries:** on load, a stored `games` upsert without `match_id` is marked refused ("Saved by an older version of the app, before matches; it cannot be sent. Discard it and re-enter the change."), is never sent and never shown as a game, and is removed by "Discard refused changes". `PGRST204` is also a permanent error, so a write the server cannot accept never stalls the queue.
+- **Consequences:** Following the order leaves nothing to discard; skipping step 1 shows the entries under "refused" instead of losing the queue behind them. Refused match writes are labelled "match" in that list.

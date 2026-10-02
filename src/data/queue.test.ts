@@ -68,7 +68,7 @@ function setup(initial: QueueEntry[] = []) {
   return { writer, storage, timers, queue }
 }
 
-const game = (id: string, extra: Record<string, unknown> = {}): QueueRow => ({ id, video_id: 'v1', start_s: 10, ...extra })
+const game = (id: string, extra: Record<string, unknown> = {}): QueueRow => ({ id, video_id: 'v1', match_id: 'm0', start_s: 10, ...extra })
 const poss = (id: string, gameId: string): QueueRow => ({ id, game_id: gameId, start_s: 12 })
 const match = (id: string): QueueRow => ({ id, video_id: 'v1' })
 
@@ -277,5 +277,42 @@ describe('WriteQueue', () => {
     await queue.flush()
     expect(writer.calls).toEqual(['upsert games g2'])
     expect(queue.getStatus()).toMatchObject({ pending: 0, rejected: [] })
+  })
+  describe('entries saved by the version before matches (SYN-1..4, ADR-0041)', () => {
+    const legacy = (): QueueEntry => ({
+      table: 'games',
+      id: 'old',
+      op: { kind: 'upsert', row: { id: 'old', video_id: 'v1', start_s: 10, format: 'singles', opponent: 'Bob' } },
+      seq: 1,
+      version: 1,
+      attempted: true,
+    })
+
+    it('reports it as refused, never sends it, and does not block later writes', async () => {
+      const { queue, writer } = setup([legacy()])
+      expect(queue.getStatus().rejected).toHaveLength(1)
+      expect(queue.getStatus().rejected[0]?.rejected).toBe(
+        'Saved by an older version of the app, before matches; it cannot be sent. Discard it and re-enter the change.',
+      )
+      expect(queue.getStatus().pending).toBe(0)
+      queue.upsert('possessions', poss('p1', 'g1'))
+      queue.upsert('games', game('g2', { match_id: 'm1' }))
+      await queue.flush()
+      expect(writer.calls).toEqual(['upsert games g2', 'upsert possessions p1'])
+      expect(queue.getStatus().rejected).toHaveLength(1)
+    })
+
+    it('is not overlaid as a game', () => {
+      const { queue } = setup([legacy()])
+      queue.upsert('games', game('g2', { match_id: 'm1' }))
+      expect(queue.overlay<{ id: string }>('games', [], () => true).map((g) => g.id)).toEqual(['g2'])
+    })
+
+    it('is removed by discardRejected()', () => {
+      const { queue, storage } = setup([legacy()])
+      queue.discardRejected()
+      expect(queue.getStatus().rejected).toEqual([])
+      expect(storage.saved).toHaveLength(0)
+    })
   })
 })
