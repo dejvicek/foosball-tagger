@@ -2,7 +2,7 @@
 // worked out by hand from the fixture's possession list, not from the code.
 import synthetic from '../../fixtures/synthetic-01.json'
 import { fixtureItems, type Fixture } from './fixture'
-import { byHole, byLength, byShotDirection, movementOf, bySetup, byShot, confirmedOnly, executionVsResult, headline, shotStatus, applyFilters, NO_FILTERS, formatRatio, ratio, opponentsOf, gameOpponents, type StatItem } from '.'
+import { byHole, byLength, byShotDirection, movementOf, bySetup, byShot, confirmedOnly, executionVsResult, headline, shotStatus, applyFilters, NO_FILTERS, formatRatio, ratio, opponentsOf, matchOpponents, type StatItem } from '.'
 
 const all = fixtureItems(synthetic as Fixture)
 const items = confirmedOnly(all)
@@ -179,8 +179,8 @@ describe('filters (STA-4)', () => {
     expect(applyFilters(withPair, { ...NO_FILTERS, opponent: 'Olaf' }).map((p) => p.id)).toEqual(['d0', 'd1'])
     expect(applyFilters(withPair, { ...NO_FILTERS, opponent: 'Eva' })).toHaveLength(2)
     expect(opponentsOf(withPair)).toEqual(['', 'Eva', 'Olaf', 'Tomáš'])
-    expect(gameOpponents({ opponent: 'Eva', opponent2: null })).toEqual(['Eva'])
-    expect(gameOpponents({ opponent: null, opponent2: 'Olaf' })).toEqual(['Olaf'])
+    expect(matchOpponents({ opponent: 'Eva', opponent2: null })).toEqual(['Eva'])
+    expect(matchOpponents({ opponent: null, opponent2: 'Olaf' })).toEqual(['Olaf'])
   })
 
   it('no filters keeps everything', () => {

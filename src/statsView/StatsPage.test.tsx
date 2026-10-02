@@ -3,9 +3,10 @@ import { MemoryRouter, Route, Routes } from 'react-router'
 import synthetic from '../../fixtures/synthetic-01.json'
 import type { Fixture } from '../stats/fixture'
 import { loadScope, type ScopeData } from '../data/stats'
-import type { Game, Possession } from '../data/types'
+import type { Game, Match, Possession, Side } from '../data/types'
 import { listVideos } from '../data/videos'
 import { loadGames } from '../data/games'
+import { loadMatches } from '../data/matches'
 import { summary } from '../videos/testData'
 import { StatsPage, exportFileName, filtersFromParams, scopeFromParams } from './StatsPage'
 
@@ -15,12 +16,44 @@ vi.mock('../data/stats', async (importOriginal) => ({
 }))
 vi.mock('../data/videos', () => ({ listVideos: vi.fn<typeof import('../data/videos').listVideos>() }))
 vi.mock('../data/games', () => ({ loadGames: vi.fn<typeof import('../data/games').loadGames>() }))
+vi.mock('../data/matches', () => ({ loadMatches: vi.fn<typeof import('../data/matches').loadMatches>() }))
 vi.mock('../app/QueueProvider', () => ({ useQueue: () => ({}) }))
 
-const f = synthetic as Fixture & { video: { youtube_id: string; title: string }; game: Partial<Game> }
+const f = synthetic as Fixture & {
+  video: { youtube_id: string; title: string }
+  game: { video_id: string; start_s: number; end_s: number | null; my_side: Side }
+}
+const fixtureMatch: Match = {
+  id: 'm1',
+  user_id: 'u1',
+  video_id: f.game.video_id,
+  best_of: null,
+  format: f.game.format,
+  teammate: null,
+  opponent: f.game.opponent,
+  opponent2: null,
+  notes: null,
+  created_at: '',
+  updated_at: '',
+}
+const fixtureGame: Game = {
+  id: f.game.id,
+  user_id: 'u1',
+  video_id: f.game.video_id,
+  match_id: 'm1',
+  start_s: f.game.start_s,
+  end_s: f.game.end_s,
+  my_side: f.game.my_side,
+  my_score: null,
+  opp_score: null,
+  notes: null,
+  created_at: '',
+  updated_at: '',
+}
 const scopeData: ScopeData = {
   videos: [summary({ id: f.video.id, youtube_id: f.video.youtube_id, title: f.video.title, recorded_on: f.video.recorded_on })],
-  games: [{ ...(f.game as Game), user_id: 'u1', teammate: null, opponent2: null, my_score: null, opp_score: null, notes: null, created_at: '', updated_at: '' }],
+  matches: [fixtureMatch],
+  games: [fixtureGame],
   possessions: f.possessions.map((p): Possession => ({ ...p, user_id: 'u1', created_at: '', updated_at: '' })),
 }
 
@@ -28,6 +61,7 @@ beforeEach(() => {
   vi.mocked(loadScope).mockResolvedValue(scopeData)
   vi.mocked(listVideos).mockResolvedValue([summary({ id: 'v1', title: 'Synthetic practice' })])
   vi.mocked(loadGames).mockResolvedValue([])
+  vi.mocked(loadMatches).mockResolvedValue([])
 })
 
 function renderAt(url: string) {
@@ -89,7 +123,7 @@ describe('export (EXP-1..3)', () => {
     expect(exportFileName({ kind: 'range', from: null, to: null }, scopeData)).toBe('foosball-all.csv')
     expect(exportFileName({ kind: 'range', from: '2026-09-01', to: '2026-09-30' }, scopeData)).toBe('foosball-2026-09-01-to-2026-09-30.csv')
     expect(exportFileName({ kind: 'video', videoId: 'v1' }, scopeData)).toBe('foosball-aaaaaaaaaaa.csv')
-    expect(exportFileName({ kind: 'game', videoId: 'v1', gameId: 'g1' }, scopeData)).toBe('foosball-aaaaaaaaaaa-game-1.csv')
+    expect(exportFileName({ kind: 'game', videoId: 'v1', gameId: 'g1' }, scopeData)).toBe('foosball-aaaaaaaaaaa-match-1-game-1.csv')
   })
 
   it('counts confirmed possessions, adds candidates when ticked, follows the filters', async () => {

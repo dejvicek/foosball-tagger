@@ -1,4 +1,4 @@
-import type { Game, VideoSummary } from '../data/types'
+import type { Match, VideoSummary } from '../data/types'
 
 export function plural(n: number, one: string, many = `${one}s`): string {
   return `${n} ${n === 1 ? one : many}`
@@ -26,9 +26,9 @@ export function formatDuration(seconds: number): string {
 }
 
 /** "vs Olaf", or in doubles "with Eva · vs Olaf & Tom"; '' when no names are entered. */
-export function playersLabel(g: Pick<Game, 'format' | 'teammate' | 'opponent' | 'opponent2'>): string {
-  const opp = [g.opponent, g.opponent2].filter(Boolean).join(' & ')
-  const parts = [g.format === 'doubles' && g.teammate ? `with ${g.teammate}` : '', opp ? `vs ${opp}` : ''].filter(Boolean)
+export function playersLabel(m: Pick<Match, 'format' | 'teammate' | 'opponent' | 'opponent2'>): string {
+  const opp = [m.opponent, m.opponent2].filter(Boolean).join(' & ')
+  const parts = [m.format === 'doubles' && m.teammate ? `with ${m.teammate}` : '', opp ? `vs ${opp}` : ''].filter(Boolean)
   return parts.join(' · ')
 }
 

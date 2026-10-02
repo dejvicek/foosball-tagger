@@ -1,4 +1,4 @@
-import type { Game, Possession } from '../data/types'
+import type { Game, Match, Possession } from '../data/types'
 import type { ScopeData } from '../data/stats'
 import { summary } from '../videos/testData'
 import { EXPORT_COLUMNS, csvField, exportCsv, exportRows } from './csv'
@@ -7,15 +7,27 @@ const game = (o: Partial<Game>): Game => ({
   id: 'g1',
   user_id: 'u1',
   video_id: 'v1',
+  match_id: 'm1',
   start_s: 0,
   end_s: null,
   my_side: 'left',
+  my_score: null,
+  opp_score: null,
+  notes: null,
+  created_at: '2026-09-20T10:00:00Z',
+  updated_at: '2026-09-20T10:00:00Z',
+  ...o,
+})
+
+const match = (o: Partial<Match>): Match => ({
+  id: 'm1',
+  user_id: 'u1',
+  video_id: 'v1',
+  best_of: null,
   format: 'singles',
   teammate: null,
   opponent: null,
   opponent2: null,
-  my_score: null,
-  opp_score: null,
   notes: null,
   created_at: '2026-09-20T10:00:00Z',
   updated_at: '2026-09-20T10:00:00Z',
@@ -44,10 +56,11 @@ const pos = (o: Partial<Possession>): Possession => ({
 
 const data: ScopeData = {
   videos: [summary({ id: 'v1', youtube_id: 'abcdefghijk', title: 'Club night, "finals"', recorded_on: '2026-09-20' })],
-  games: [
-    game({ id: 'g2', start_s: 600, format: 'doubles', my_side: 'right', teammate: 'Eva', opponent: 'Tomáš', opponent2: 'Jan' }),
-    game({ id: 'g1', start_s: 10, opponent: 'Tomáš' }),
+  matches: [
+    match({ id: 'm2', format: 'doubles', teammate: 'Eva', opponent: 'Tomáš', opponent2: 'Jan' }),
+    match({ id: 'm1', opponent: 'Tomáš' }),
   ],
+  games: [game({ id: 'g2', match_id: 'm2', start_s: 600, my_side: 'right' }), game({ id: 'g1', start_s: 10 })],
   possessions: [
     pos({ id: 'b', start_s: 30, shot_s: 34.456, setup: 'Pull side', shot_type: 'Pin', hole: 'Middle', shot_direction: 'Z', result: 'No goal', execution: 'Proper' }),
     pos({ id: 'a', start_s: 12, shot_s: 16.5, setup: 'Middle', shot_type: 'Pull', hole: 'Pull long', shot_direction: 'Straight', result: 'Goal', execution: 'Misexecuted' }),

@@ -1,15 +1,17 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { FORMATS, SIDES, type Format, type Game, type Side } from '../data/types'
+import { SIDES, type Game, type Match, type Side } from '../data/types'
 import { formatTime } from '../player/time'
 import { gameRange, sortGames } from './games'
+import { gameLabel } from './matches'
 import { keyLabel } from '../player/keyboardLayout'
 import { useKeyboardLayout } from '../player/useKeyboardLayout'
 
-export type GameField = Partial<Pick<Game, 'my_side' | 'format' | 'teammate' | 'opponent' | 'opponent2' | 'my_score' | 'opp_score' | 'notes'>>
+export type GameField = Partial<Pick<Game, 'my_side' | 'my_score' | 'opp_score' | 'notes'>>
 
 interface Props {
   videoId: string
+  matches: Match[]
   games: Game[]
   duration: number | null
   ready: boolean
@@ -24,7 +26,6 @@ interface Props {
 }
 
 const SIDE_LABEL: Record<Side, string> = { left: 'Left', right: 'Right' }
-const FORMAT_LABEL: Record<Format, string> = { singles: 'Singles', doubles: 'Doubles' }
 
 function scoreValue(v: string): number | null {
   if (v.trim() === '') return null
@@ -66,8 +67,8 @@ export function GamesPanel(props: Props) {
         <p className="muted">Play the video and press B where a game starts and E where it ends.</p>
       ) : (
         <ol className="game-list">
-          {sorted.map((g, i) => (
-            <GameRow key={g.id} game={g} index={i + 1} {...props} />
+          {sorted.map((g) => (
+            <GameRow key={g.id} game={g} {...props} />
           ))}
         </ol>
       )}
@@ -75,7 +76,7 @@ export function GamesPanel(props: Props) {
   )
 }
 
-function GameRow({ game, index, games, duration, videoId, onSeek, onChange, onBoundary, onDelete }: Props & { game: Game; index: number }) {
+function GameRow({ game, matches, games, duration, videoId, onSeek, onChange, onBoundary, onDelete }: Props & { game: Game }) {
   const range = gameRange(game, games, duration)
   const length = Number.isFinite(range.end) ? range.end - range.start : null
   const id = `g-${game.id}`
@@ -85,7 +86,7 @@ function GameRow({ game, index, games, duration, videoId, onSeek, onChange, onBo
   return (
     <li className="game">
       <div className="game-head">
-        <h3>Game {index}</h3>
+        <h3>{gameLabel(matches, games, game)}</h3>
         <span className="game-range">
           <button className="seek" type="button" onClick={() => onSeek(game.start_s)} title="Seek to the start">
             {formatTime(game.start_s)}
@@ -113,31 +114,6 @@ function GameRow({ game, index, games, duration, videoId, onSeek, onChange, onBo
             </option>
           ))}
         </select>
-        <span className="label" id={`${id}-format`}>
-          Format
-        </span>
-        <span className="seg-ctl" role="group" aria-labelledby={`${id}-format`}>
-          {FORMATS.map((f) => (
-            <button
-              key={f}
-              type="button"
-              className="opt nf"
-              aria-pressed={game.format === f}
-              // Singles has no teammate or second opponent (CHECK in 0002_game_players.sql).
-              onClick={() => onChange(game.id, f === 'singles' ? { format: f, teammate: null, opponent2: null } : { format: f })}
-            >
-              {FORMAT_LABEL[f]}
-            </button>
-          ))}
-        </span>
-        {game.format === 'doubles' && <NameField id={`${id}-mate`} label="Teammate" value={game.teammate} onChange={(v) => onChange(game.id, { teammate: v })} />}
-        <NameField
-          id={`${id}-opp`}
-          label={game.format === 'doubles' ? 'Opponent 1' : 'Opponent'}
-          value={game.opponent}
-          onChange={(v) => onChange(game.id, { opponent: v })}
-        />
-        {game.format === 'doubles' && <NameField id={`${id}-opp2`} label="Opponent 2" value={game.opponent2} onChange={(v) => onChange(game.id, { opponent2: v })} />}
         <span className="label" id={`${id}-score`}>
           Score
         </span>
@@ -187,20 +163,5 @@ function GameRow({ game, index, games, duration, videoId, onSeek, onChange, onBo
         </button>
       </div>
     </li>
-  )
-}
-
-function NameField({ id, label, value, onChange }: { id: string; label: string; value: string | null; onChange: (v: string | null) => void }) {
-  return (
-    <>
-      <label htmlFor={id}>{label}</label>
-      <input
-        id={id}
-        type="text"
-        value={value ?? ''}
-        onChange={(e) => onChange(e.target.value || null)}
-        onBlur={(e) => onChange(e.target.value.trim() || null)}
-      />
-    </>
   )
 }

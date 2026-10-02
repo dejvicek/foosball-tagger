@@ -13,9 +13,10 @@ export interface StatItem {
   execution: Execution | null
   review_status: ReviewStatus
   gameId: string
+  matchId: string
   videoId: string
   format: Format
-  /** Opponents' names in the game (one in singles, up to two in doubles); empty when none entered. */
+  /** Opponents' names in the match (one in singles, up to two in doubles); empty when none entered. */
   opponents: string[]
   /** Calendar date of the video (YYYY-MM-DD). */
   date: string

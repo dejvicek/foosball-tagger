@@ -70,22 +70,25 @@ export type Video = {
 
 export type VideoSummary = Video & {
   game_count: number
+  match_count: number
   confirmed_possession_count: number
   possession_count: number
   calibration_count: number
   job_count: number
   job_running: boolean
-  match_count: number
 }
 
+/** A match on a video: one or more games against the same players (ADR-0040). */
 export type Match = {
   id: string
   user_id: string
   video_id: string
+  /** Best of n games; null = not stated. Any n ≥ 1, even ones too. */
   best_of: number | null
   format: Format
-  opponent: string | null
+  /** Doubles only (null in singles), like opponent2. */
   teammate: string | null
+  opponent: string | null
   opponent2: string | null
   notes: string | null
   created_at: string
@@ -96,14 +99,10 @@ export type Game = {
   id: string
   user_id: string
   video_id: string
+  match_id: string
   start_s: number
   end_s: number | null
   my_side: Side
-  format: Format
-  /** Doubles only (null in singles), like opponent2. */
-  teammate: string | null
-  opponent: string | null
-  opponent2: string | null
   my_score: number | null
   opp_score: number | null
   notes: string | null
@@ -175,9 +174,9 @@ export type VideoUpdate = Updatable<Video>
 export interface Database {
   public: {
     Tables: {
-      matches: Table<Match, Insertable<Match, 'video_id' | 'format'>, Updatable<Match>>
+      matches: Table<Match, Insertable<Match, 'video_id'>, Updatable<Match>>
       videos: Table<Video, VideoInsert, VideoUpdate>
-      games: Table<Game, Insertable<Game, 'video_id' | 'start_s' | 'my_side'>, Updatable<Game>>
+      games: Table<Game, Insertable<Game, 'video_id' | 'match_id' | 'start_s' | 'my_side'>, Updatable<Game>>
       calibrations: Table<Calibration, Insertable<Calibration, 'video_id' | 'points'>, Updatable<Calibration>>
       possessions: Table<Possession, Insertable<Possession, 'game_id'>, Updatable<Possession>>
       analysis_jobs: Table<AnalysisJob, Insertable<AnalysisJob, 'video_id'>, Updatable<AnalysisJob>>

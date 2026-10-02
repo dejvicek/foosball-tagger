@@ -22,6 +22,7 @@ export function fixtureItems(f: Fixture): StatItem[] {
     execution: p.execution,
     review_status: p.review_status,
     gameId: f.game.id,
+    matchId: `m-${f.game.id}`,
     videoId: f.video.id,
     format: f.game.format,
     opponents: f.game.opponent ? [f.game.opponent] : [],

@@ -3,7 +3,8 @@ import { useCinemaPage } from '../player/useCinema'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { deleteVideo, getVideo, updateVideo } from '../data/videos'
 import { deleteGame, loadGames, possessionCounts, saveGame } from '../data/games'
-import { FPS_VALUES, type Fps, type Game, type Side, type VideoSummary } from '../data/types'
+import { loadMatches, saveMatch } from '../data/matches'
+import { FPS_VALUES, type Fps, type Game, type Match, type Side, type VideoSummary } from '../data/types'
 import { PlayerController } from '../player/controller'
 import { PlayerControls } from '../player/PlayerControls'
 import { SeekBar, type SeekMark } from '../player/SeekBar'
@@ -16,7 +17,8 @@ import { useQueue } from '../app/QueueProvider'
 import { useResource } from '../app/useResource'
 import { useToast } from '../app/useToast'
 import { deleteSummary, formatDuration, plural, videoTitle } from './format'
-import { defaultSide, endGame, gameNumber, gameRange, setBoundary, sortGames, startGame, type Plan } from './games'
+import { defaultSide, endGame, gameRange, setBoundary, sortGames, startGame, type Plan } from './games'
+import { currentMatch, gameLabel, newMatch } from './matches'
 import { GamesPanel, type GameField } from './GamesPanel'
 import type { VideosLocationState } from './VideosPage'
 
@@ -79,14 +81,27 @@ function VideoScreen({
   const duration = snapshot.duration ?? video.duration_s
   const { toast, show } = useToast()
 
-  const loadVideoGames = useCallback(() => loadGames(queue, video.id), [queue, video.id])
+  const loadVideoGames = useCallback(
+    () => Promise.all([loadMatches(queue, video.id), loadGames(queue, video.id)]).then(([matches, games]) => ({ matches, games })),
+    [queue, video.id],
+  )
   const gamesResource = useResource(loadVideoGames)
-  const games = gamesResource.state.kind === 'ready' ? gamesResource.state.value : null
-  const setGames = gamesResource.update
+  const { update: updateLoaded } = gamesResource
+  const loaded = gamesResource.state.kind === 'ready' ? gamesResource.state.value : null
+  const games = loaded?.games ?? null
+  const matches = loaded?.matches ?? null
+  const setGames = useCallback(
+    (f: (gs: Game[]) => Game[]) => updateLoaded((d) => (d ? { ...d, games: f(d.games) } : d)),
+    [updateLoaded],
+  )
+  const setMatches = useCallback(
+    (f: (ms: Match[]) => Match[]) => updateLoaded((d) => (d ? { ...d, matches: f(d.matches) } : d)),
+    [updateLoaded],
+  )
   const [firstSide, setFirstSide] = useState<Side | null>(null)
-  const marks: SeekMark[] = sortGames(games ?? []).map((g, i) => {
+  const marks: SeekMark[] = sortGames(games ?? []).map((g) => {
     const r = gameRange(g, games ?? [], duration)
-    return { id: g.id, start: r.start, end: Number.isFinite(r.end) ? r.end : r.start, label: `Game ${i + 1}` }
+    return { id: g.id, start: r.start, end: Number.isFinite(r.end) ? r.end : r.start, label: gameLabel(matches ?? [], games ?? [], g) }
   })
   const [toDelete, setToDelete] = useState<{ game: Game; possessions: number | null } | null>(null)
 
@@ -116,23 +131,33 @@ function VideoScreen({
   )
 
   const start = useCallback(() => {
-    if (!games) return
+    if (!games || !matches) return
     const at = controller.time()
     const side = games.length > 0 ? defaultSide(games, at) : firstSide
-    apply(startGame(games, at, { id: crypto.randomUUID(), userId, videoId: video.id, now: nowIso(), side }, duration))
-  }, [games, controller, apply, userId, video.id, firstSide, duration])
+    const now = nowIso()
+    // B adds to the last match, or creates the first one (ADR-0040).
+    const existing = currentMatch(matches, games, null)
+    const match = existing ?? newMatch({ id: crypto.randomUUID(), userId, videoId: video.id, now }, undefined)
+    const ms = existing ? matches : [...matches, match]
+    const plan = startGame(games, ms, at, { id: crypto.randomUUID(), userId, videoId: video.id, now, side, matchId: match.id }, duration)
+    if (plan.ok && !existing) {
+      setMatches(() => ms)
+      saveMatch(queue, match)
+    }
+    apply(plan)
+  }, [games, matches, controller, apply, userId, video.id, firstSide, duration, queue, setMatches])
 
   const end = useCallback(() => {
-    if (!games) return
-    apply(endGame(games, controller.time(), nowIso(), duration))
-  }, [games, controller, apply, duration])
+    if (!games || !matches) return
+    apply(endGame(games, matches, controller.time(), nowIso(), duration))
+  }, [games, matches, controller, apply, duration])
 
   const boundary = useCallback(
     (gameId: string, which: 'start' | 'end') => {
-      if (!games) return
-      apply(setBoundary(games, gameId, which, controller.time(), nowIso(), duration))
+      if (!games || !matches) return
+      apply(setBoundary(games, matches, gameId, which, controller.time(), nowIso(), duration))
     },
-    [games, controller, apply, duration],
+    [games, matches, controller, apply, duration],
   )
 
   const change = useCallback(
@@ -155,12 +180,12 @@ function VideoScreen({
   }, [])
 
   const confirmDelete = () => {
-    if (!toDelete || !games) return
-    const n = gameNumber(games, toDelete.game.id)
+    if (!toDelete || !games || !matches) return
+    const label = gameLabel(matches, games, toDelete.game)
     deleteGame(queue, toDelete.game.id)
     setGames((gs) => gs.filter((g) => g.id !== toDelete.game.id))
     setToDelete(null)
-    show(`Deleted Game ${n}.`)
+    show(`Deleted ${label}.`)
   }
 
   // Keyboard (TAG-1 rules): player keys, plus B / E for games on this screen only (ADR-0010).
@@ -233,9 +258,10 @@ function VideoScreen({
               </button>
             </section>
           )}
-          {games && (
+          {games && matches && (
             <GamesPanel
               videoId={video.id}
+              matches={matches}
               games={games}
               duration={duration}
               ready={snapshot.ready}
@@ -255,9 +281,9 @@ function VideoScreen({
         <VideoDetailsForm video={video} onSaved={merge} />
         <DeleteVideo video={video} />
       </div>
-      {toDelete && games && (
+      {toDelete && games && matches && (
         <ConfirmDialog
-          title={`Delete Game ${gameNumber(games, toDelete.game.id)}?`}
+          title={`Delete ${gameLabel(matches, games, toDelete.game)}?`}
           confirmLabel="Delete game"
           onConfirm={confirmDelete}
           onCancel={() => setToDelete(null)}

@@ -3,9 +3,10 @@ import { useEffect } from 'react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import { deleteVideo, getVideo, updateVideo } from '../data/videos'
 import { loadGames, possessionCounts } from '../data/games'
+import { loadMatches } from '../data/matches'
 import { WriteQueue, type QueueEntry, type QueueRow } from '../data/queue'
 import { PLAYER_STATE, type PlayerController, type YTPlayerLike } from '../player/controller'
-import type { Game } from '../data/types'
+import type { Game, Match } from '../data/types'
 import { VideoPage } from './VideoPage'
 import { summary } from './testData'
 
@@ -22,6 +23,11 @@ vi.mock('../data/games', async (importOriginal) => {
     loadGames: vi.fn<typeof actual.loadGames>(),
     possessionCounts: vi.fn<typeof actual.possessionCounts>(),
   }
+})
+
+vi.mock('../data/matches', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../data/matches')>()
+  return { ...actual, loadMatches: vi.fn<typeof actual.loadMatches>() }
 })
 
 // A player that is ready at once and whose time the test sets.
@@ -89,13 +95,10 @@ function game(start_s: number, end_s: number | null, extra: Partial<Game> = {}):
     id: `g-${start_s}`,
     user_id: 'u1',
     video_id: 'v1',
+    match_id: 'm1',
     start_s,
     end_s,
     my_side: 'right',
-    format: 'singles',
-    teammate: null,
-    opponent: null,
-    opponent2: null,
     my_score: null,
     opp_score: null,
     notes: null,
@@ -105,12 +108,36 @@ function game(start_s: number, end_s: number | null, extra: Partial<Game> = {}):
   }
 }
 
+function match(id: string, extra: Partial<Match> = {}): Match {
+  return {
+    id,
+    user_id: 'u1',
+    video_id: 'v1',
+    best_of: null,
+    format: 'singles',
+    teammate: null,
+    opponent: null,
+    opponent2: null,
+    notes: null,
+    created_at: '2026-09-24T00:00:00Z',
+    updated_at: '2026-09-24T00:00:00Z',
+    ...extra,
+  }
+}
+
+/** Games of one match m1, as the screen loads them. */
+function loadOneMatch(games: Game[]) {
+  vi.mocked(loadMatches).mockResolvedValue([match('m1')])
+  vi.mocked(loadGames).mockResolvedValue(games)
+}
+
 beforeEach(() => {
   fake.t = 0
   written.length = 0
   queue = makeQueue()
   vi.mocked(getVideo).mockResolvedValue(summary())
   vi.mocked(loadGames).mockResolvedValue([])
+  vi.mocked(loadMatches).mockResolvedValue([])
   vi.mocked(possessionCounts).mockResolvedValue(new Map())
 })
 
@@ -161,7 +188,7 @@ describe('games on the video screen (GAM-1..4)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Right' }))
     press('b')
-    expect(await screen.findByRole('heading', { name: 'Game 1' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Match 1 · Game 1' })).toBeInTheDocument()
     expect(screen.getByText('open')).toBeInTheDocument()
     expect(screen.getByLabelText('My side')).toHaveValue('right')
 
@@ -169,55 +196,39 @@ describe('games on the video screen (GAM-1..4)', () => {
     press('E')
     expect(await screen.findByRole('button', { name: '1:35.5' })).toBeInTheDocument()
     await act(() => queue.flush())
-    expect(written).toHaveLength(1) // create and close coalesced into one write
-    expect(written[0]).toMatch(/"start_s":12,"end_s":95.5,"my_side":"right"/)
+    expect(written).toHaveLength(2) // the new match, then the game's create and close coalesced into one write
+    expect(written[1]).toMatch(/"start_s":12,"end_s":95.5,"my_side":"right"/)
   })
 
   it('B closes the open game and starts the next with the same side (GAM-1, GAM-2)', async () => {
-    vi.mocked(loadGames).mockResolvedValue([game(10, null, { my_side: 'right' })])
+    loadOneMatch([game(10, null, { my_side: 'right' })])
     renderPage()
-    await screen.findByRole('heading', { name: 'Game 1' })
+    await screen.findByRole('heading', { name: 'Match 1 · Game 1' })
     fake.t = 300
     press('b')
-    expect(await screen.findByRole('heading', { name: 'Game 2' })).toBeInTheDocument()
-    expect(screen.getByText(/Ended Game 1 and started Game 2 at 5:00.0/)).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Match 1 · Game 2' })).toBeInTheDocument()
+    expect(screen.getByText(/Ended Match 1 · Game 1 and started Match 1 · Game 2 at 5:00.0/)).toBeInTheDocument()
     const selects = screen.getAllByLabelText('My side')
     expect(selects.map((s) => (s as HTMLSelectElement).value)).toEqual(['right', 'right'])
   })
 
   it('refuses overlapping games and explains why (GAM-4)', async () => {
-    vi.mocked(loadGames).mockResolvedValue([game(10, 100)])
+    loadOneMatch([game(10, 100)])
     renderPage()
-    await screen.findByRole('heading', { name: 'Game 1' })
+    await screen.findByRole('heading', { name: 'Match 1 · Game 1' })
     fake.t = 50
     press('b')
-    expect(await screen.findByText(/inside Game 1 \(0:10.0–1:40.0\)/)).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'Game 2' })).not.toBeInTheDocument()
+    expect(await screen.findByText(/inside Match 1 · Game 1 \(0:10.0–1:40.0\)/)).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Match 1 · Game 2' })).not.toBeInTheDocument()
   })
 
   it('edits game fields inline and queues the write (GAM-2)', async () => {
-    vi.mocked(loadGames).mockResolvedValue([game(10, 100)])
+    loadOneMatch([game(10, 100)])
     renderPage()
-    fireEvent.change(await screen.findByLabelText('Opponent'), { target: { value: 'Tomáš' } })
-    expect(screen.queryByLabelText('Teammate')).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Doubles' }))
-    fireEvent.change(screen.getByLabelText('Teammate'), { target: { value: 'Eva' } })
-    fireEvent.change(screen.getByLabelText('Opponent 2'), { target: { value: 'Olaf' } })
-    fireEvent.change(screen.getByLabelText('My score'), { target: { value: '5' } })
+    fireEvent.change(await screen.findByLabelText('My score'), { target: { value: '5' } })
     expect(queue.getStatus().pending).toBe(1)
     await act(() => queue.flush())
-    expect(written[0]).toMatch(/"format":"doubles","teammate":"Eva","opponent":"Tomáš","opponent2":"Olaf","my_score":5/)
-  })
-
-  it('switching back to singles clears the teammate and second opponent (GAM-2, ADR-0023)', async () => {
-    vi.mocked(loadGames).mockResolvedValue([game(10, 100, { format: 'doubles', teammate: 'Eva', opponent: 'Tomáš', opponent2: 'Olaf' })])
-    renderPage()
-    expect(await screen.findByLabelText('Opponent 1')).toHaveValue('Tomáš')
-    fireEvent.click(screen.getByRole('button', { name: 'Singles' }))
-    expect(screen.getByLabelText('Opponent')).toHaveValue('Tomáš')
-    expect(screen.queryByLabelText('Opponent 2')).not.toBeInTheDocument()
-    await act(() => queue.flush())
-    expect(written[0]).toMatch(/"format":"singles","teammate":null,"opponent":"Tomáš","opponent2":null/)
+    expect(written[0]).toMatch(/^upsert games .*"my_score":5/)
   })
 
   it('cinema mode widens the player and is remembered (ADR-0023)', async () => {
@@ -235,7 +246,7 @@ describe('games on the video screen (GAM-1..4)', () => {
   })
 
   it('clicking a game start seeks there (GAM-3), and Tag opens its tagging screen', async () => {
-    vi.mocked(loadGames).mockResolvedValue([game(42, 100)])
+    loadOneMatch([game(42, 100)])
     renderPage()
     fireEvent.click(await screen.findByRole('button', { name: '0:42.0' }))
     expect(fake.t).toBe(42)
@@ -244,24 +255,35 @@ describe('games on the video screen (GAM-1..4)', () => {
   })
 
   it('deletes a game after confirming with its possession count', async () => {
-    vi.mocked(loadGames).mockResolvedValue([game(10, 100)])
+    loadOneMatch([game(10, 100)])
     vi.mocked(possessionCounts).mockResolvedValue(new Map([['g-10', 7]]))
     renderPage()
     fireEvent.click(await screen.findByRole('button', { name: 'Delete…' }))
     const dialog = screen.getByRole('alertdialog')
     expect(await within(dialog).findByText(/also deletes its 7 possessions/)).toBeInTheDocument()
     fireEvent.click(within(dialog).getByRole('button', { name: 'Delete game' }))
-    expect(screen.queryByRole('heading', { name: 'Game 1' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Match 1 · Game 1' })).not.toBeInTheDocument()
     await act(() => queue.flush())
     expect(written).toEqual(['delete games g-10'])
   })
 
   it('ignores shortcuts while typing in a field (TAG-1)', async () => {
-    vi.mocked(loadGames).mockResolvedValue([game(10, null)])
+    loadOneMatch([game(10, null)])
     renderPage()
     const notes = await screen.findByLabelText('Notes', { selector: 'input' })
     fake.t = 50
     fireEvent.keyDown(notes, { key: 'e' })
     expect(screen.getByText('open')).toBeInTheDocument()
+  })
+
+  it('creates the first match with the first game (ADR-0040)', async () => {
+    renderPage()
+    fireEvent.click(await screen.findByRole('button', { name: 'Left' }))
+    press('b')
+    expect(await screen.findByText('Started Match 1 · Game 1 at 0:00.0.')).toBeInTheDocument()
+    await act(() => queue.flush())
+    expect(written[0]).toMatch(/^upsert matches .*"format":"singles"/)
+    expect(written[1]).toMatch(/^upsert games .*"match_id"/)
+    expect(written[1]).not.toMatch(/"opponent"|"format"/)
   })
 })

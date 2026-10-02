@@ -1,4 +1,4 @@
-import type { Format, Game, ShotType } from '../data/types'
+import type { Format, Match, ShotType } from '../data/types'
 import type { StatItem } from './types'
 
 /** STA-4 filters. Empty / null means "all". */
@@ -30,7 +30,7 @@ export function opponentsOf(items: readonly StatItem[]): string[] {
   return [...new Set(items.flatMap((p) => (p.opponents.length === 0 ? [''] : p.opponents)))].sort((a, b) => a.localeCompare(b))
 }
 
-/** The named opponents of a game, in order. */
-export function gameOpponents(g: Pick<Game, 'opponent' | 'opponent2'>): string[] {
+/** The named opponents of a match, in order. */
+export function matchOpponents(g: Pick<Match, 'opponent' | 'opponent2'>): string[] {
   return [g.opponent, g.opponent2].filter((o): o is string => o != null && o !== '')
 }

@@ -3,12 +3,14 @@ import { useSearchParams } from 'react-router'
 import { loadScope, scopeItems, type ScopeData, type StatScope } from '../data/stats'
 import { listVideos } from '../data/videos'
 import { loadGames } from '../data/games'
+import { loadMatches } from '../data/matches'
 import { FORMATS, SHOT_TYPES, type Format, type ShotType } from '../data/types'
 import { applyFilters, confirmedOnly, opponentsOf, type StatFilters } from '../stats'
 import { useQueue } from '../app/QueueProvider'
 import { useResource } from '../app/useResource'
 import { formatDate, playersLabel, plural, videoTitle } from '../videos/format'
-import { gameNumber, sortGames } from '../videos/games'
+import { sortGames } from '../videos/games'
+import { gameInMatch, gameLabel, matchNumber } from '../videos/matches'
 import { formatTime } from '../player/time'
 import { StatsView } from './StatsView'
 import { ExportCard } from './ExportCard'
@@ -36,14 +38,17 @@ export function filtersFromParams(p: URLSearchParams): StatFilters {
   }
 }
 
-/** e.g. foosball-dQw4w9WgXcQ-game-2.csv, foosball-2026-09-01-to-2026-09-30.csv */
+/** e.g. foosball-dQw4w9WgXcQ-match-1-game-2.csv, foosball-2026-09-01-to-2026-09-30.csv */
 export function exportFileName(scope: StatScope, data: ScopeData): string {
   if (scope.kind === 'range') {
     return scope.from == null && scope.to == null ? 'foosball-all.csv' : `foosball-${scope.from ?? 'start'}-to-${scope.to ?? today()}.csv`
   }
   const yt = data.videos[0]?.youtube_id ?? 'video'
   if (scope.kind === 'video') return `foosball-${yt}.csv`
-  return `foosball-${yt}-game-${gameNumber(data.games, scope.gameId)}.csv`
+  const game = data.games.find((g) => g.id === scope.gameId)
+  const m = game ? matchNumber(data.matches, data.games, game.match_id) : 0
+  const k = game ? gameInMatch(data.games, game) : 0
+  return `foosball-${yt}-match-${m}-game-${k}.csv`
 }
 
 const today = () => new Date().toISOString().slice(0, 10)
@@ -67,7 +72,13 @@ export function StatsPage() {
 
   const videos = useResource(listVideos)
   const videoId = scope.kind === 'range' ? null : scope.videoId
-  const loadVideoGames = useCallback(() => (videoId ? loadGames(queue, videoId) : Promise.resolve([])), [queue, videoId])
+  const loadVideoGames = useCallback(
+    () =>
+      videoId
+        ? Promise.all([loadMatches(queue, videoId), loadGames(queue, videoId)]).then(([matches, games]) => ({ matches, games }))
+        : Promise.resolve({ matches: [], games: [] }),
+    [queue, videoId],
+  )
   const games = useResource(loadVideoGames)
 
   // eslint-disable-next-line react/exhaustive-deps -- scopeKey stands for scope
@@ -86,7 +97,9 @@ export function StatsPage() {
   const keep = useCallback((id: string) => keepIds.has(id), [keepIds])
   const opponents = opponentsOf(confirmed)
   const videoList = videos.state.kind === 'ready' ? videos.state.value : []
-  const gameList = games.state.kind === 'ready' ? sortGames(games.state.value) : []
+  const ms = games.state.kind === 'ready' ? games.state.value.matches : []
+  const gs = games.state.kind === 'ready' ? games.state.value.games : []
+  const gameList = sortGames(gs)
   const firstVideo = videoList[0]?.id ?? null
 
   const toggleShot = (s: ShotType) => {
@@ -166,12 +179,16 @@ export function StatsPage() {
                 <label htmlFor="st-game">Game</label>
                 <select id="st-game" value={params.get('game') ?? ''} onChange={(e) => set({ game: e.target.value })}>
                   <option value="">Choose a game…</option>
-                  {gameList.map((g, i) => (
-                    <option key={g.id} value={g.id}>
-                      Game {i + 1} · {formatTime(g.start_s, 0)}
-                      {playersLabel(g) ? ` · ${playersLabel(g)}` : ''}
-                    </option>
-                  ))}
+                  {gameList.map((g) => {
+                    const match = ms.find((m) => m.id === g.match_id)
+                    const players = match ? playersLabel(match) : ''
+                    return (
+                      <option key={g.id} value={g.id}>
+                        {gameLabel(ms, gs, g)} · {formatTime(g.start_s, 0)}
+                        {players ? ` · ${players}` : ''}
+                      </option>
+                    )
+                  })}
                 </select>
               </>
             )}

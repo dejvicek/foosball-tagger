@@ -3,8 +3,9 @@ import { useCinemaPage } from '../player/useCinema'
 import { Link, useParams } from 'react-router'
 import { getVideo } from '../data/videos'
 import { loadGames } from '../data/games'
+import { loadMatches } from '../data/matches'
 import { deletePossession, loadPossessions, savePossession } from '../data/possessions'
-import type { Game, Possession, ReviewStatus, VideoSummary } from '../data/types'
+import type { Game, Match, Possession, ReviewStatus, VideoSummary } from '../data/types'
 import { PlayerController } from '../player/controller'
 import { PlayerControls } from '../player/PlayerControls'
 import { YouTubePlayer } from '../player/YouTubePlayer'
@@ -13,7 +14,8 @@ import { formatTime } from '../player/time'
 import { useQueue } from '../app/QueueProvider'
 import { useResource } from '../app/useResource'
 import { useToast } from '../app/useToast'
-import { gameNumber, gameRange } from '../videos/games'
+import { gameRange } from '../videos/games'
+import { gameLabel } from '../videos/matches'
 import { playersLabel, videoTitle } from '../videos/format'
 import { reduce, reduceEdit, sameDraft, toDraft, type Draft, type DraftEvent } from './draft'
 import { loadDraft, storeDraft } from './draftStore'
@@ -29,8 +31,10 @@ import { confirmedOnly } from '../stats'
 
 interface Loaded {
   video: VideoSummary
+  matches: Match[]
   games: Game[]
   game: Game
+  match: Match
   possessions: Possession[]
 }
 
@@ -38,9 +42,15 @@ export function TaggingPage({ userId }: { userId: string }) {
   const { id = '', gameId = '' } = useParams()
   const queue = useQueue()
   const load = useCallback(async (): Promise<Loaded | null> => {
-    const [video, games, possessions] = await Promise.all([getVideo(id), loadGames(queue, id), loadPossessions(queue, gameId)])
+    const [video, matches, games, possessions] = await Promise.all([
+      getVideo(id),
+      loadMatches(queue, id),
+      loadGames(queue, id),
+      loadPossessions(queue, gameId),
+    ])
     const game = games.find((g) => g.id === gameId)
-    return video && game ? { video, games, game, possessions } : null
+    const match = game && matches.find((m) => m.id === game.match_id)
+    return video && game && match ? { video, matches, games, game, match, possessions } : null
   }, [id, gameId, queue])
   const { state, reload } = useResource(load)
 
@@ -78,14 +88,14 @@ export function TaggingPage({ userId }: { userId: string }) {
 const nowIso = () => new Date().toISOString()
 
 function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
-  const { video, games, game } = loaded
+  const { video, matches, games, game, match } = loaded
   const queue = useQueue()
   const [controller] = useState(() => new PlayerController())
   const snapshot = useSyncExternalStore(controller.subscribe, controller.getSnapshot)
   const duration = snapshot.duration ?? video.duration_s
   const range = gameRange(game, games, duration)
   const shownRange = { start: range.start, end: Number.isFinite(range.end) ? range.end : range.start + 600 }
-  const label = `Game ${gameNumber(games, game.id)}`
+  const label = gameLabel(matches, games, game)
   const { toast, show } = useToast()
 
   const [possessions, setPossessions] = useState(loaded.possessions)
@@ -110,7 +120,7 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
 
   const rows = useMemo(() => numberPossessions(possessions), [possessions])
   // Live game statistics from what is tagged here, synced or not (STA-4 game scope).
-  const statItems = useMemo(() => confirmedOnly(possessions.map((p) => toStatItem(p, game, video))), [possessions, game, video])
+  const statItems = useMemo(() => confirmedOnly(possessions.map((p) => toStatItem(p, game, match, video))), [possessions, game, match, video])
   const numbered = useMemo(() => rows.filter((r): r is { p: Possession; n: number } => r.n != null), [rows])
 
   // GAM-3: the tagging screen opens at the game's start.
@@ -241,8 +251,8 @@ function TaggingScreen({ loaded, userId }: { loaded: Loaded; userId: string }) {
         {label}
         <span className="muted game-meta">
           {' '}
-          · {formatTime(range.start)}–{Number.isFinite(range.end) ? formatTime(range.end) : 'end'} · {game.format === 'doubles' ? 'doubles' : 'singles'}, on the {game.my_side}
-          {playersLabel(game) ? ` · ${playersLabel(game)}` : ''}
+          · {formatTime(range.start)}–{Number.isFinite(range.end) ? formatTime(range.end) : 'end'} · {match.format === 'doubles' ? 'doubles' : 'singles'}, on the {game.my_side}
+          {playersLabel(match) ? ` · ${playersLabel(match)}` : ''}
         </span>
       </h2>
       <div className={cinema ? 'grid cinema' : 'grid'} style={{ '--ar': ar } as CSSProperties}>

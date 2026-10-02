@@ -3,9 +3,10 @@ import { useEffect } from 'react'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { getVideo } from '../data/videos'
 import { loadGames } from '../data/games'
+import { loadMatches } from '../data/matches'
 import { loadPossessions } from '../data/possessions'
 import { WriteQueue, type QueueEntry, type QueueRow } from '../data/queue'
-import type { Game, Possession } from '../data/types'
+import type { Game, Match, Possession } from '../data/types'
 import { PLAYER_STATE, type PlayerController, type YTPlayerLike } from '../player/controller'
 import { summary } from '../videos/testData'
 import { emptyDraft } from './draft'
@@ -14,6 +15,7 @@ import { TaggingPage } from './TaggingPage'
 
 vi.mock('../data/videos', () => ({ getVideo: vi.fn<typeof import('../data/videos').getVideo>() }))
 vi.mock('../data/games', () => ({ loadGames: vi.fn<typeof import('../data/games').loadGames>() }))
+vi.mock('../data/matches', () => ({ loadMatches: vi.fn<typeof import('../data/matches').loadMatches>() }))
 vi.mock('../data/possessions', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../data/possessions')>()
   return { ...actual, loadPossessions: vi.fn<typeof actual.loadPossessions>() }
@@ -59,17 +61,28 @@ function makeQueue() {
   )
 }
 
-const game: Game = {
-  id: 'g1',
+const match: Match = {
+  id: 'm1',
   user_id: 'u1',
   video_id: 'v1',
-  start_s: 60,
-  end_s: 300,
-  my_side: 'left',
+  best_of: null,
   format: 'singles',
   teammate: null,
   opponent: 'Olaf',
   opponent2: null,
+  notes: null,
+  created_at: '2026-09-24T00:00:00Z',
+  updated_at: '2026-09-24T00:00:00Z',
+}
+
+const game: Game = {
+  id: 'g1',
+  user_id: 'u1',
+  video_id: 'v1',
+  match_id: 'm1',
+  start_s: 60,
+  end_s: 300,
+  my_side: 'left',
   my_score: null,
   opp_score: null,
   notes: null,
@@ -109,6 +122,7 @@ beforeEach(() => {
   queue = makeQueue()
   vi.mocked(getVideo).mockResolvedValue(summary({ duration_s: 600 }))
   vi.mocked(loadGames).mockResolvedValue([game])
+  vi.mocked(loadMatches).mockResolvedValue([match])
   vi.mocked(loadPossessions).mockResolvedValue([])
 })
 
@@ -236,7 +250,7 @@ describe('tagging screen keyboard (TAG-1..5, PRD §8)', () => {
     expect(screen.getByText(/can’t be before the start/)).toBeInTheDocument()
     at(301)
     press('f')
-    expect(screen.getByText(/outside Game 1 \(1:00.0–5:00.0\)/)).toBeInTheDocument()
+    expect(screen.getByText(/outside Match 1 · Game 1 \(1:00.0–5:00.0\)/)).toBeInTheDocument()
   })
 
   it('ignores tag keys while a field has focus', async () => {

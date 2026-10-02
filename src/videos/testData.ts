@@ -14,12 +14,12 @@ export function summary(overrides: Partial<VideoSummary> = {}): VideoSummary {
     created_at: '2026-09-24T10:00:00Z',
     updated_at: '2026-09-24T10:00:00Z',
     game_count: 0,
+    match_count: 0,
     confirmed_possession_count: 0,
     possession_count: 0,
     calibration_count: 0,
     job_count: 0,
     job_running: false,
-    match_count: 0,
     ...overrides,
   }
 }

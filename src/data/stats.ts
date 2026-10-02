@@ -1,10 +1,10 @@
 import { getSupabase } from './supabase'
 import { toDataError } from './errors'
 import type { WriteQueue } from './queue'
-import type { Game, Possession, VideoSummary } from './types'
+import type { Game, Match, Possession, VideoSummary } from './types'
 import { listVideos, getVideo } from './videos'
 import type { StatItem } from '../stats/types'
-import { gameOpponents } from '../stats/filters'
+import { matchOpponents } from '../stats/filters'
 
 export type StatScope =
   | { kind: 'game'; videoId: string; gameId: string }
@@ -25,14 +25,15 @@ async function inChunks<T>(ids: string[], fetch: (chunk: string[]) => Promise<T[
   return out
 }
 
-/** Everything in a scope: its videos, their games (one in game scope) and those games' possessions, all review states. */
+/** Everything in a scope: its videos, their matches, their games (one in game scope) and those games' possessions, all review states. */
 export interface ScopeData {
   videos: VideoSummary[]
+  matches: Match[]
   games: Game[]
   possessions: Possession[]
 }
 
-const EMPTY: ScopeData = { videos: [], games: [], possessions: [] }
+const EMPTY: ScopeData = { videos: [], matches: [], games: [], possessions: [] }
 
 /**
  * Loads a scope for statistics and export. Pending writes are replayed first and
@@ -55,6 +56,13 @@ export async function loadScope(queue: WriteQueue, scope: StatScope): Promise<Sc
   if (videos.length === 0) return EMPTY
   const videoIds = new Set(videos.map((v) => v.id))
 
+  let matches = await inChunks([...videoIds], async (chunk) => {
+    const { data, error } = await db.from('matches').select('*').in('video_id', chunk)
+    if (error) throw toDataError(error, 'load the matches')
+    return data
+  })
+  matches = queue.overlay('matches', matches, (row) => videoIds.has(row.video_id as string))
+
   let games = await inChunks([...videoIds], async (chunk) => {
     const { data, error } = await db.from('games').select('*').in('video_id', chunk)
     if (error) throw toDataError(error, 'load the games')
@@ -62,7 +70,7 @@ export async function loadScope(queue: WriteQueue, scope: StatScope): Promise<Sc
   })
   games = queue.overlay('games', games, (row) => videoIds.has(row.video_id as string))
   const gameIds = new Set((scope.kind === 'game' ? games.filter((g) => g.id === scope.gameId) : games).map((g) => g.id))
-  if (gameIds.size === 0) return { videos, games, possessions: [] }
+  if (gameIds.size === 0) return { videos, matches, games, possessions: [] }
 
   let possessions = await inChunks([...gameIds], async (chunk) => {
     const { data, error } = await db.from('possessions').select('*').in('game_id', chunk)
@@ -70,23 +78,30 @@ export async function loadScope(queue: WriteQueue, scope: StatScope): Promise<Sc
     return data
   })
   possessions = queue.overlay('possessions', possessions, (row) => gameIds.has(row.game_id as string))
-  // All of a video's games are kept so game numbers stay right; possessions are the scope's only.
-  return { videos, games, possessions }
+  // All of a video's matches and games are kept so their numbers stay right; possessions are the scope's only.
+  return { videos, matches, games, possessions }
 }
 
-/** The scope's possessions with their game and video context; the caller keeps the confirmed ones. */
+/** The scope's possessions with their game, match and video context; the caller keeps the confirmed ones. */
 export function scopeItems(data: ScopeData): StatItem[] {
   const gameById = new Map(data.games.map((g) => [g.id, g]))
+  const matchById = new Map(data.matches.map((m) => [m.id, m]))
   const videoById = new Map(data.videos.map((v) => [v.id, v]))
   return data.possessions.flatMap((p) => {
     const game = gameById.get(p.game_id)
     const video = game && videoById.get(game.video_id)
-    if (!game || !video) return []
-    return [toStatItem(p, game, video)]
+    const match = game && matchById.get(game.match_id)
+    if (!game || !match || !video) return []
+    return [toStatItem(p, game, match, video)]
   })
 }
 
-export function toStatItem(p: Possession, game: Game, video: Pick<VideoSummary, 'id' | 'recorded_on' | 'created_at'>): StatItem {
+export function toStatItem(
+  p: Possession,
+  game: Game,
+  match: Pick<Match, 'id' | 'format' | 'opponent' | 'opponent2'>,
+  video: Pick<VideoSummary, 'id' | 'recorded_on' | 'created_at'>,
+): StatItem {
   return {
     id: p.id,
     start_s: p.start_s,
@@ -99,9 +114,10 @@ export function toStatItem(p: Possession, game: Game, video: Pick<VideoSummary, 
     execution: p.execution,
     review_status: p.review_status,
     gameId: game.id,
+    matchId: match.id,
     videoId: video.id,
-    format: game.format,
-    opponents: gameOpponents(game),
+    format: match.format,
+    opponents: matchOpponents(match),
     date: videoDate(video),
   }
 }

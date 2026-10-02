@@ -2,7 +2,7 @@
 import type { ScopeData } from '../data/stats'
 import { videoDate } from '../data/stats'
 import { movementOf } from '../stats/movement'
-import { gameOpponents } from '../stats/filters'
+import { matchOpponents } from '../stats/filters'
 import { numberPossessions, possessionLength } from '../tagging/possessions'
 import { sortGames } from '../videos/games'
 
@@ -46,9 +46,12 @@ export function exportRows(data: ScopeData, opts: ExportOptions): ExportRow[] {
   const videos = [...data.videos].sort(
     (a, b) => videoDate(a).localeCompare(videoDate(b)) || text(a.title).localeCompare(text(b.title)) || a.created_at.localeCompare(b.created_at),
   )
+  const matchById = new Map(data.matches.map((m) => [m.id, m]))
   const rows: ExportRow[] = []
   for (const v of videos) {
     sortGames(data.games.filter((g) => g.video_id === v.id)).forEach((g, i) => {
+      const match = matchById.get(g.match_id)
+      if (!match) return
       const numbered = numberPossessions(data.possessions.filter((p) => p.game_id === g.id))
       for (const { p, n } of numbered) {
         if (n == null) continue
@@ -59,8 +62,8 @@ export function exportRows(data: ScopeData, opts: ExportOptions): ExportRow[] {
           recorded_on: text(v.recorded_on),
           youtube_id: v.youtube_id,
           game_index: String(i + 1),
-          opponent: gameOpponents(g).join(' & '),
-          format: g.format,
+          opponent: matchOpponents(match).join(' & '),
+          format: match.format,
           my_side: g.my_side,
           n: String(n),
           start_s: time(p.start_s),
