@@ -74,7 +74,19 @@ function renderAt(url: string) {
   )
 }
 
+function matchRow(id: string): Match {
+  return { ...fixtureMatch, id, video_id: 'v1' }
+}
+function gameRow(id: string, match_id: string, start_s: number): Game {
+  return { ...fixtureGame, id, video_id: 'v1', match_id, start_s, end_s: null }
+}
+
 describe('scope and filters from the URL (STA-4)', () => {
+  it('reads a match scope from the URL (STA-4, ADR-0040)', () => {
+    expect(scopeFromParams(new URLSearchParams('scope=match&video=v1&match=m2'))).toEqual({ kind: 'match', videoId: 'v1', matchId: 'm2' })
+    expect(scopeFromParams(new URLSearchParams('scope=match&video=v1'))).toEqual({ kind: 'video', videoId: 'v1' })
+  })
+
   it('reads each scope', () => {
     expect(scopeFromParams(new URLSearchParams('scope=game&video=v1&game=g1'))).toEqual({ kind: 'game', videoId: 'v1', gameId: 'g1' })
     expect(scopeFromParams(new URLSearchParams('scope=video&video=v1'))).toEqual({ kind: 'video', videoId: 'v1' })
@@ -112,6 +124,29 @@ describe('StatsPage', () => {
     expect(loadScope).toHaveBeenCalledWith({}, { kind: 'video', videoId: 'v1' })
   })
 
+  it('counts only the chosen match in match scope and marks the Match button', async () => {
+    const mine = f.possessions.filter((p) => p.review_status === 'confirmed')
+    const inFirst = mine.slice(0, 4)
+    const data: ScopeData = {
+      videos: scopeData.videos,
+      matches: [matchRow('m1'), matchRow('m2')],
+      games: [gameRow('g1', 'm1', 0), gameRow('g2', 'm2', 100)],
+      possessions: [
+        ...inFirst.map((p): Possession => ({ ...p, game_id: 'g1', user_id: 'u1', created_at: '', updated_at: '' })),
+        ...mine.slice(4).map((p): Possession => ({ ...p, game_id: 'g2', user_id: 'u1', created_at: '', updated_at: '' })),
+      ],
+    }
+    // loadScope is mocked, so honour the scope the way the real one does.
+    vi.mocked(loadScope).mockImplementation((_q, scope) => {
+      const ids = new Set(data.games.filter((g) => scope.kind === 'match' && g.match_id === scope.matchId).map((g) => g.id))
+      return Promise.resolve({ ...data, possessions: data.possessions.filter((p) => ids.has(p.game_id)) })
+    })
+    renderAt('/stats?scope=match&video=v1&match=m1')
+    expect(await screen.findByText(new RegExp(`${inFirst.length} of ${inFirst.length} confirmed possessions`))).toBeInTheDocument()
+    expect(loadScope).toHaveBeenCalledWith({}, { kind: 'match', videoId: 'v1', matchId: 'm1' })
+    expect(screen.getByRole('button', { name: 'Match' })).toHaveAttribute('aria-pressed', 'true')
+  })
+
   it('asks for a game in game scope', async () => {
     renderAt('/stats?scope=game&video=v1')
     expect(await screen.findByText('Choose a game above.')).toBeInTheDocument()
@@ -119,6 +154,21 @@ describe('StatsPage', () => {
 })
 
 describe('export (EXP-1..3)', () => {
+  const twoMatches = {
+    videos: [summary({ youtube_id: 'dQw4w9WgXcQ' })],
+    matches: [matchRow('m1'), matchRow('m2')],
+    games: [gameRow('g1', 'm1', 0), gameRow('g2', 'm2', 100)],
+    possessions: [],
+  }
+
+  it('names a match export by its number', () => {
+    expect(exportFileName({ kind: 'match', videoId: 'v1', matchId: 'm2' }, twoMatches)).toBe('foosball-dQw4w9WgXcQ-match-2.csv')
+  })
+
+  it('numbers a game within its own match when there are two matches', () => {
+    expect(exportFileName({ kind: 'game', videoId: 'v1', gameId: 'g2' }, twoMatches)).toBe('foosball-dQw4w9WgXcQ-match-2-game-1.csv')
+  })
+
   it('names the file after the scope', () => {
     expect(exportFileName({ kind: 'range', from: null, to: null }, scopeData)).toBe('foosball-all.csv')
     expect(exportFileName({ kind: 'range', from: '2026-09-01', to: '2026-09-30' }, scopeData)).toBe('foosball-2026-09-01-to-2026-09-30.csv')

@@ -10,20 +10,22 @@ import { useQueue } from '../app/QueueProvider'
 import { useResource } from '../app/useResource'
 import { formatDate, playersLabel, plural, videoTitle } from '../videos/format'
 import { sortGames } from '../videos/games'
-import { gameInMatch, gameLabel, matchNumber } from '../videos/matches'
+import { gameInMatch, gameLabel, matchNumber, resultLabel, sortMatches } from '../videos/matches'
 import { formatTime } from '../player/time'
 import { StatsView } from './StatsView'
 import { ExportCard } from './ExportCard'
 
-// URL: #/stats?scope=game|video|range&video=…&game=…&from=…&to=…&shot=Pin,Pull&format=…&opp=…
+// URL: #/stats?scope=game|match|video|range&video=…&game=…&match=…&from=…&to=…&shot=Pin,Pull&format=…&opp=…
 const NO_OPPONENT = '__none'
 
 export function scopeFromParams(p: URLSearchParams): StatScope {
   const scope = p.get('scope')
   const video = p.get('video')
   const game = p.get('game')
+  const match = p.get('match')
   if (scope === 'game' && video && game) return { kind: 'game', videoId: video, gameId: game }
-  if ((scope === 'video' || scope === 'game') && video) return { kind: 'video', videoId: video }
+  if (scope === 'match' && video && match) return { kind: 'match', videoId: video, matchId: match }
+  if ((scope === 'video' || scope === 'game' || scope === 'match') && video) return { kind: 'video', videoId: video }
   return { kind: 'range', from: p.get('from') || null, to: p.get('to') || null }
 }
 
@@ -45,6 +47,7 @@ export function exportFileName(scope: StatScope, data: ScopeData): string {
   }
   const yt = data.videos[0]?.youtube_id ?? 'video'
   if (scope.kind === 'video') return `foosball-${yt}.csv`
+  if (scope.kind === 'match') return `foosball-${yt}-match-${matchNumber(data.matches, data.games, scope.matchId)}.csv`
   const game = data.games.find((g) => g.id === scope.gameId)
   const m = game ? matchNumber(data.matches, data.games, game.match_id) : 0
   const k = game ? gameInMatch(data.games, game) : 0
@@ -120,7 +123,7 @@ export function StatsPage() {
               type="button"
               className="opt"
               aria-pressed={scope.kind === 'range'}
-              onClick={() => set({ scope: 'range', video: null, game: null })}
+              onClick={() => set({ scope: 'range', video: null, game: null, match: null })}
             >
               Date range
             </button>
@@ -128,7 +131,7 @@ export function StatsPage() {
               type="button"
               className="opt"
               aria-pressed={scope.kind === 'video'}
-              onClick={() => set({ scope: 'video', video: videoId ?? firstVideo, game: null })}
+              onClick={() => set({ scope: 'video', video: videoId ?? firstVideo, game: null, match: null })}
               disabled={!firstVideo}
             >
               Video
@@ -136,8 +139,17 @@ export function StatsPage() {
             <button
               type="button"
               className="opt"
+              aria-pressed={scope.kind === 'match'}
+              onClick={() => set({ scope: 'match', video: videoId ?? firstVideo, game: null, match: params.get('match') })}
+              disabled={!firstVideo}
+            >
+              Match
+            </button>
+            <button
+              type="button"
+              className="opt"
               aria-pressed={scope.kind === 'game'}
-              onClick={() => set({ scope: 'game', video: videoId ?? firstVideo, game: params.get('game') })}
+              onClick={() => set({ scope: 'game', video: videoId ?? firstVideo, game: params.get('game'), match: null })}
               disabled={!firstVideo}
             >
               Game
@@ -166,7 +178,7 @@ export function StatsPage() {
         {scope.kind !== 'range' && (
           <div className="control">
             <label htmlFor="st-video">Video</label>
-            <select id="st-video" value={videoId ?? ''} onChange={(e) => set({ video: e.target.value, game: null })}>
+            <select id="st-video" value={videoId ?? ''} onChange={(e) => set({ video: e.target.value, game: null, match: null })}>
               {videoList.map((v) => (
                 <option key={v.id} value={v.id}>
                   {videoTitle(v)}
@@ -174,6 +186,21 @@ export function StatsPage() {
                 </option>
               ))}
             </select>
+            {params.get('scope') === 'match' && (
+              <>
+                <label htmlFor="st-match">Match</label>
+                <select id="st-match" value={params.get('match') ?? ''} onChange={(e) => set({ match: e.target.value })}>
+                  <option value="">Choose a match…</option>
+                  {sortMatches(ms, gs).map((m, i) => (
+                    <option key={m.id} value={m.id}>
+                      Match {i + 1}
+                      {playersLabel(m) ? ` · ${playersLabel(m)}` : ''}
+                      {resultLabel(m, gs) ? ` · ${resultLabel(m, gs)}` : ''}
+                    </option>
+                  ))}
+                </select>
+              </>
+            )}
             {params.get('scope') === 'game' && (
               <>
                 <label htmlFor="st-game">Game</label>

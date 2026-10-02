@@ -8,6 +8,7 @@ import { matchOpponents } from '../stats/filters'
 
 export type StatScope =
   | { kind: 'game'; videoId: string; gameId: string }
+  | { kind: 'match'; videoId: string; matchId: string }
   | { kind: 'video'; videoId: string }
   /** Inclusive calendar dates; null = open-ended. */
   | { kind: 'range'; from: string | null; to: string | null }
@@ -69,7 +70,9 @@ export async function loadScope(queue: WriteQueue, scope: StatScope): Promise<Sc
     return data
   })
   games = queue.overlay('games', games, (row) => videoIds.has(row.video_id as string))
-  const gameIds = new Set((scope.kind === 'game' ? games.filter((g) => g.id === scope.gameId) : games).map((g) => g.id))
+  const inScope =
+    scope.kind === 'game' ? games.filter((g) => g.id === scope.gameId) : scope.kind === 'match' ? games.filter((g) => g.match_id === scope.matchId) : games
+  const gameIds = new Set(inScope.map((g) => g.id))
   if (gameIds.size === 0) return { videos, matches, games, possessions: [] }
 
   let possessions = await inChunks([...gameIds], async (chunk) => {
