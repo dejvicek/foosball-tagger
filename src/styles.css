@@ -130,6 +130,13 @@ kbd { font-family: var(--sans); font-size: 11px; font-weight: 600; min-width: 18
 .opt[aria-pressed="true"] { background: var(--felt); border-color: var(--felt); color: var(--on-felt); }
 .first-side { margin-bottom: 12px; }
 .first-side p { margin: 0 0 6px; }
+.match-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.match { border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+.match.current { border-color: var(--felt); }
+.match-head { margin-bottom: 10px; }
+.match-title { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-bottom: 8px; }
+.match-title h3 { margin: 0; }
+.warn { color: var(--warn, #b45309); margin: 0 0 8px; font-size: 14px; }
 .game-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .game { border: 1px solid var(--line); border-radius: 6px; padding: 10px; }
 .game-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-bottom: 8px; }

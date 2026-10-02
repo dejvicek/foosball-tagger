@@ -46,6 +46,7 @@ Use a real practice video. Repeat 1–4 in Chrome, Firefox and Safari.
 9. **Inline edits (GAM-2):** change side, format, opponent, scores, notes; reload → all kept. Doubles shows Teammate, Opponent 1 and Opponent 2; Singles hides them and clears them (ADR-0023).
 10. **GAM-3:** click a game's start time → the player seeks there; "Tag →" opens the tagging placeholder.
 11. **Delete a game:** Delete… → confirmation; Esc cancels; confirm removes it.
+12. **Matches (ADR-0040):** press M → "Started Match 2…", a new empty match copying format and players. B adds Game 1 to it. "Make current" on Match 1 sends B there; B after Match 2's games is refused as interleaving. Set Best of 3 and scores: header shows the result. "Delete match…" shows game and possession counts.
 12. **Offline (SYN-2):** turn Wi-Fi off, press B and E, edit a name → header shows "Unsynced changes: n"; reload while still offline → the games are still there (games list may show a load error: Try again once online); turn Wi-Fi on → the counter disappears within a minute; reload → everything is on the server.
 13. **Seek bar (ADR-0018):** on a long video, drag the bar → the video follows while dragging and lands where released; hovering shows the time; games appear as green marks. Right after using the bar, Space and B still work. Tab to the bar: Page Up/Down jump a minute, Home/End go to the ends.
 

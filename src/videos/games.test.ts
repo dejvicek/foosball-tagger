@@ -1,5 +1,5 @@
 import type { Game, Match } from '../data/types'
-import { defaultSide, endGame, gameRange, setBoundary, sortGames, startGame, validateGames, type NewGameInput } from './games'
+import { defaultSide, endGame, gameRange, setBoundary, sortGames, startGame, startMatch, validateGames, type NewGameInput } from './games'
 
 let seq = 0
 function g(start_s: number, end_s: number | null, extra: Partial<Game> = {}): Game {
@@ -182,5 +182,28 @@ describe('matches (ADR-0040)', () => {
       ok: false,
       message: 'Match 1 and Match 2 would interleave at 0:30.0. A match’s games follow each other: start a new match with M, or select the match being played.',
     })
+  })
+})
+
+describe('startMatch (M)', () => {
+  const now = '2026-09-24T12:00:00Z'
+  const mi = { id: 'mNew', userId: 'u', videoId: 'v', now }
+
+  it('creates an empty match copying the current one', () => {
+    const plan = startMatch([g(0, 10)], [{ ...M1, opponent: 'Tom', best_of: 3 }], 50, mi, null, 600)
+    expect(plan).toMatchObject({ ok: true, save: [], message: 'Started Match 2. Press B where its first game starts.' })
+    if (!plan.ok) throw new Error()
+    expect(plan.match).toMatchObject({ id: 'mNew', opponent: 'Tom', best_of: 3, notes: null })
+  })
+
+  it('ends an open game first', () => {
+    const plan = startMatch([g(0, null)], [M1], 50, mi, null, 600)
+    expect(plan).toMatchObject({ ok: true, message: 'Ended Match 1 · Game 1 at 0:50.0. Started Match 2. Press B where its first game starts.' })
+    if (!plan.ok) throw new Error()
+    expect(plan.save).toEqual([expect.objectContaining({ end_s: 50 })])
+  })
+
+  it('refuses when the open game starts after this time', () => {
+    expect(startMatch([g(60, null)], [M1], 50, mi, null, 600)).toMatchObject({ ok: false })
   })
 })

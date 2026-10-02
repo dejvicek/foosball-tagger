@@ -3,7 +3,7 @@ import { useCinemaPage } from '../player/useCinema'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { deleteVideo, getVideo, updateVideo } from '../data/videos'
 import { deleteGame, loadGames, possessionCounts, saveGame } from '../data/games'
-import { loadMatches, saveMatch } from '../data/matches'
+import { deleteMatch, loadMatches, saveMatch } from '../data/matches'
 import { FPS_VALUES, type Fps, type Game, type Match, type Side, type VideoSummary } from '../data/types'
 import { PlayerController } from '../player/controller'
 import { PlayerControls } from '../player/PlayerControls'
@@ -17,9 +17,10 @@ import { useQueue } from '../app/QueueProvider'
 import { useResource } from '../app/useResource'
 import { useToast } from '../app/useToast'
 import { deleteSummary, formatDuration, plural, videoTitle } from './format'
-import { defaultSide, endGame, gameRange, setBoundary, sortGames, startGame, type Plan } from './games'
-import { currentMatch, gameLabel, newMatch } from './matches'
+import { defaultSide, endGame, gameRange, setBoundary, sortGames, startGame, startMatch, type Plan } from './games'
+import { currentMatch, gameLabel, matchGames, matchNumber, newMatch } from './matches'
 import { GamesPanel, type GameField } from './GamesPanel'
+import type { MatchField } from './MatchHeader'
 import type { VideosLocationState } from './VideosPage'
 
 export function VideoPage({ userId }: { userId: string }) {
@@ -103,6 +104,8 @@ function VideoScreen({
     const r = gameRange(g, games ?? [], duration)
     return { id: g.id, start: r.start, end: Number.isFinite(r.end) ? r.end : r.start, label: gameLabel(matches ?? [], games ?? [], g) }
   })
+  const [selectedMatch, setSelectedMatch] = useState<string | null>(null)
+  const [matchToDelete, setMatchToDelete] = useState<{ match: Match; games: number; possessions: number | null } | null>(null)
   const [toDelete, setToDelete] = useState<{ game: Game; possessions: number | null } | null>(null)
 
   // Store the duration the player reports, so the list can show it and games can be checked against it.
@@ -136,7 +139,7 @@ function VideoScreen({
     const side = games.length > 0 ? defaultSide(games, at) : firstSide
     const now = nowIso()
     // B adds to the last match, or creates the first one (ADR-0040).
-    const existing = currentMatch(matches, games, null)
+    const existing = currentMatch(matches, games, selectedMatch)
     const match = existing ?? newMatch({ id: crypto.randomUUID(), userId, videoId: video.id, now }, undefined)
     const ms = existing ? matches : [...matches, match]
     const plan = startGame(games, ms, at, { id: crypto.randomUUID(), userId, videoId: video.id, now, side, matchId: match.id }, duration)
@@ -144,8 +147,63 @@ function VideoScreen({
       setMatches(() => ms)
       saveMatch(queue, match)
     }
+    if (plan.ok) setSelectedMatch(match.id)
     apply(plan)
-  }, [games, matches, controller, apply, userId, video.id, firstSide, duration, queue, setMatches])
+  }, [games, matches, controller, apply, userId, video.id, firstSide, duration, queue, setMatches, selectedMatch])
+
+  const newMatchHere = useCallback(() => {
+    if (!games || !matches) return
+    const plan = startMatch(games, matches, controller.time(), { id: crypto.randomUUID(), userId, videoId: video.id, now: nowIso() }, selectedMatch, duration)
+    if (!plan.ok) {
+      show(plan.message, 'error')
+      return
+    }
+    setMatches((ms) => [...ms, plan.match])
+    saveMatch(queue, plan.match)
+    setGames(() => plan.games)
+    plan.save.forEach((g) => saveGame(queue, g))
+    setSelectedMatch(plan.match.id)
+    show(plan.message)
+  }, [games, matches, controller, userId, video.id, selectedMatch, duration, queue, setMatches, setGames, show])
+
+  const changeMatch = useCallback(
+    (matchId: string, patch: MatchField) => {
+      const match = matches?.find((m) => m.id === matchId)
+      if (!match || (Object.keys(patch) as (keyof MatchField)[]).every((k) => match[k] === patch[k])) return
+      const next = { ...match, ...patch, updated_at: nowIso() }
+      setMatches((ms) => ms.map((m) => (m.id === matchId ? next : m)))
+      saveMatch(queue, next, 500) // SYN-3: edits are debounced
+    },
+    [matches, queue, setMatches],
+  )
+
+  const askDeleteMatch = useCallback(
+    (m: Match) => {
+      const ids = matchGames(games ?? [], m.id).map((g) => g.id)
+      setMatchToDelete({ match: m, games: ids.length, possessions: ids.length === 0 ? 0 : null })
+      if (ids.length === 0) return
+      possessionCounts(ids).then(
+        (counts) =>
+          setMatchToDelete((d) =>
+            d?.match.id === m.id ? { ...d, possessions: ids.reduce((n, id) => n + (counts.get(id) ?? 0), 0) } : d,
+          ),
+        () => {}, // offline: the dialog says possessions go with the games, without a count
+      )
+    },
+    [games],
+  )
+
+  const confirmDeleteMatch = () => {
+    if (!matchToDelete || !games || !matches) return
+    const m = matchToDelete.match
+    const n = matchNumber(matches, games, m.id)
+    deleteMatch(queue, m.id)
+    setMatches((ms) => ms.filter((x) => x.id !== m.id))
+    setGames((gs) => gs.filter((g) => g.match_id !== m.id))
+    setSelectedMatch((s) => (s === m.id ? null : s))
+    setMatchToDelete(null)
+    show(`Deleted Match ${n}.`)
+  }
 
   const end = useCallback(() => {
     if (!games || !matches) return
@@ -191,7 +249,7 @@ function VideoScreen({
   // Keyboard (TAG-1 rules): player keys, plus B / E for games on this screen only (ADR-0010).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (toDelete || !isShortcut(e) || !snapshot.ready) return
+      if (toDelete || matchToDelete || !isShortcut(e) || !snapshot.ready) return
       const action = playerAction(e)
       if (action) {
         e.preventDefault()
@@ -208,11 +266,14 @@ function VideoScreen({
       } else if (k === 'KeyE') {
         e.preventDefault()
         end()
+      } else if (k === 'KeyM') {
+        e.preventDefault()
+        newMatchHere()
       }
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [controller, snapshot.ready, video.fps, start, end, show, toDelete])
+  }, [controller, snapshot.ready, video.fps, start, end, newMatchHere, show, toDelete, matchToDelete])
 
   const ar = video.aspect_ratio ?? 16 / 9
   const cinema = useCinemaPage()
@@ -266,6 +327,11 @@ function VideoScreen({
               duration={duration}
               ready={snapshot.ready}
               firstSide={firstSide}
+              currentMatchId={selectedMatch}
+              onNewMatch={newMatchHere}
+              onSelectMatch={setSelectedMatch}
+              onMatchChange={changeMatch}
+              onDeleteMatch={askDeleteMatch}
               onFirstSide={setFirstSide}
               onStart={start}
               onEnd={end}
@@ -294,6 +360,23 @@ function VideoScreen({
               : toDelete.possessions === 0
                 ? 'It has no possessions yet.'
                 : `This also deletes its ${plural(toDelete.possessions, 'possession')}.`}{' '}
+            It cannot be undone.
+          </p>
+        </ConfirmDialog>
+      )}
+      {matchToDelete && games && matches && (
+        <ConfirmDialog
+          title={`Delete Match ${matchNumber(matches, games, matchToDelete.match.id)}?`}
+          confirmLabel="Delete match"
+          onConfirm={confirmDeleteMatch}
+          onCancel={() => setMatchToDelete(null)}
+        >
+          <p>
+            {matchToDelete.games === 0
+              ? 'It has no games yet.'
+              : matchToDelete.possessions == null
+                ? `This also deletes its ${plural(matchToDelete.games, 'game')} and their possessions.`
+                : `This also deletes its ${plural(matchToDelete.games, 'game')} and ${plural(matchToDelete.possessions, 'possession')}.`}{' '}
             It cannot be undone.
           </p>
         </ConfirmDialog>

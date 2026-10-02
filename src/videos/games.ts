@@ -1,7 +1,7 @@
 // Game boundaries on a video (GAM-1, GAM-2, GAM-4, ADR-0040). Pure functions over game rows.
 import type { Game, Match, Side } from '../data/types'
 import { formatTime } from '../player/time'
-import { gameLabel, interleaveProblem, matchGames } from './matches'
+import { currentMatch, gameLabel, interleaveProblem, matchGames, matchNumber, newMatch, type NewMatchInput } from './matches'
 import { sortGames } from './order'
 
 export { sortGames }
@@ -169,4 +169,30 @@ export function setBoundary(
     save: [changed],
     message: `${gameLabel(matches, next, changed)} now ${which === 'start' ? 'starts' : 'ends'} at ${t(at)}.`,
   }
+}
+
+export type MatchPlan = { ok: true; match: Match; games: Game[]; save: Game[]; message: string } | { ok: false; message: string }
+
+/** M: a new empty match after the current one, ending an open game at `at` first (ADR-0040). */
+export function startMatch(
+  games: readonly Game[],
+  matches: readonly Match[],
+  at: number,
+  input: NewMatchInput,
+  selectedId: string | null,
+  duration: number | null,
+): MatchPlan {
+  const match = newMatch(input, currentMatch(matches, games, selectedId))
+  const all = [...matches, match]
+  let next: Game[] = [...games]
+  let save: Game[] = []
+  let ended = ''
+  if (openGame(games)) {
+    const plan = endGame(games, matches, at, input.now, duration)
+    if (!plan.ok) return plan
+    next = plan.games
+    save = plan.save
+    ended = `${plan.message} `
+  }
+  return { ok: true, match, games: next, save, message: `${ended}Started Match ${matchNumber(all, next, match.id)}. Press B where its first game starts.` }
 }

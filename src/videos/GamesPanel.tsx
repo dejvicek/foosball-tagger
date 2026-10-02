@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { SIDES, type Game, type Match, type Side } from '../data/types'
 import { formatTime } from '../player/time'
-import { gameRange, sortGames } from './games'
-import { gameLabel } from './matches'
+import { gameRange } from './games'
+import { currentMatch, matchGames, sortMatches } from './matches'
+import { MatchHeader, type MatchField } from './MatchHeader'
 import { keyLabel } from '../player/keyboardLayout'
 import { useKeyboardLayout } from '../player/useKeyboardLayout'
 
@@ -16,6 +17,11 @@ interface Props {
   duration: number | null
   ready: boolean
   firstSide: Side | null
+  currentMatchId: string | null
+  onNewMatch: () => void
+  onSelectMatch: (id: string) => void
+  onMatchChange: (id: string, patch: MatchField) => void
+  onDeleteMatch: (match: Match) => void
   onFirstSide: (side: Side) => void
   onStart: () => void
   onEnd: () => void
@@ -35,14 +41,14 @@ function scoreValue(v: string): number | null {
 
 export function GamesPanel(props: Props) {
   useKeyboardLayout()
-  const { games, firstSide, onFirstSide, onStart, onEnd, ready } = props
-  const sorted = sortGames(games)
-  const hasOpen = sorted.some((g) => g.end_s == null)
+  const { matches, games, firstSide, onFirstSide, onStart, onEnd, ready } = props
+  const hasOpen = games.some((g) => g.end_s == null)
+  const current = currentMatch(matches, games, props.currentMatchId)
 
   return (
     <section className="card games" aria-labelledby="games-heading">
-      <h2 id="games-heading">Games</h2>
-      {sorted.length === 0 && (
+      <h2 id="games-heading">Matches</h2>
+      {games.length === 0 && (
         <div className="first-side">
           <p id="side-q">Which side of the frame do you stand on?</p>
           <div className="seg-ctl" role="group" aria-labelledby="side-q">
@@ -62,13 +68,35 @@ export function GamesPanel(props: Props) {
         <button className="btn nf" type="button" onClick={onEnd} disabled={!ready || !hasOpen}>
           End game <kbd>{keyLabel('KeyE')}</kbd>
         </button>
+        <button className="btn nf" type="button" onClick={props.onNewMatch} disabled={!ready}>
+          New match <kbd>{keyLabel('KeyM')}</kbd>
+        </button>
       </div>
-      {sorted.length === 0 ? (
-        <p className="muted">Play the video and press B where a game starts and E where it ends.</p>
+      {matches.length === 0 ? (
+        <p className="muted">Play the video and press B where a game starts and E where it ends. M starts a new match.</p>
       ) : (
-        <ol className="game-list">
-          {sorted.map((g) => (
-            <GameRow key={g.id} game={g} {...props} />
+        <ol className="match-list">
+          {sortMatches(matches, games).map((m, i) => (
+            <li key={m.id} className={m.id === current?.id ? 'match current' : 'match'}>
+              <MatchHeader
+                match={m}
+                number={i + 1}
+                games={games}
+                current={m.id === current?.id}
+                onSelect={() => props.onSelectMatch(m.id)}
+                onChange={(patch) => props.onMatchChange(m.id, patch)}
+                onDelete={() => props.onDeleteMatch(m)}
+              />
+              {matchGames(games, m.id).length === 0 ? (
+                <p className="muted">No games yet. Press B where its first game starts.</p>
+              ) : (
+                <ol className="game-list">
+                  {matchGames(games, m.id).map((g, k) => (
+                    <GameRow key={g.id} game={g} index={k + 1} {...props} />
+                  ))}
+                </ol>
+              )}
+            </li>
           ))}
         </ol>
       )}
@@ -76,7 +104,7 @@ export function GamesPanel(props: Props) {
   )
 }
 
-function GameRow({ game, matches, games, duration, videoId, onSeek, onChange, onBoundary, onDelete }: Props & { game: Game }) {
+function GameRow({ game, index, games, duration, videoId, onSeek, onChange, onBoundary, onDelete }: Props & { game: Game; index: number }) {
   const range = gameRange(game, games, duration)
   const length = Number.isFinite(range.end) ? range.end - range.start : null
   const id = `g-${game.id}`
@@ -86,7 +114,7 @@ function GameRow({ game, matches, games, duration, videoId, onSeek, onChange, on
   return (
     <li className="game">
       <div className="game-head">
-        <h3>{gameLabel(matches, games, game)}</h3>
+        <h3>Game {index}</h3>
         <span className="game-range">
           <button className="seek" type="button" onClick={() => onSeek(game.start_s)} title="Seek to the start">
             {formatTime(game.start_s)}
