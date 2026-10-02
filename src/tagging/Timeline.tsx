@@ -23,7 +23,7 @@ interface Props {
 /** Legend groups (ADR-0037): color is the result, pattern the execution, then the markers. */
 interface LegendItem {
   label: string
-  look: Partial<SegmentLook> | 'draft'
+  look: Partial<SegmentLook> & { current?: true }
   /** Listed only when a segment on this timeline looks like it (ADR-0038). */
   ifPresent?: (look: SegmentLook) => boolean
 }
@@ -51,13 +51,13 @@ const LEGEND: { title: string; items: LegendItem[] }[] = [
       { label: 'No shot', look: { result: 'noshot' } },
       { label: FOUL_LABEL, look: { foul: true } },
       { label: 'Unreviewed candidate', look: { candidate: true }, ifPresent: (l) => l.candidate },
-      { label: 'Current possession', look: 'draft' },
+      { label: 'Current possession', look: { current: true } },
     ],
   },
 ]
 
-/** A marker without a result (foul, candidate) is drawn alone, with no fill (ADR-0038). */
-const swatchClass = (look: LegendItem['look']) => (look === 'draft' ? 'draft' : `${segmentClass(look)}${look.result ? '' : ' marker'}`)
+/** A marker swatch (no result): foul and current draw their ring around a neutral segment, the candidate alone (ADR-0039). */
+const swatchClass = (look: LegendItem['look']) => `${segmentClass(look)}${look.current ? ' current' : ''}${look.result ? '' : ' marker'}`
 
 /** Where the 15 s tick sits inside a segment of `length` seconds, in percent of it. */
 const tickAt = (length: number) => `${(FOUL_LIMIT_S / length) * 100}%`
@@ -125,7 +125,7 @@ export function Timeline({ range, possessions, draft, controller, onSeek, onSele
             <button
               key={p.id}
               type="button"
-              className={`seg nf ${segmentClass(look)}${p.id === editingId ? ' editing' : ''}`}
+              className={`seg nf ${segmentClass(look)}${p.id === editingId ? ' current' : ''}`}
               style={{ left: `${pos(a)}%`, width: `${Math.max(0, pos(b) - pos(a))}%` }}
               title={label}
               aria-label={`${label}. ${lookLabel(look)}. Edit it, from one second before it.`}
@@ -137,7 +137,7 @@ export function Timeline({ range, possessions, draft, controller, onSeek, onSele
           )
         })}
         {draft.start_s != null && (
-          <div ref={draftRef} className="seg draft" aria-hidden="true">
+          <div ref={draftRef} className="seg draft current" aria-hidden="true">
             <span ref={draftFoulRef} className="foul-tick" />
           </div>
         )}

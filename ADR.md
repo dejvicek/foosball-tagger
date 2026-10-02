@@ -387,3 +387,15 @@ _Numbering fix: committed as a second ADR-0033 in 2f7bbc5; renumbered, content u
   - **Legend:** marker swatches (Foul, Unreviewed candidate, Current possession) show the marker alone, with no fill; on the timeline a foul keeps its segment's fill inside the ring (ADR-0037). Smaller (12 px text, 24 × 16 px swatches); the groups Result · Execution · Markers sit on one line, separated by thin dividers, and wrap as whole groups. "No result", "Not tagged" and "Unreviewed candidate" are listed only when a segment on this game's timeline looks like that; the rest are always listed.
 - **Consequences:** On a game tagged only under ADR-0037 the legend is one line; on older games it gains the entries that apply. The faded "not tagged" look stays for old rows.
 
+## ADR-0039 · One "current possession" ring outside the segment; No shot tinted
+
+- **Status:** Accepted · 2026-10-02 (requested by the user; ring order and the No-shot tint chosen by Claude) · Amends ADR-0030, ADR-0037, ADR-0038
+- **Context:** The possession open in the panel was ringed in the blue focus color while the legend's "Current possession" (the running draft) was a white outline drawn inside its box, so the two did not match. The foul and current outlines should sit outside the segment. The hollow No-shot box showed the strip and its grid lines through it and looked smaller than the filled segments, though it was the same size.
+- **Decision:**
+  - **Current possession** means the possession in the tag panel: the running draft, or the saved one open for editing. Both get a 2 px white ring outside the segment with a 2 px gap (the edited one keeps its fill and pattern; the draft has none). With a foul as well, the orange ring sits next to the segment and the white ring outside it. The playhead draws above both.
+  - **Foul** stays a 2 px orange ring outside the segment with a gap (ADR-0037).
+  - **Hover** brightens the segment instead of drawing a ring, so it never hides one.
+  - **No shot** keeps its red outline and gets a faint red tint inside, so it reads as a box of the same size.
+  - **Legend:** Foul and Current possession show their ring around a small neutral segment; Unreviewed candidate stays a dashed outline alone. Swatches 32 × 20 px.
+- **Consequences:** The log row and the tag panel of the edited possession stay blue; only the timeline uses white.
+

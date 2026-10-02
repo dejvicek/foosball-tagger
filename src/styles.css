@@ -4,7 +4,7 @@
   --felt: #2e6b45; --on-felt: #ffffff; --wood: #a8703c; --miss: #b23e2c; --key: #e4e9e6;
   --stage: #0f1512; --focus: #2b5da8; --noshot: #9aa5a0;
   /* Timeline strip (ADR-0029, ADR-0037): neutral track; light green vs dark red also differ in greyscale. */
-  --strip: #2c3431; --goal: #5fd68a; --nogoal: #b3261e; --noresult: #9aa5a0; --foul: #ff9f1a; --cand: #ffd24a;
+  --strip: #2c3431; --goal: #5fd68a; --nogoal: #b3261e; --noresult: #9aa5a0; --foul: #ff9f1a; --cand: #ffd24a; --current: #ffffff;
   --sans: "Barlow", "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
   --cond: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", "Segoe UI", system-ui, sans-serif;
   color-scheme: light;
@@ -207,39 +207,44 @@ kbd { font-family: var(--sans); font-size: 11px; font-weight: 600; min-width: 18
 .strip-tip { position: absolute; z-index: 5; top: -22px; transform: translateX(-50%); background: var(--ink); color: var(--bg); font-size: 12px; font-variant-numeric: tabular-nums; padding: 2px 6px; border-radius: 4px; white-space: nowrap; pointer-events: none; }
 .strip { position: relative; height: 34px; border-radius: 6px; background: var(--strip); cursor: pointer; overflow: hidden; }
 .strip-bg { position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 calc(12.5% - 1px), rgba(255, 255, 255, 0.10) calc(12.5% - 1px) 12.5%); }
-.seg { --c: var(--noresult); position: absolute; top: 6px; bottom: 6px; min-width: 4px; margin: 0; padding: 0; border: 0; border-radius: 2px; cursor: pointer; background: var(--c); }
+.seg { --c: var(--noresult); position: absolute; top: 6px; bottom: 6px; min-width: 4px; margin: 0; padding: 0; border: 0; border-radius: 2px; cursor: pointer; background: var(--c);
+  /* Layers, top first: No-shot outline inside, then the foul ring, then the current ring (ADR-0039). */
+  --inset: 0 0 transparent; --foul-ring: 0 0 transparent; --current-ring: 0 0 transparent;
+  box-shadow: var(--inset), var(--foul-ring), var(--current-ring); }
 .seg.goal { --c: var(--goal); }
 .seg.nogoal { --c: var(--nogoal); }
 .seg.mis { background: repeating-linear-gradient(135deg, var(--c) 0 4px, var(--strip) 4px 7px); }
 .seg.blank { background: color-mix(in srgb, var(--c) 45%, var(--strip)); }
-.seg.noshot { background: transparent; box-shadow: inset 0 0 0 2px var(--nogoal); }
-/* Current possession and candidates are outlines only (ADR-0038). */
-.seg.draft { background: transparent; box-shadow: inset 0 0 0 2px #fff; pointer-events: none; }
-/* Foul: a ring outside the fill, with a gap, so color and pattern stay visible. */
-.seg.foul { box-shadow: 0 0 0 2px var(--strip), 0 0 0 4px var(--foul); }
-.seg.noshot.foul { box-shadow: inset 0 0 0 2px var(--nogoal), 0 0 0 2px var(--strip), 0 0 0 4px var(--foul); }
-.seg.draft.foul { box-shadow: inset 0 0 0 2px #fff, 0 0 0 2px var(--strip), 0 0 0 4px var(--foul); }
+/* A faint tint fills the box, so it reads the same size as the filled segments (ADR-0039). */
+.seg.noshot { background: color-mix(in srgb, var(--nogoal) 22%, var(--strip)); --inset: inset 0 0 0 2px var(--nogoal); }
+/* The running draft is only its ring (ADR-0038, ADR-0039). */
+.seg.draft { background: transparent; pointer-events: none; }
+/* Foul: a ring outside the segment, with a gap, so color and pattern stay visible. */
+.seg.foul { --foul-ring: 0 0 0 2px var(--strip), 0 0 0 4px var(--foul); }
+/* Current possession (the running draft, or the one open in the panel): a white ring
+   outside the segment; outside the foul ring when both apply (ADR-0039). */
+.seg.current { --current-ring: 0 0 0 2px var(--strip), 0 0 0 4px var(--current); z-index: 1; }
+.seg.current.foul { --current-ring: 0 0 0 6px var(--current); }
 .foul-tick { position: absolute; top: -6px; bottom: -6px; width: 2px; margin-left: -1px; pointer-events: none;
   background: linear-gradient(to bottom, var(--foul) 0 6px, transparent 6px calc(100% - 6px), var(--foul) calc(100% - 6px)); }
 .seg.draft .foul-tick { display: none; }
 .seg.draft.foul .foul-tick { display: block; }
-.seg.candidate { background: transparent; box-shadow: none; outline: 2px dashed var(--cand); outline-offset: -2px; }
-.seg.candidate.foul { box-shadow: 0 0 0 2px var(--strip), 0 0 0 4px var(--foul); }
-/* Hover and edit rings sit outside the foul ring. */
-.seg:hover, .seg:focus-visible { outline: 2px solid var(--cand); outline-offset: 4px; }
-.seg.editing { outline: 2px solid var(--focus); outline-offset: 4px; z-index: 1; }
-.playhead { position: absolute; top: 0; bottom: 0; width: 3px; margin-left: -1.5px; background: var(--cand); pointer-events: none; }
+.seg.candidate { background: transparent; outline: 2px dashed var(--cand); outline-offset: -2px; }
+/* Hover brightens, so it never hides a ring. */
+.seg:hover { filter: brightness(1.25); }
+.seg:focus-visible { outline: 2px solid var(--cand); outline-offset: 6px; }
+.playhead { position: absolute; z-index: 2; top: 0; bottom: 0; width: 3px; margin-left: -1.5px; background: var(--cand); pointer-events: none; }
 .playhead::before { content: ""; position: absolute; top: -1px; left: 50%; width: 11px; height: 11px; margin-left: -5.5px; border-radius: 50%; background: var(--cand); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4); }
 .legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 0; margin-top: 8px; font-size: 12px; color: var(--muted); }
 .legend-group { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding-right: 12px; margin-right: 12px; border-right: 1px solid var(--line); }
 .legend-group:last-child { border-right: 0; margin-right: 0; padding-right: 0; }
 .legend-group b { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
 .legend-group span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
-.swatch { position: relative; display: inline-block; flex: none; width: 24px; height: 16px; border-radius: 3px; background: var(--strip); }
-.swatch .seg { top: 4px; bottom: 4px; left: 5px; right: 5px; min-width: 0; cursor: default; }
-.swatch .seg:hover { outline: none; }
-.swatch .seg.marker { background: transparent; }
-.swatch .seg.candidate:hover { outline: 2px dashed var(--cand); }
+.swatch { position: relative; display: inline-block; flex: none; width: 32px; height: 20px; border-radius: 3px; background: var(--strip); }
+.swatch .seg { top: 6px; bottom: 6px; left: 8px; right: 8px; min-width: 0; cursor: default; }
+.swatch .seg:hover { filter: none; }
+/* Foul and current swatches draw their ring around a neutral segment. */
+.swatch .seg.marker:not(.candidate) { background: color-mix(in srgb, var(--noresult) 55%, var(--strip)); }
 
 /* Possession log (TAG-7) */
 table.log td, table.log th { padding: 5px 6px; }

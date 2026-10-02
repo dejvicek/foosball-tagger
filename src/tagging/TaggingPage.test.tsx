@@ -384,6 +384,7 @@ describe('timeline (TAG-6)', () => {
     expect(fake.t).toBe(69)
     expect(screen.getByText('Editing possession 1')).toBeInTheDocument()
     expect(seg).toHaveAttribute('aria-pressed', 'true')
+    expect(seg).toHaveClass('current') // white ring, like the running possession (ADR-0039)
   })
 
   it('lists No result, Not tagged and Unreviewed candidate in the legend only when such a segment is drawn (ADR-0038)', async () => {
